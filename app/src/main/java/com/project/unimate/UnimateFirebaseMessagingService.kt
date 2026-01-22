@@ -64,7 +64,7 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
         if (nm.getNotificationChannel(CHANNEL_ID) != null) return
 
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Unimate", NotificationManager.IMPORTANCE_DEFAULT)
+            NotificationChannel(CHANNEL_ID, "Unimate", NotificationManager.IMPORTANCE_HIGH)
         )
     }
 
