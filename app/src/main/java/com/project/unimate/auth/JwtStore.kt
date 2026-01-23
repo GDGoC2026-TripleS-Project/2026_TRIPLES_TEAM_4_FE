@@ -13,9 +13,10 @@ object JwtStore {
             .apply()
     }
 
-    fun load(context: Context): String? =
-        context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+    fun load(context: Context): String? {
+        return context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
             .getString(KEY, null)
+    }
 
     fun clear(context: Context) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)

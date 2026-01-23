@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         // - 한번만 넣고 앱 재실행해서 확인
         // - 테스트 끝나면 이 블록 통째로 삭제
         // =============================
-        val TEST_JWT = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJrYWthb180Njk4MjY5NTk4QHVuaW1hdGUubG9jYWwiLCJpYXQiOjE3NjkwNzc3NjEsImV4cCI6MTc2OTA4MTM2MX0.ds-QgCIjFgf2El4uT2FRZHSYM7WxJbhnBQu8g8zLA6fro5exoIYoxLjfD2YdGmlJUPrTM2Tt7AEyIk2lGbgY3Q" // <-- 여기에 Swagger에서 복사한 JWT 붙여넣기
+        val TEST_JWT = "" // <-- Swagger에서 복사한 JWT 붙여넣기
         if (TEST_JWT.isNotBlank()) {
             JwtStore.save(this, TEST_JWT)
             Log.d(TAG, "✅ TEST_JWT injected into JwtStore")
@@ -39,6 +39,8 @@ class MainActivity : ComponentActivity() {
         // ✅ 이미 로그인(JWT 저장)된 상태면 앱 시작하자마자 FCM 등록(갱신)
         val jwt = JwtStore.load(this)
         Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()}")
+
+        // ✅ BASE_URL을 넘기는 형태 유지
         FcmRegistrar.registerIfPossible(this, BASE_URL)
     }
 
