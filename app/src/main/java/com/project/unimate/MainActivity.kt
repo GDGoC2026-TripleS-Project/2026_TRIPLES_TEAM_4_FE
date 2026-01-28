@@ -12,11 +12,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.auth.JwtStore
+import com.project.unimate.network.Env
 
 class MainActivity : ComponentActivity() {
 
     private val TAG = "UnimateFCM"
-    private val BASE_URL = "https://seok-hwan1.duckdns.org"
+    private val BASE_URL = Env.BASE_URL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,22 +26,22 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermissionIfNeeded()
         handlePushIntent(intent)
 
-        // =============================
-        // ✅ (테스트용) 스웨거 JWT 임시 주입
-        // - 한번만 넣고 앱 재실행해서 확인
-        // - 테스트 끝나면 이 블록 통째로 삭제
-        // =============================
-        val TEST_JWT = "" // <-- Swagger에서 복사한 JWT 붙여넣기
+        // ✅ 여기 " " 안에 Swagger에서 받은 JWT를 그대로 붙여넣기 (Bearer 붙이지 말 것)
+        val TEST_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJrYWthb180Njk4MjY5NTk4QHVuaW1hdGUubG9jYWwiLCJpYXQiOjE3Njk2MDQ1MjksImV4cCI6MTc2OTYwODEyOX0.Nu1IJqOEFUnsFo8hs3BQuPkhGIKj8chHms4OlzrTDWM"  // ex) "eyJhbGciOiJIUzI1NiJ9...."
+
         if (TEST_JWT.isNotBlank()) {
-            JwtStore.save(this, TEST_JWT)
-            Log.d(TAG, "✅ TEST_JWT injected into JwtStore")
+            val token = TEST_JWT.trim().removePrefix("Bearer ").trim()
+            JwtStore.save(this, token)
+
+            val after = JwtStore.load(this)
+            Log.d(TAG, "✅ TEST_JWT injected. afterLoad len=${after?.length ?: 0}, head=${after?.take(12)}")
+        } else {
+            Log.d(TAG, "TEST_JWT is blank - skip inject (use stored token or login flow)")
         }
 
-        // ✅ 이미 로그인(JWT 저장)된 상태면 앱 시작하자마자 FCM 등록(갱신)
         val jwt = JwtStore.load(this)
-        Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()}")
+        Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()} len=${jwt?.length ?: 0}")
 
-        // ✅ BASE_URL을 넘기는 형태 유지
         FcmRegistrar.registerIfPossible(this, BASE_URL)
     }
 

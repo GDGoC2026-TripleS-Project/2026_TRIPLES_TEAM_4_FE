@@ -11,14 +11,16 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.project.unimate.auth.FcmRegistrar
+import com.project.unimate.network.Env
 
 class UnimateFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d(TAG, "FCM onNewToken: ${token.take(12)}...")
-        // ✅ JWT가 있으면 즉시 서버에 재등록 (토큰은 자주 바뀔 수 있음)
-        FcmRegistrar.registerIfPossible(this, BASE_URL)
+
+        // JWT가 있으면 즉시 서버에 재등록
+        FcmRegistrar.registerIfPossible(this, Env.BASE_URL)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -55,7 +57,7 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body)) // ✅ 길어도 보이게
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -78,7 +80,6 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "UnimateFCM"
         private const val CHANNEL_ID = "unimate_default"
-        private const val BASE_URL = "https://seok-hwan1.duckdns.org"
 
         const val EXTRA_PUSH_SCREEN = "push_screen"
         const val EXTRA_PUSH_ALARM_ID = "push_alarm_id"
