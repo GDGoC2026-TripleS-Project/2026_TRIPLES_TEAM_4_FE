@@ -16,6 +16,8 @@ import com.project.unimate.network.Env
 
 class MainActivity : ComponentActivity() {
 
+    // ToDo : 네비게이션바 로직 추가 필요(백파트 코드 건들이지 않기)
+
     private val TAG = "UnimateFCM"
     private val BASE_URL = Env.BASE_URL
 
