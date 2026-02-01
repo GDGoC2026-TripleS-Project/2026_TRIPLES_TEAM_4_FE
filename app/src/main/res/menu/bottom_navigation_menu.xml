@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/nav_home_selector"
+        android:title="홈" />
+    <item
+        android:id="@+id/calendarFragment"
+        android:icon="@drawable/nav_calendar_selector"
+        android:title="캘린더" />
+    <item
+        android:id="@+id/cockFragment"
+        android:icon="@drawable/nav_cock_selector"
+        android:title="찌르기" />
+    <item
+        android:id="@+id/myPageFragment"
+        android:icon="@drawable/nav_mypage_selector"
+        android:title="마이" />
+</menu>
