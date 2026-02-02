@@ -1,4 +1,4 @@
-package com.project.unimate.login
+package com.project.unimate.ui.login
 
 import android.annotation.SuppressLint
 import android.net.Uri
