@@ -53,9 +53,18 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
         handlePushIntent(intent)
 
+<<<<<<< HEAD
         // ✅ 여기 " " 안에 Swagger에서 받은 JWT를 그대로 붙여넣기 (Bearer 붙이지 말 것)
         val TEST_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJza2h1MjAyMjE0MTM5QGdtYWlsLmNvbSIsImlhdCI6MTc3MDIxNjg5OCwiZXhwIjoxNzcwMjIwNDk4fQ.dNg26ob5y_bfjrZq_fzEtTRU8r49SXiVps9G0iwz3eI"
 
+=======
+        // =============================
+        // ✅ (테스트용) 스웨거 JWT 임시 주입
+        // - 한번만 넣고 앱 재실행해서 확인
+        // - 테스트 끝나면 이 블록 통째로 삭제
+        // =============================
+        val TEST_JWT = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJrYWthb180NzEwMTQ4NjA4QHVuaW1hdGUubG9jYWwiLCJpYXQiOjE3NjkxNTYwOTEsImV4cCI6MTc2OTE1OTY5MX0.zSJZAqtTLUiD9XhDDDEDZBVmCOB6bpjs9CZ4cj1ZOK_DTABB5fszgP8LlyMEQqxssCATEHZtSfNqQ4OGIT-Kkw" // <-- Swagger에서 복사한 JWT 붙여넣기
+>>>>>>> a95adac (fix: 로그인 화면 구현)
         if (TEST_JWT.isNotBlank()) {
             val token = TEST_JWT.trim().removePrefix("Bearer ").trim()
             JwtStore.save(this, token)
