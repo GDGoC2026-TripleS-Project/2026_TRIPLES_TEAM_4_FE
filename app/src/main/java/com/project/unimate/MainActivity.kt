@@ -3,69 +3,44 @@ package com.project.unimate
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.auth.JwtStore
-import com.project.unimate.databinding.ActivityMainBinding
-import com.project.unimate.network.Env
 
-// 네비게이션바 로직을 위해 AppCompatActivity로 상속 변경
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivityMainBinding
     private val TAG = "UnimateFCM"
-    private val BASE_URL = Env.BASE_URL
+    private val BASE_URL = "https://seok-hwan1.duckdns.org"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 뷰 바인딩 초기화 및 레이아웃 설정
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-
-
-        // 네비게이션바 초기화 로직
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
-        val navView: BottomNavigationView = binding.bottomNavigation
-        navView.itemIconTintList = null // 아이콘 원래 색상 유지
-        navView.itemActiveIndicatorColor = ColorStateList.valueOf(Color.TRANSPARENT)
-        navView.setupWithNavController(navController)
-        applyBottomNavGap(navView, gapDp = 6)
-
-
+        setContentView(R.layout.activity_main)
 
         requestNotificationPermissionIfNeeded()
         handlePushIntent(intent)
 
-        // ✅ 여기 " " 안에 Swagger에서 받은 JWT를 그대로 붙여넣기 (Bearer 붙이지 말 것)
-        val TEST_JWT = ""
-
+        // =============================
+        // ✅ (테스트용) 스웨거 JWT 임시 주입
+        // - 한번만 넣고 앱 재실행해서 확인
+        // - 테스트 끝나면 이 블록 통째로 삭제
+        // =============================
+        val TEST_JWT = "" // <-- Swagger에서 복사한 JWT 붙여넣기
         if (TEST_JWT.isNotBlank()) {
-            val token = TEST_JWT.trim().removePrefix("Bearer ").trim()
-            JwtStore.save(this, token)
-            val after = JwtStore.load(this)
-            Log.d(TAG, "✅ TEST_JWT injected. afterLoad len=${after?.length ?: 0}, head=${after?.take(12)}")
+            JwtStore.save(this, TEST_JWT)
+            Log.d(TAG, "✅ TEST_JWT injected into JwtStore")
         }
 
+        // ✅ 이미 로그인(JWT 저장)된 상태면 앱 시작하자마자 FCM 등록(갱신)
         val jwt = JwtStore.load(this)
-        Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()} len=${jwt?.length ?: 0}")
+        Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()}")
 
+        // ✅ BASE_URL을 넘기는 형태 유지
         FcmRegistrar.registerIfPossible(this, BASE_URL)
     }
 
@@ -107,45 +82,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-
-
-
-    // 네비게이션바 내부 간격 조정
-    private fun applyBottomNavGap(navView: BottomNavigationView, gapDp: Int) {
-        navView.post {
-            val gapPx = (gapDp * resources.displayMetrics.density)
-
-            val menuView = navView.getChildAt(0) as? ViewGroup ?: return@post
-            for (i in 0 until menuView.childCount) {
-                val item = menuView.getChildAt(i) as? ViewGroup ?: continue
-
-                val icons = ArrayList<ImageView>()
-                val labels = ArrayList<TextView>()
-                collectNavChildren(item, icons, labels)
-
-                // 아이콘&글자 사이 간격 증가
-                labels.forEach { it.translationY = gapPx}
-                icons.forEach { it.translationY = 0f }
-                }
-        }
-    }
-
-    private fun collectNavChildren(
-        root: View,
-        icons: MutableList<ImageView>,
-        labels: MutableList<TextView>
-    ) {
-        when (root) {
-            is ImageView -> icons.add(root)
-            is TextView -> labels.add(root)
-            is ViewGroup -> {
-                for (i in 0 until root.childCount) {
-                    collectNavChildren(root.getChildAt(i), icons, labels)
-                }
-            }
-        }
-    }
-
 }
-
