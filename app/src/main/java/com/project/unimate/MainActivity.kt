@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         // - 한번만 넣고 앱 재실행해서 확인
         // - 테스트 끝나면 이 블록 통째로 삭제
         // =============================
-        val TEST_JWT = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJrYWthb180NzEwMTQ4NjA4QHVuaW1hdGUubG9jYWwiLCJpYXQiOjE3NjkxNTYwOTEsImV4cCI6MTc2OTE1OTY5MX0.zSJZAqtTLUiD9XhDDDEDZBVmCOB6bpjs9CZ4cj1ZOK_DTABB5fszgP8LlyMEQqxssCATEHZtSfNqQ4OGIT-Kkw" // <-- Swagger에서 복사한 JWT 붙여넣기
+        val TEST_JWT = "" // <-- Swagger에서 복사한 JWT 붙여넣기
         if (TEST_JWT.isNotBlank()) {
             JwtStore.save(this, TEST_JWT)
             Log.d(TAG, "✅ TEST_JWT injected into JwtStore")

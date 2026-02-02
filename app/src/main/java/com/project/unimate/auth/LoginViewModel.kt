@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.project.unimate.network.ApiClient
+import com.project.unimate.network.Env
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
@@ -13,7 +14,7 @@ import java.io.IOException
 class LoginViewModel(app: Application) : AndroidViewModel(app) {
 
     private val TAG = "UnimateLogin"
-    private val baseUrl = "https://seok-hwan1.duckdns.org"
+    private val baseUrl = Env.BASE_URL
     private val authApi = AuthApi(baseUrl)
 
     fun onLoginSuccessSaveJwtAndRegisterFcm(jwt: String) {
