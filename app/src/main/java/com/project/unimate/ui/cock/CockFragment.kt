@@ -9,16 +9,57 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
+import com.project.unimate.notification.NotificationApi
+import com.project.unimate.notification.NotificationItem
+import com.project.unimate.notification.NotificationStore
 
 class CockFragment : Fragment() {
+    private lateinit var adapter: NotificationAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_cock, container, false)
+        val view = inflater.inflate(R.layout.fragment_cock, container, false)
+
+        val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.notification_list)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        adapter = NotificationAdapter(
+            onCompleteClicked = { item, onResult ->
+                val api = NotificationApi()
+                api.completeNotification(requireContext(), item.notificationId) { success ->
+                    if (success) {
+                        val updated = item.copy(isCompleted = true)
+                        if (isAdded) {
+                            requireActivity().runOnUiThread {
+                                NotificationStore.upsert(requireContext(), updated)
+                                onResult(updated)
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        recyclerView.adapter = adapter
+
+        return view
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val items = NotificationStore.loadAll(requireContext())
+        adapter.submit(items)
+        syncFromServerIfAvailable()
+    }
+
+    private fun syncFromServerIfAvailable() {
+        // TODO: 서버 알림 목록 API 연동 시 사용
+        // 1) fetchServerList()
+        // 2) val merged = NotificationStore.mergeWithServer(local, server)
+        // 3) NotificationStore.saveAll(context, merged)
+        // 4) adapter.submit(merged)
+    }
 }
