@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         handlePushIntent(intent)
 
         // ✅ 여기 " " 안에 Swagger에서 받은 JWT를 그대로 붙여넣기 (Bearer 붙이지 말 것)
-        val TEST_JWT = ""
+        val TEST_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJza2h1MjAyMjE0MTM5QGdtYWlsLmNvbSIsImlhdCI6MTc3MDIxNjg5OCwiZXhwIjoxNzcwMjIwNDk4fQ.dNg26ob5y_bfjrZq_fzEtTRU8r49SXiVps9G0iwz3eI"
 
         if (TEST_JWT.isNotBlank()) {
             val token = TEST_JWT.trim().removePrefix("Bearer ").trim()
