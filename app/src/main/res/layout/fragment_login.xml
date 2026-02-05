@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context=".ui.login.LoginFragment">
+
+    <ImageView
+        android:id="@+id/iv_login_logo"
+        android:layout_width="133dp"
+        android:layout_height="68dp"
+        android:src="@drawable/ic_uni_logo"
+        app:layout_constraintBottom_toTopOf="@+id/tv_login_welcome"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/tv_login_welcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/pretendard_bold"
+        android:letterSpacing="-0.05"
+        android:text="유니메이트에 오신 걸 환영해요!"
+        android:textColor="#B4D75C"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/tv_login_sub"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/iv_login_logo" />
+
+    <TextView
+        android:id="@+id/tv_login_sub"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/pretendard_regular"
+        android:text="간편한 소셜 로그인으로 바로 시작해보세요."
+        android:textColor="#666666"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/layout_login_buttons"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_login_welcome" />
+
+    <LinearLayout
+        android:id="@+id/layout_login_buttons"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="24dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_login_sub">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_kakao"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="카카오 로그인"
+            android:textColor="#3C1E1E"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#F9DE2C"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_kakao_logo"
+            app:iconGravity="start"
+            app:iconPadding="12dp"
+            app:iconSize="30dp"
+            app:iconTint="@null" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_naver"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="네이버 로그인"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#3DB54C"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_naver_logo"
+            app:iconSize="30dp"
+            app:iconGravity="start"
+            app:iconPadding="12dp"
+            app:iconTint="@null" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_google"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="구글 로그인"
+            android:textColor="#1f1f1f"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@android:color/white"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_google_logo"
+            app:iconGravity="start"
+            app:iconPadding="12dp"
+            app:iconTint="@null"
+            app:iconSize="20dp"
+            app:strokeColor="#EBEBEB"
+            app:strokeWidth="1dp" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

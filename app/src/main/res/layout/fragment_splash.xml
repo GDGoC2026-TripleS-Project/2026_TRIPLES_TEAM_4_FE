@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".ui.splash.SplashFragment">
+
+    <ImageView
+        android:id="@+id/iv_splash_logo"
+        android:layout_width="132.75dp"
+        android:layout_height="67.78dp"
+        android:src="@drawable/ic_uni_logo"
+        app:layout_constraintBottom_toTopOf="@+id/tv_splash_sub"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/tv_splash_sub"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/pretendard_bold"
+        android:gravity="center"
+        android:letterSpacing="-0.05"
+        android:lineSpacingExtra="8dp"
+        android:text="함께하는 일정관리!"
+        android:textColor="#6D6D6D"
+        android:textSize="24dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/tv_splash_main"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/iv_splash_logo" />
+
+    <TextView
+        android:id="@+id/tv_splash_main"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pretendard_bold"
+        android:gravity="center"
+        android:letterSpacing="-0.05"
+        android:text="유니메이트!"
+        android:textColor="#B4D75C"
+        android:textSize="24dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_splash_sub" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

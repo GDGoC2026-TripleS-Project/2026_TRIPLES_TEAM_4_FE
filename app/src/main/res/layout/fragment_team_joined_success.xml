@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <!-- 로고: 세로 위치를 조금 더 안정적으로 고정 -->
+    <ImageView
+        android:id="@+id/ivCompleteLogo"
+        android:layout_width="74dp"
+        android:layout_height="35dp"
+        android:layout_marginTop="160dp"
+        android:src="@drawable/ic_uni_logo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 카드 레이아웃: 가로 너비를 0dp로 하고 마진을 주는 것이 에러 방지에 좋습니다 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutCard"
+        android:layout_width="0dp"
+        android:layout_height="217dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginHorizontal="20dp"
+        android:background="@drawable/shape_complete_card"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ivCompleteLogo">
+
+        <TextView
+            android:id="@+id/tvCompleteMsg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="33dp"
+            android:text="팀 스페이스에 참여되었습니다!"
+            android:textColor="#7FAE2E"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/layoutCode"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginHorizontal="18dp"
+            android:background="@drawable/shape_code_box"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvCompleteMsg">
+
+            <TextView
+                android:id="@+id/tvInviteCode"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="B7D9KQ"
+                android:textColor="#151515"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/ivCopyIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_copy" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnCopyCode"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="18dp"
+            android:background="@drawable/shape_button_create"
+            android:text="초대코드 복사"
+            android:textAllCaps="false"
+            android:textColor="#151515"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:elevation="0dp"
+            android:stateListAnimator="@null"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layoutCode" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 팀으로 이동하기 버튼 -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnGoToTeam"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="4dp"
+        android:background="@android:color/transparent"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingHorizontal="8dp"
+        android:text="팀으로 이동하기 →"
+        android:textColor="#2F2F2F"
+        android:textSize="14sp"
+        android:fontFamily="@font/pretendard_bold"
+        android:textAllCaps="false"
+        app:layout_constraintEnd_toEndOf="@id/layoutCard"
+        app:layout_constraintTop_toBottomOf="@id/layoutCard" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

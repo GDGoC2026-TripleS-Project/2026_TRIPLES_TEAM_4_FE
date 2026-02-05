@@ -17,5 +17,25 @@
     <color name="list_item_pressed">#D3EF9E</color>
     <color name="btn_register_bg">#D9F592</color>
     <color name="list_divider">#E3E6DF</color>
+    <color name="grayscale_gray10">#151515</color>
+    <color name="primary_main_green">#B4D75C</color>
+    <color name="secondary_sub_orange">#EFFFC8</color>
+    <color name="gray02">#EBEBEB</color>
+
+
+<!--팀컬러 색상-->
+    <color name="team_mint">#3FE9C0</color>
+    <color name="team_periwinkle">#90A3ED</color>
+    <color name="team_aqua">#C2FFF0</color>
+    <color name="team_lavender">#D9E1FF</color>
+    <color name="team_lime">#D9F592</color>
+    <color name="team_magenta">#F488D4</color>
+    <color name="team_coral_light">#FBB0A9</color>
+    <color name="team_coral">#FF7A6E</color>
+    <color name="team_pink_light">#FFD8F3</color>
+    <color name="team_yellow">#FFE970</color>
+    <color name="team_beige">#FFF8D3</color>
+    <color name="team_white">#FFFFFF</color>
+
 
 </resources>

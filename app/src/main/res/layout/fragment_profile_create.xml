@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".ui.profile.ProfileCreateFragment">
+
+    <ImageView
+        android:id="@+id/iv_logo"
+        android:layout_width="116dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="60dp"
+        android:src="@drawable/ic_unimate"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_profile_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/pretendard_bold"
+        android:text="프로필 등록"
+        android:textColor="#151515"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_logo" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_profile"
+        android:layout_width="103dp"
+        android:layout_height="103dp"
+        android:layout_marginTop="40dp"
+        app:cardCornerRadius="51.5dp"
+        app:cardElevation="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_profile_title">
+
+        <ImageView
+            android:id="@+id/iv_profile_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/profile_bg"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_profile_user" />
+    </androidx.cardview.widget.CardView>
+
+    <ImageView
+        android:id="@+id/iv_add_profile"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_add_circle"
+        android:elevation="2dp"
+
+        app:layout_constraintBottom_toBottomOf="@id/cv_profile"
+        app:layout_constraintEnd_toEndOf="@id/cv_profile"
+
+        android:layout_marginEnd="0dp"
+        android:layout_marginBottom="0dp" />
+
+
+    <EditText
+        android:id="@+id/et_name"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/shape_edittext_default"
+        android:hint="이름"
+        android:inputType="text"
+        android:paddingStart="16dp"
+        android:privateImeOptions="defaultInputMode=korean"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cv_profile" />
+
+    <FrameLayout
+        android:id="@+id/layout_search"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintEnd_toEndOf="@id/et_name"
+        app:layout_constraintStart_toStartOf="@id/et_name"
+        app:layout_constraintTop_toBottomOf="@id/et_name">
+
+        <EditText
+            android:id="@+id/et_school_search"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/shape_edittext_default"
+            android:hint="학교 이름 검색 및 선택"
+            android:inputType="text"
+            android:paddingStart="16dp"
+            android:paddingEnd="48dp"
+            android:privateImeOptions="defaultInputMode=korean"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_search"
+            app:tint="@color/unimate_main" />
+    </FrameLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_profile_register"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="24dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="등록"
+        android:textColor="@color/unimate_green"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:backgroundTint="@color/btn_register_bg"
+        app:cornerRadius="12dp"
+        app:layout_constraintEnd_toEndOf="@id/et_name"
+        app:layout_constraintStart_toStartOf="@id/et_name"
+        app:layout_constraintTop_toBottomOf="@id/layout_search" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_school_list"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_school_list_bg"
+        android:elevation="4dp"
+        android:maxHeight="200dp"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintEnd_toEndOf="@id/layout_search"
+        app:layout_constraintStart_toStartOf="@id/layout_search"
+        app:layout_constraintTop_toBottomOf="@id/layout_search" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

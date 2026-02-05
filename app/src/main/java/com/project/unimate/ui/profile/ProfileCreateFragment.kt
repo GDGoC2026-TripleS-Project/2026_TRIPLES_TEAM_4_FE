@@ -1,5 +1,6 @@
 package com.project.unimate.ui.profile
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -8,30 +9,30 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.ImageView
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.project.unimate.databinding.ActivityProfileCreateBinding
-import com.project.unimate.R // 중요: 본인 프로젝트의 R을 임포트해야 합니다.
+import com.project.unimate.R
+import com.project.unimate.databinding.FragmentProfileCreateBinding
 
-class ProfileCreateActivity : AppCompatActivity() {
+class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
 
-    private lateinit var binding: ActivityProfileCreateBinding
+    private var _binding: FragmentProfileCreateBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var schoolAdapter: SchoolAdapter
-
     private var selectedImageUri: Uri? = null
 
-    // 요청하신 대로 3개 학교만 리스트에 넣었습니다.
+    // 테스트용 학교 데이터 리스트
     private val allSchools = listOf("성공회대학교", "성신여자대학교", "서울여자대학교")
 
-    private val pickImageLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
+    // 이미지 선택 결과 처리를 위한 런처
+    private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == RESULT_OK) {
+        if (result.resultCode == Activity.RESULT_OK) {
             val imageUri = result.data?.data
             if (imageUri != null) {
                 selectedImageUri = imageUri
@@ -44,49 +45,54 @@ class ProfileCreateActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityProfileCreateBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentProfileCreateBinding.bind(view)
 
-        enableEdgeToEdge()
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
+        // 초기 설정 함수 호출
         setupRecyclerView()
         setupSearchLogic()
 
+        // 1. 프로필 이미지 영역 클릭 리스너 (이미지 선택)
         binding.cvProfile.setOnClickListener {
             openGallery()
         }
 
+        // 2. 등록 버튼 클릭 리스너 (팀 설정 화면으로 이동)
         binding.btnProfileRegister.setOnClickListener {
-            val name = binding.etName.text.toString()
-            val school = binding.etSchoolSearch.text.toString()
+            val name = binding.etName.text.toString().trim()
+            val school = binding.etSchoolSearch.text.toString().trim()
 
             if (name.isNotEmpty() && school.isNotEmpty()) {
-                // TODO: 서버 전송 로직
+                // [수정된 부분] Intent 대신 네비게이션 액션을 사용하여 team_nav로 이동
+                // nav_graph.xml에 action_profileCreate_to_team_nav가 정의되어 있어야 합니다.
+                findNavController().navigate(R.id.action_profileCreate_to_team_nav)
+            } else {
+                Toast.makeText(requireContext(), "이름과 학교를 모두 입력해주세요.", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
+    /**
+     * 학교 검색 리스트를 위한 리사이클러뷰 설정
+     */
     private fun setupRecyclerView() {
         schoolAdapter = SchoolAdapter { selectedSchool ->
+            // 아이템 클릭 시 에디트텍스트에 값 입력 후 리스트 숨김
             binding.etSchoolSearch.setText(selectedSchool)
-            hideSchoolList() // 아이템 클릭 시 리스트 숨기고 배경 원복
+            binding.rvSchoolList.visibility = View.GONE
             binding.etSchoolSearch.clearFocus()
         }
 
         binding.rvSchoolList.apply {
             adapter = schoolAdapter
-            layoutManager = LinearLayoutManager(this@ProfileCreateActivity)
+            layoutManager = LinearLayoutManager(requireContext())
         }
     }
 
+    /**
+     * 학교 이름 검색 로직 설정
+     */
     private fun setupSearchLogic() {
         binding.etSchoolSearch.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -96,34 +102,32 @@ class ProfileCreateActivity : AppCompatActivity() {
                     val filteredList = allSchools.filter { it.contains(query) }
                     if (filteredList.isNotEmpty()) {
                         schoolAdapter.submitList(filteredList)
-                        showSchoolList() // 리스트 보여주며 배경 변경
+                        binding.rvSchoolList.visibility = View.VISIBLE
                     } else {
-                        hideSchoolList()
+                        binding.rvSchoolList.visibility = View.GONE
                     }
                 } else {
-                    hideSchoolList()
+                    binding.rvSchoolList.visibility = View.GONE
                 }
             }
+
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun afterTextChanged(s: Editable?) {}
         })
     }
 
-    // 리스트를 보여주고 입력창 하단을 각지게 만듦 (일체형 디자인)
-    private fun showSchoolList() {
-        binding.etSchoolSearch.setBackgroundResource(R.drawable.shape_edittext_opened)
-        binding.rvSchoolList.visibility = View.VISIBLE
-    }
-
-    // 리스트를 숨기고 입력창을 다시 둥글게 만듦
-    private fun hideSchoolList() {
-        binding.etSchoolSearch.setBackgroundResource(R.drawable.shape_edittext_default)
-        binding.rvSchoolList.visibility = View.GONE
-    }
-
+    /**
+     * 갤러리 열기 함수
+     */
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         intent.type = "image/*"
         pickImageLauncher.launch(intent)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // 뷰 바인딩 메모리 누수 방지
+        _binding = null
     }
 }
