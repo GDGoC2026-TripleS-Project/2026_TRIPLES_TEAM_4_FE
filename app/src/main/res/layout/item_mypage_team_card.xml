@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="@color/mypage_card_bg"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/cardTeamName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/body2_m_14"
+            android:textStyle="bold"
+            tools:text="행복의 심리학" />
+
+        <TextView
+            android:id="@+id/cardTeamStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/gray_dark"
+            style="@style/body2_r_14"
+            tools:text="진행중 · 팀원 4명" />
+
+        <TextView
+            android:id="@+id/cardDeadline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/deadline_green"
+            style="@style/body2_m_14"
+            tools:text="마감 D-3" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

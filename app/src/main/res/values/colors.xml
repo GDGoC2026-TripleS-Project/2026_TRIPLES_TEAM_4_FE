@@ -2,4 +2,27 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Unimate brand -->
+    <color name="unimate_i">#FFB4D75C</color>
+    <!-- Team colors -->
+    <color name="team_megacoffe">#FFFFACAC</color>
+    <color name="team_cherish">#FFF495E0</color>
+    <color name="team_momami">#FF98ADFF</color>
+    <!-- Calendar filter pill colors (similar tones) -->
+    <color name="filter_capstone">#FFE8E0A0</color>
+    <color name="filter_megacoffe">#FFD4C8F0</color>
+    <color name="filter_mamosari">#FFC8E6C8</color>
+    <color name="filter_cherish">#FFE8C8E8</color>
+    <!-- UI -->
+    <color name="gray_light">#FFE0E0E0</color>
+    <color name="gray_medium">#FF9E9E9E</color>
+    <color name="gray_dark">#FF616161</color>
+    <color name="sunday_red">#FFF44336</color>
+    <color name="calendar_selected_bg">#FF9E9E9E</color>
+    <color name="calendar_today_bg">#FFF5F5F5</color>
+    <color name="home_selected_bg">#FFF5F5F5</color>
+    <color name="mypage_card_bg">#FFEDF3D7</color>
+    <color name="deadline_green">#FF4CAF50</color>
+    <!-- 완료된 팀플 원형 썸네일 테두리 (자주색-분홍) -->
+    <color name="completed_team_border">#FFD4C0D8</color>
 </resources>
