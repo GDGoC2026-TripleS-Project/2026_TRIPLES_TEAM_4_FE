@@ -34,9 +34,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="33dp"
             android:text="팀 스페이스에 참여되었습니다!"
-            android:textColor="#7FAE2E"
+            android:textColor="@color/green08"
             android:textSize="18sp"
-            android:textStyle="bold"
             android:fontFamily="@font/pretendard_bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -63,9 +62,9 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="B7D9KQ"
-                android:textColor="#151515"
+                android:textColor="@color/green10"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:fontFamily="@font/pretendard_semibold" />
 
             <ImageView
                 android:id="@+id/ivCopyIcon"
@@ -83,9 +82,9 @@
             android:background="@drawable/shape_button_create"
             android:text="초대코드 복사"
             android:textAllCaps="false"
-            android:textColor="#151515"
+            android:textColor="@color/gray10"
+            android:fontFamily="@font/pretendard_semibold"
             android:textSize="14sp"
-            android:textStyle="bold"
             android:elevation="0dp"
             android:stateListAnimator="@null"
             app:layout_constraintEnd_toEndOf="parent"
@@ -106,9 +105,9 @@
         android:minHeight="0dp"
         android:paddingHorizontal="8dp"
         android:text="팀으로 이동하기 →"
-        android:textColor="#2F2F2F"
+        android:textColor="@color/gray10"
         android:textSize="14sp"
-        android:fontFamily="@font/pretendard_bold"
+        android:fontFamily="@font/pretendard_medium"
         android:textAllCaps="false"
         app:layout_constraintEnd_toEndOf="@id/layoutCard"
         app:layout_constraintTop_toBottomOf="@id/layoutCard" />

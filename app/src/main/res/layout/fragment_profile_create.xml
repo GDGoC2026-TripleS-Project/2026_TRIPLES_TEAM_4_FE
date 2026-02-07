@@ -23,9 +23,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:fontFamily="@font/pretendard_bold"
+        android:fontFamily="@font/pretendard_medium"
         android:text="프로필 등록"
-        android:textColor="#151515"
+        android:textColor="@color/gray08"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -74,6 +74,8 @@
         android:layout_marginEnd="24dp"
         android:background="@drawable/shape_edittext_default"
         android:hint="이름"
+        android:fontFamily="@font/pretendard_medium"
+        android:textColor="@color/gray06"
         android:inputType="text"
         android:paddingStart="16dp"
         android:privateImeOptions="defaultInputMode=korean"
@@ -97,6 +99,8 @@
             android:layout_height="match_parent"
             android:background="@drawable/shape_edittext_default"
             android:hint="학교 이름 검색 및 선택"
+            android:fontFamily="@font/pretendard_medium"
+            android:textColor="@color/gray06"
             android:inputType="text"
             android:paddingStart="16dp"
             android:paddingEnd="48dp"
@@ -109,7 +113,7 @@
             android:layout_gravity="end|center_vertical"
             android:layout_marginEnd="16dp"
             android:src="@drawable/ic_search"
-            app:tint="@color/unimate_main" />
+            app:tint="@color/main_green" />
     </FrameLayout>
 
     <com.google.android.material.button.MaterialButton
@@ -120,10 +124,11 @@
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="등록"
-        android:textColor="@color/unimate_green"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:backgroundTint="@color/btn_register_bg"
+        app:backgroundTint="@color/green05"
+        android:fontFamily="@font/pretendard_medium"
         app:cornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="@id/et_name"
         app:layout_constraintStart_toStartOf="@id/et_name"

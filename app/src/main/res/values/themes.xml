@@ -39,15 +39,15 @@
 
 <!--그...거 뭐지 그거 그...뭐지 그... 날짜 선택하는 달력 색상임 -->
     <style name="MyDatePickerDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
-        <item name="colorPrimary">@color/unimate_main</item>
+        <item name="colorPrimary">@color/main_green</item>
         <item name="colorOnPrimary">@color/white</item> <!-- 선택된 날짜 및 헤더 글자색을 흰색으로 변경 -->
-        <item name="colorAccent">@color/unimate_main</item>
+        <item name="colorAccent">@color/main_green</item>
         <item name="android:windowBackground">@color/white</item>
         <item name="android:textColorPrimary">#151515</item>
     </style>
 
 
     <style name="DatePickerButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <item name="android:textColor">@color/unimate_main</item>
+        <item name="android:textColor">@color/main_green</item>
     </style>
 </resources>

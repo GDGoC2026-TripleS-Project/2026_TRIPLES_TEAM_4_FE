@@ -1,5 +1,5 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- 내부를 채우는 색상: 원하는 색상 코드로 변경하세요 -->
-    <solid android:color="@color/gray02" />
+    <solid android:color="@color/green05" />
     <corners android:radius="16dp" />
 </shape>

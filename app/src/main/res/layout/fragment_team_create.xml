@@ -28,9 +28,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:fontFamily="@font/pretendard_bold"
+            android:fontFamily="@font/pretendard_medium"
             android:text="팀스페이스 생성"
-            android:textColor="#151515"
+            android:textColor="@color/gray08"
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -49,7 +49,7 @@
             app:layout_constraintTop_toBottomOf="@id/tvCreateSubTitle">
 
             <ImageView
-                android:id="@+id/ivTeamProfilePlaceholder"
+                android:id="@+id/ivTeamProfile"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@color/profile_bg"
@@ -72,10 +72,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
+            android:fontFamily="@font/pretendard_semibold"
             android:text="팀 명 "
-            android:textColor="#2F2F2F"
+            android:textColor="@color/gray09"
             android:textSize="14sp"
-            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cvTeamProfile" />
 
@@ -85,9 +85,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="(필수)"
-            android:textColor="#B4D75C"
+            android:textColor="@color/main_green"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             app:layout_constraintBaseline_toBaselineOf="@id/tvLabelTeamName"
             app:layout_constraintStart_toEndOf="@id/tvLabelTeamName" />
 
@@ -98,6 +98,8 @@
             android:layout_marginTop="8dp"
             android:background="@drawable/shape_edittext_bg"
             android:hint="팀 명을 입력하세요."
+            android:textColor="@color/gray06"
+            android:fontFamily="@font/pretendard_medium"
             android:inputType="text"
             android:paddingHorizontal="16dp"
             android:privateImeOptions="defaultInputmode=korean"
@@ -110,9 +112,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="팀 소개 "
-            android:textColor="#2F2F2F"
+            android:textColor="@color/gray09"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/etTeamName" />
 
@@ -122,9 +124,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="(선택)"
-            android:textColor="#A4A4A4"
+            android:textColor="@color/gray05"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             app:layout_constraintBaseline_toBaselineOf="@id/tvLabelTeamDesc"
             app:layout_constraintStart_toEndOf="@id/tvLabelTeamDesc" />
 
@@ -137,6 +139,8 @@
             android:gravity="top"
             android:hint="팀을 소개하세요."
             android:inputType="textMultiLine"
+            android:fontFamily="@font/pretendard_medium"
+            android:textColor="@color/gray06"
             android:padding="16dp"
             android:privateImeOptions="defaultInputmode=korean"
             android:textSize="14sp"
@@ -148,9 +152,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="팀 작업일 "
-            android:textColor="#2F2F2F"
+            android:textColor="@color/gray09"
+            android:fontFamily="@font/pretendard_semibold"
             android:textSize="14sp"
-            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/etTeamDesc" />
 
@@ -160,9 +164,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="(선택)"
-            android:textColor="#A4A4A4"
+            android:textColor="@color/gray05"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/pretendard_semibold"
             app:layout_constraintBaseline_toBaselineOf="@id/tvLabelWorkDate"
             app:layout_constraintStart_toEndOf="@id/tvLabelWorkDate" />
 
@@ -187,7 +191,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="시작"
-                    android:textColor="#2F2F2F"
+                    android:fontFamily="@font/pretendard_medium"
+                    android:textColor="@color/gray09"
                     android:textSize="14sp" />
 
                 <TextView
@@ -198,7 +203,8 @@
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
                     android:text="2026. 2. 23"
-                    android:textColor="#2F2F2F"
+                    android:textColor="@color/gray09"
+                    android:fontFamily="@font/pretendard_medium"
                     android:textSize="13sp" />
 
                 <TextView
@@ -210,8 +216,8 @@
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
                     android:text="오후 1:00"
-                    android:textColor="#2F2F2F"
-                    android:textSize="13sp" />
+                    android:textColor="@color/gray09"
+                    android:fontFamily="@font/pretendard_medium"                    android:textSize="13sp" />
             </LinearLayout>
 
             <View
@@ -231,7 +237,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="종료"
-                    android:textColor="#2F2F2F"
+                    android:textColor="@color/gray09"
+                    android:fontFamily="@font/pretendard_medium"
                     android:textSize="14sp" />
 
                 <TextView
@@ -242,8 +249,8 @@
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
                     android:text="2026. 2. 23"
-                    android:textColor="#2F2F2F"
-                    android:textSize="13sp" />
+                    android:textColor="@color/gray09"
+                    android:fontFamily="@font/pretendard_medium"                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/tvEndTime"
@@ -254,8 +261,8 @@
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="6dp"
                     android:text="오후 2:00"
-                    android:textColor="#2F2F2F"
-                    android:textSize="13sp" />
+                    android:textColor="@color/gray09"
+                    android:fontFamily="@font/pretendard_medium"                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -265,9 +272,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="팀 컬러 지정 "
-            android:textColor="#2F2F2F"
-            android:textSize="14sp"
-            android:textStyle="bold"
+            android:textColor="@color/gray09"
+            android:fontFamily="@font/pretendard_semibold"            android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/layoutWorkTime" />
 
@@ -277,9 +283,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="(필수)"
-            android:textColor="#B4D75C"
+            android:textColor="@color/main_green"
+            android:fontFamily="@font/pretendard_semibold"
             android:textSize="14sp"
-            android:textStyle="bold"
             app:layout_constraintBaseline_toBaselineOf="@id/tvLabelColor"
             app:layout_constraintStart_toEndOf="@id/tvLabelColor" />
 
@@ -315,9 +321,9 @@
             android:background="@drawable/shape_button_create"
             android:stateListAnimator="@null"
             android:text="완료"
-            android:textColor="#151515"
+            android:textColor="@color/gray10"
+            android:fontFamily="@font/pretendard_medium"
             android:textSize="16sp"
-            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/layoutColorPalette" />
 
