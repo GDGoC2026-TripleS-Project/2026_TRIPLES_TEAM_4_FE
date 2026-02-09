@@ -17,6 +17,7 @@ import com.project.unimate.notification.NotificationStore
 
 class CockFragment : Fragment() {
     private lateinit var adapter: NotificationAdapter
+    private lateinit var emptyView: android.widget.TextView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,13 +27,14 @@ class CockFragment : Fragment() {
 
         val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.notification_list)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        emptyView = view.findViewById(R.id.empty_state)
 
         adapter = NotificationAdapter(
             onCompleteClicked = { item, onResult ->
                 val api = NotificationApi()
-                api.completeNotification(requireContext(), item.notificationId) { success ->
+                api.markActionDone(requireContext(), item.notificationId) { success ->
                     if (success) {
-                        val updated = item.copy(isCompleted = true)
+                        val updated = item.copy(actionDone = true)
                         if (isAdded) {
                             requireActivity().runOnUiThread {
                                 NotificationStore.upsert(requireContext(), updated)
@@ -51,15 +53,32 @@ class CockFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val items = NotificationStore.loadAll(requireContext())
-        adapter.submit(items)
+        render(items)
+        syncFromServerIfAvailable()
+    }
+
+    override fun onResume() {
+        super.onResume()
         syncFromServerIfAvailable()
     }
 
     private fun syncFromServerIfAvailable() {
-        // TODO: 서버 알림 목록 API 연동 시 사용
-        // 1) fetchServerList()
-        // 2) val merged = NotificationStore.mergeWithServer(local, server)
-        // 3) NotificationStore.saveAll(context, merged)
-        // 4) adapter.submit(merged)
+        val api = NotificationApi()
+        api.getNotifications(requireContext()) { server ->
+            if (!isAdded) return@getNotifications
+            val local = NotificationStore.loadAll(requireContext())
+            val merged = NotificationStore.mergeWithServer(local, server)
+            requireActivity().runOnUiThread {
+                for (item in merged) {
+                    NotificationStore.upsert(requireContext(), item)
+                }
+                render(merged)
+            }
+        }
+    }
+
+    private fun render(items: List<NotificationItem>) {
+        adapter.submit(items)
+        emptyView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
     }
 }
