@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/team_nav"
+    app:startDestination="@id/teamAddFragment">
+
+    <fragment
+        android:id="@+id/teamAddFragment"
+        android:name="com.project.unimate.ui.team.TeamAddFragment">
+        <action android:id="@+id/action_teamAdd_to_teamCreate" app:destination="@id/teamCreateFragment" />
+        <action android:id="@+id/action_teamAdd_to_teamJoin" app:destination="@id/teamJoinFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teamCreateFragment"
+        android:name="com.project.unimate.ui.team.TeamCreateFragment">
+        <action android:id="@+id/action_teamCreate_to_teamComplete" app:destination="@id/teamCompleteFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teamJoinFragment"
+        android:name="com.project.unimate.ui.team.TeamJoinFragment">
+        <action android:id="@+id/action_teamJoin_to_teamJoinedSuccess" app:destination="@id/teamJoinedSuccessFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teamCompleteFragment"
+        android:name="com.project.unimate.ui.team.TeamCompleteFragment" />
+
+    <fragment
+        android:id="@+id/teamJoinedSuccessFragment"
+        android:name="com.project.unimate.ui.team.TeamJoinedSuccessFragment">
+
+        <action
+            android:id="@+id/action_success_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+</navigation>
