@@ -15,7 +15,9 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
+import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.databinding.FragmentProfileCreateBinding
+import com.project.unimate.network.Env
 
 class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
 
@@ -94,6 +96,8 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
             ) { ok, err ->
                 requireActivity().runOnUiThread {
                     if (ok) {
+                        // 회원가입 완료 직후 FCM 토큰 등록/갱신
+                        FcmRegistrar.registerIfPossible(requireContext(), Env.BASE_URL)
                         findNavController().navigate(R.id.action_profileCreate_to_team_nav)
                     } else {
                         Toast.makeText(requireContext(), err ?: "프로필 등록 실패", Toast.LENGTH_SHORT).show()
