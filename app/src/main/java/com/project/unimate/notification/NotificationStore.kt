@@ -1,12 +1,13 @@
 package com.project.unimate.notification
 
 import android.content.Context
+import com.project.unimate.auth.JwtStore
 import org.json.JSONArray
 import org.json.JSONObject
 
 object NotificationStore {
     private const val PREF = "unimate_notifications"
-    private const val KEY = "items"
+    private const val KEY_PREFIX = "items_"
 
     fun upsert(context: Context, item: NotificationItem) {
         val list = loadAll(context).toMutableList()
@@ -21,7 +22,7 @@ object NotificationStore {
 
     fun loadAll(context: Context): List<NotificationItem> {
         val raw = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-            .getString(KEY, null)
+            .getString(keyForUser(context), null)
             ?: return emptyList()
 
         val arr = try {
@@ -80,8 +81,17 @@ object NotificationStore {
         }
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
             .edit()
-            .putString(KEY, arr.toString())
+            .putString(keyForUser(context), arr.toString())
             .apply()
+    }
+
+    private fun keyForUser(context: Context): String {
+        val userId = JwtStore.loadUserId(context)
+        return if (userId != null && userId > 0) {
+            "$KEY_PREFIX$userId"
+        } else {
+            "${KEY_PREFIX}guest"
+        }
     }
 
     private fun toJson(item: NotificationItem): JSONObject {

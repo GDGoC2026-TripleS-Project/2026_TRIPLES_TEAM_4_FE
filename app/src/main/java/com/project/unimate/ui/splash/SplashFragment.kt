@@ -35,6 +35,7 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
         findNavController().navigate(R.id.action_splash_to_login)
     }
 
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

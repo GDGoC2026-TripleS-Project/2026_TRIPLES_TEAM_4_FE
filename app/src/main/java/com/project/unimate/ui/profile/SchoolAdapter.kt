@@ -5,12 +5,17 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.databinding.ItemSchoolBinding
 
-class SchoolAdapter(private val onClick: (String) -> Unit) :
+data class UniversityItem(
+    val id: Long,
+    val name: String
+)
+
+class SchoolAdapter(private val onClick: (UniversityItem) -> Unit) :
     RecyclerView.Adapter<SchoolAdapter.ViewHolder>() {
 
-    private var schools = listOf<String>()
+    private var schools = listOf<UniversityItem>()
 
-    fun submitList(newList: List<String>) {
+    fun submitList(newList: List<UniversityItem>) {
         schools = newList
         notifyDataSetChanged()
     }
@@ -21,17 +26,17 @@ class SchoolAdapter(private val onClick: (String) -> Unit) :
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val schoolName = schools[position]
-        holder.bind(schoolName)
+        val item = schools[position]
+        holder.bind(item)
     }
 
     override fun getItemCount(): Int = schools.size
 
     inner class ViewHolder(private val binding: ItemSchoolBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        fun bind(name: String) {
-            binding.tvSchoolName.text = name
-            binding.root.setOnClickListener { onClick(name) }
+        fun bind(item: UniversityItem) {
+            binding.tvSchoolName.text = item.name
+            binding.root.setOnClickListener { onClick(item) }
         }
     }
 }

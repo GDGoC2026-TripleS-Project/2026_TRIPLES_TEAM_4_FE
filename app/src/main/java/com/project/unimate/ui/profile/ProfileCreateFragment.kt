@@ -24,9 +24,10 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
 
     private lateinit var schoolAdapter: SchoolAdapter
     private var selectedImageUri: Uri? = null
-
-    // 테스트용 학교 데이터 리스트
-    private val allSchools = listOf("성공회대학교", "성신여자대학교", "서울여자대학교")
+    private var selectedUniversityId: Long? = null
+    private val profileApi = ProfileApi()
+    private var searchSeq = 0
+    private var isSelectingSchool = false
 
     // 이미지 선택 결과 처리를 위한 런처
     private val pickImageLauncher = registerForActivityResult(
@@ -63,13 +64,35 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
             val name = binding.etName.text.toString().trim()
             val school = binding.etSchoolSearch.text.toString().trim()
 
-            if (name.isNotEmpty() && school.isNotEmpty()) {
-                // [수정된 부분] Intent 대신 네비게이션 액션을 사용하여 team_nav로 이동
-                // nav_graph.xml에 action_profileCreate_to_team_nav가 정의되어 있어야 합니다.
-                findNavController().navigate(R.id.action_profileCreate_to_team_nav)
-            } else {
-                Toast.makeText(requireContext(), "이름과 학교를 모두 입력해주세요.", Toast.LENGTH_SHORT).show()
+            if (name.isEmpty()) {
+                Toast.makeText(requireContext(), "이름을 입력해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+            if (school.isEmpty() || selectedUniversityId == null) {
+                Toast.makeText(requireContext(), "학교를 검색해서 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            profileApi.upsertProfile(
+                context = requireContext(),
+                nickname = name,
+                universityId = selectedUniversityId!!,
+                profileImageUrl = null
+            ) { ok, err ->
+                requireActivity().runOnUiThread {
+                    if (ok) {
+                        findNavController().navigate(R.id.action_profileCreate_to_team_nav)
+                    } else {
+                        Toast.makeText(requireContext(), err ?: "프로필 등록 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        // 3. 학교 검색 버튼 클릭
+        binding.btnSchoolSearch.setOnClickListener {
+            val query = binding.etSchoolSearch.text.toString().trim()
+            runSchoolSearch(query, forceToast = true)
         }
     }
 
@@ -79,9 +102,12 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
     private fun setupRecyclerView() {
         schoolAdapter = SchoolAdapter { selectedSchool ->
             // 아이템 클릭 시 에디트텍스트에 값 입력 후 리스트 숨김
-            binding.etSchoolSearch.setText(selectedSchool)
+            isSelectingSchool = true
+            selectedUniversityId = selectedSchool.id
+            binding.etSchoolSearch.setText(selectedSchool.name)
             binding.rvSchoolList.visibility = View.GONE
             binding.etSchoolSearch.clearFocus()
+            isSelectingSchool = false
         }
 
         binding.rvSchoolList.apply {
@@ -97,23 +123,42 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
         binding.etSchoolSearch.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = s.toString().trim()
-
-                if (query.isNotEmpty()) {
-                    val filteredList = allSchools.filter { it.contains(query) }
-                    if (filteredList.isNotEmpty()) {
-                        schoolAdapter.submitList(filteredList)
-                        binding.rvSchoolList.visibility = View.VISIBLE
-                    } else {
-                        binding.rvSchoolList.visibility = View.GONE
-                    }
-                } else {
-                    binding.rvSchoolList.visibility = View.GONE
+                if (!isSelectingSchool) {
+                    selectedUniversityId = null
                 }
+
+                runSchoolSearch(query, forceToast = false)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun afterTextChanged(s: Editable?) {}
         })
+    }
+
+    private fun runSchoolSearch(query: String, forceToast: Boolean) {
+        if (query.isEmpty()) {
+            binding.rvSchoolList.visibility = View.GONE
+            if (forceToast) {
+                Toast.makeText(requireContext(), "학교명을 입력해주세요.", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
+        val seq = ++searchSeq
+        profileApi.searchUniversities(requireContext(), query, limit = 10) { list, err ->
+            if (!isAdded || seq != searchSeq) return@searchUniversities
+            requireActivity().runOnUiThread {
+                if (list.isNotEmpty()) {
+                    schoolAdapter.submitList(list)
+                    binding.rvSchoolList.visibility = View.VISIBLE
+                } else {
+                    binding.rvSchoolList.visibility = View.GONE
+                    if (forceToast) {
+                        Toast.makeText(requireContext(), err ?: "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 
     /**
