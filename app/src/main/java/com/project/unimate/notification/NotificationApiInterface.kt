@@ -20,9 +20,12 @@ data class NotificationServerItem(
     val messageTitle: String,
     val messageBody: String,
     val createdAt: String,
-    val isCompleted: Boolean?
+    val isRead: Boolean?,
+    val action: Boolean?,
+    val actionDone: Boolean?,
+    val processedAt: String?
 ) {
-    fun toNotificationItem(isCompleted: Boolean): NotificationItem {
+    fun toNotificationItem(): NotificationItem {
         return NotificationItem(
             notificationId = notificationId,
             teamId = teamId,
@@ -32,7 +35,10 @@ data class NotificationServerItem(
             messageTitle = messageTitle,
             messageBody = messageBody,
             createdAt = createdAt,
-            isCompleted = isCompleted
+            isRead = this.isRead ?: false,
+            action = this.action ?: false,
+            actionDone = this.actionDone ?: false,
+            processedAt = this.processedAt
         )
     }
 }

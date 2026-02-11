@@ -8,7 +8,7 @@ object Env {
      * - Android Emulator 기준 PC의 localhost → 10.0.2.2
      * - 예: http://localhost:8080
      */
-    const val BASE_URL = "http://10.0.2.2:8080"
+    const val BASE_URL = "https://seok-hwan1.duckdns.org"
 
     /*
     ======================================================

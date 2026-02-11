@@ -44,7 +44,16 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
         handlePushIntent(intent)
 
-        // 4. JWT 및 FCM 등록 로직
+        // ✅ 여기 " " 안에 Swagger에서 받은 JWT를 그대로 붙여넣기 (Bearer 붙이지 말 것)
+        val TEST_JWT = ""
+
+        if (TEST_JWT.isNotBlank()) {
+            val token = TEST_JWT.trim().removePrefix("Bearer ").trim()
+            JwtStore.save(this, token)
+            val after = JwtStore.load(this)
+            Log.d(TAG, "✅ TEST_JWT injected. afterLoad len=${after?.length ?: 0}, head=${after?.take(12)}")
+        }
+
         val jwt = JwtStore.load(this)
         Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()}")
         FcmRegistrar.registerIfPossible(this, BASE_URL)

@@ -50,7 +50,7 @@ object NotificationStore {
         for (s in server) {
             val l = map[s.notificationId]
             map[s.notificationId] = if (l == null) {
-                s.toNotificationItem(isCompleted = s.isCompleted ?: false)
+                s.toNotificationItem()
             } else {
                 mergeItem(l, s)
             }
@@ -59,7 +59,6 @@ object NotificationStore {
     }
 
     private fun mergeItem(local: NotificationItem, server: NotificationServerItem): NotificationItem {
-        val completed = server.isCompleted ?: local.isCompleted
         return local.copy(
             teamName = server.teamName,
             teamColorHex = server.teamColorHex,
@@ -67,7 +66,10 @@ object NotificationStore {
             messageTitle = server.messageTitle,
             messageBody = server.messageBody,
             createdAt = server.createdAt,
-            isCompleted = completed
+            isRead = server.isRead ?: local.isRead,
+            action = server.action ?: local.action,
+            actionDone = server.actionDone ?: local.actionDone,
+            processedAt = server.processedAt ?: local.processedAt
         )
     }
 
@@ -92,7 +94,10 @@ object NotificationStore {
             .put("messageTitle", item.messageTitle)
             .put("messageBody", item.messageBody)
             .put("createdAt", item.createdAt)
-            .put("isCompleted", item.isCompleted)
+            .put("isRead", item.isRead)
+            .put("action", item.action)
+            .put("actionDone", item.actionDone)
+            .put("processedAt", item.processedAt)
     }
 
     private fun fromJson(obj: JSONObject): NotificationItem? {
@@ -108,7 +113,10 @@ object NotificationStore {
             messageTitle = obj.optString("messageTitle", ""),
             messageBody = obj.optString("messageBody", ""),
             createdAt = obj.optString("createdAt", ""),
-            isCompleted = obj.optBoolean("isCompleted", false)
+            isRead = obj.optBoolean("isRead", false),
+            action = obj.optBoolean("action", false),
+            actionDone = obj.optBoolean("actionDone", false),
+            processedAt = obj.optString("processedAt", null)
         )
     }
 }
