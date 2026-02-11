@@ -8,6 +8,7 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
@@ -106,6 +107,71 @@ class ProfileApi(
         })
     }
 
+    fun uploadProfileImage(
+        context: Context,
+        uri: android.net.Uri,
+        onDone: (String?, String?) -> Unit
+    ) {
+        val jwt = JwtStore.load(context)
+        if (jwt.isNullOrBlank()) {
+            onDone(null, "로그인이 필요합니다")
+            return
+        }
+
+        val contentResolver = context.contentResolver
+        val mimeType = contentResolver.getType(uri) ?: "image/*"
+        val fileName = queryDisplayName(contentResolver, uri) ?: "profile.jpg"
+
+        val bytes = try {
+            contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        } catch (e: Exception) {
+            null
+        }
+
+        if (bytes == null || bytes.isEmpty()) {
+            onDone(null, "이미지를 읽을 수 없습니다")
+            return
+        }
+
+        val fileBody = bytes.toRequestBody(mimeType.toMediaType())
+        val multipart = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", fileName, fileBody)
+            .build()
+
+        val req = Request.Builder()
+            .url("$baseUrl/api/users/me/profile-image")
+            .post(multipart)
+            .addHeader("Authorization", "Bearer $jwt")
+            .build()
+
+        ApiClient.http.newCall(req).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                onDone(null, e.message)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val code = response.code
+                val body = response.body?.string()
+                response.close()
+
+                if (code in 200..299 && !body.isNullOrBlank()) {
+                    try {
+                        val json = JSONObject(body)
+                        val url = json.optString("imageUrl", "")
+                        if (url.isNotBlank()) {
+                            onDone(url, null)
+                            return
+                        }
+                    } catch (e: Exception) {
+                        // fall through
+                    }
+                }
+                onDone(null, parseErrorMessage(code, body))
+            }
+        })
+    }
+
     private fun parseUniversityList(body: String): List<UniversityItem> {
         val arr = try {
             JSONArray(body)
@@ -150,6 +216,20 @@ class ProfileApi(
         }
 
         return "요청 실패 (code=$code)"
+    }
+
+    private fun queryDisplayName(
+        resolver: android.content.ContentResolver,
+        uri: android.net.Uri
+    ): String? {
+        val cursor = resolver.query(uri, null, null, null, null) ?: return null
+        cursor.use {
+            val nameIdx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (nameIdx >= 0 && it.moveToFirst()) {
+                return it.getString(nameIdx)
+            }
+        }
+        return null
     }
 
     private fun encode(value: String): String {

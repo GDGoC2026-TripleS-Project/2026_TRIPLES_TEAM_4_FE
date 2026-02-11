@@ -24,6 +24,7 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
 
     private lateinit var schoolAdapter: SchoolAdapter
     private var selectedImageUri: Uri? = null
+    private var uploadedImageUrl: String? = null
     private var selectedUniversityId: Long? = null
     private val profileApi = ProfileApi()
     private var searchSeq = 0
@@ -41,6 +42,18 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
                     setImageURI(imageUri)
                     scaleType = ImageView.ScaleType.CENTER_CROP
                     background = null
+                }
+
+                // 이미지 업로드
+                profileApi.uploadProfileImage(requireContext(), imageUri) { url, err ->
+                    requireActivity().runOnUiThread {
+                        if (!url.isNullOrBlank()) {
+                            uploadedImageUrl = url
+                            Toast.makeText(requireContext(), "프로필 이미지가 업로드되었습니다.", Toast.LENGTH_SHORT).show()
+                        } else if (!err.isNullOrBlank()) {
+                            Toast.makeText(requireContext(), err, Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
         }
@@ -77,7 +90,7 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
                 context = requireContext(),
                 nickname = name,
                 universityId = selectedUniversityId!!,
-                profileImageUrl = null
+                profileImageUrl = uploadedImageUrl
             ) { ok, err ->
                 requireActivity().runOnUiThread {
                     if (ok) {
