@@ -22,7 +22,7 @@ import com.project.unimate.auth.JwtStore
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "UnimateFCM"
-    private val BASE_URL = "https://seok-hwan1.duckdns.org"
+    private val BASE_URL = "http://unimate-alb-274308250.ap-northeast-2.elb.amazonaws.com"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
