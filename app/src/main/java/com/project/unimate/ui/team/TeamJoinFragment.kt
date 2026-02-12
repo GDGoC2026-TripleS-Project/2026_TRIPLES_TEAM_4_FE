@@ -46,7 +46,10 @@ class TeamJoinFragment : Fragment(R.layout.fragment_team_join) {
 
             // 2. 성공 화면(TeamJoinedSuccessFragment)으로 이동
             // action_teamJoin_to_teamJoinedSuccess ID가 nav_graph에 있는지 확인하세요!
-            findNavController().navigate(R.id.action_teamJoin_to_teamJoinedSuccess)
+            val bundle = Bundle().apply {
+                putString("inviteCode", code)
+            }
+            findNavController().navigate(R.id.action_teamJoin_to_teamJoinedSuccess, bundle)
         }
     }
 
