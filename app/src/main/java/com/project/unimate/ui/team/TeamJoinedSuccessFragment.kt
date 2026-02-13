@@ -43,8 +43,13 @@ class TeamJoinedSuccessFragment : Fragment() {
 
         // 3. 초대 코드 복사 기능 (ClipboardManager 사용)
         binding.btnCopyCode.setOnClickListener {
+            val code = inviteCode.trim()
+            if (code.isBlank()) {
+                Toast.makeText(context, "복사할 초대코드가 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Invite Code", inviteCode)
+            val clip = ClipData.newPlainText("Invite Code", code)
             clipboard.setPrimaryClip(clip)
 
             Toast.makeText(context, "초대 코드가 복사되었습니다.", Toast.LENGTH_SHORT).show()

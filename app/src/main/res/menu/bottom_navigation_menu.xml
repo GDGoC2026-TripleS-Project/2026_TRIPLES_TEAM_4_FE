@@ -15,5 +15,5 @@
     <item
         android:id="@+id/myPageFragment"
         android:icon="@drawable/nav_mypage_selector"
-        android:title="마이" />
+        android:title="my" />
 </menu>

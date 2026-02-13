@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="52dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false"
+        android:minHeight="40dp">
+
+        <TextView
+            android:id="@+id/headerUn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Un"
+            style="@style/UnimateLogo" />
+
+        <TextView
+            android:id="@+id/headerI"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="i"
+            style="@style/UnimateLogo"
+            android:textColor="@color/unimate_i" />
+
+        <TextView
+            android:id="@+id/headerMate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="mate"
+            style="@style/UnimateLogo" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageButton
+            android:id="@+id/headerNotification"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/notification"
+            android:src="@drawable/ic_home_notification"
+            android:scaleType="centerInside" />
+
+        <View
+            android:id="@+id/notificationDot"
+            android:layout_width="3.5dp"
+            android:layout_height="3.5dp"
+            android:layout_gravity="top|start"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/ic_notification_dot"
+            android:visibility="visible" />
+    </FrameLayout>
+</LinearLayout>

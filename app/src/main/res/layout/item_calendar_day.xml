@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/calendarDayRoot"
+    android:layout_width="64dp"
+    android:layout_height="68dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="4dp">
+
+    <TextView
+        android:id="@+id/calendarDayNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/body2_m_14"
+        tools:text="17" />
+
+    <FrameLayout
+        android:id="@+id/calendarDayEventCountBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:visibility="gone"
+        android:background="@drawable/ic_calender_day">
+
+        <TextView
+            android:id="@+id/calendarDayEventCount"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:layout_marginLeft="7dp"
+            android:layout_marginTop="1dp"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            tools:text="6" />
+    </FrameLayout>
+</LinearLayout>

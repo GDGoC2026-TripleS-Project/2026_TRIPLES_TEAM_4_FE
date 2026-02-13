@@ -23,16 +23,26 @@ class TeamCompleteFragment : Fragment(R.layout.fragment_team_complete) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTeamCompleteBinding.bind(view)
 
-        // 1. ViewModel에 저장된 초대코드 표시
+        // 1. 전달받은 초대코드 표시 + ViewModel에 동기화
+        val inviteCodeFromArgs = arguments?.getString("inviteCode")?.trim().orEmpty()
+        if (inviteCodeFromArgs.isNotBlank()) {
+            viewModel.inviteCode.value = inviteCodeFromArgs
+        }
+
         viewModel.inviteCode.observe(viewLifecycleOwner) { code ->
-            binding.tvInviteCode.text = code
+            binding.tvInviteCode.text = code.orEmpty()
         }
 
         // 2. 초대코드 복사 버튼
         binding.btnCopyCode.setOnClickListener {
+            val code = binding.tvInviteCode.text?.toString()?.trim().orEmpty()
+            if (code.isBlank()) {
+                Toast.makeText(context, "복사할 초대코드가 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val clipboard =
                 requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("TeamCode", binding.tvInviteCode.text)
+            val clip = ClipData.newPlainText("TeamCode", code)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(context, "코드가 복사되었습니다!", Toast.LENGTH_SHORT).show()
         }

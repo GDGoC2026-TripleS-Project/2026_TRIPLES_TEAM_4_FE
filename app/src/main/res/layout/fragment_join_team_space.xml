@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true"
+    tools:context=".ui.mypage.JoinTeamSpaceFragment">
+
+    <!-- 카드뷰: 전체 화면(그림자 포함), 상단 마진으로 정렬 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_card_modal_top"
+        android:elevation="16dp"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="32dp">
+
+        <!-- 상단: 취소 + 제목  -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:id="@+id/joinTeamSpaceCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|start"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingVertical="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="@string/cancel"
+                android:textColor="@color/gray06"
+                style="@style/body2_r_16" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/join_team_by_code"
+                android:textColor="@color/gray10"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- 안내 문구  -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingHorizontal="24dp"
+            android:layout_marginTop="80dp"
+            android:layout_marginBottom="50dp"
+            android:text="@string/join_team_code_hint"
+            android:textColor="@color/main_green"
+            style="@style/title2_m_18" />
+
+        <!-- 초대코드 입력 ) -->
+        <EditText
+            android:id="@+id/joinTeamSpaceCodeInput"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="24dp"
+            android:background="@drawable/bg_join_code_input_selector"
+            android:hint="@string/enter_invitation_code"
+            android:inputType="text"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/gray09"
+            android:textColorHint="@color/gray06"
+            android:textSize="14sp" />
+
+        <!-- 참여하기 버튼 -->
+        <Button
+            android:id="@+id/joinTeamSpaceButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/bg_join_button"
+            android:backgroundTint="@null"
+            android:text="@string/join"
+            android:textColor="@color/gray10"
+            android:textSize="16sp" />
+    </LinearLayout>
+</FrameLayout>

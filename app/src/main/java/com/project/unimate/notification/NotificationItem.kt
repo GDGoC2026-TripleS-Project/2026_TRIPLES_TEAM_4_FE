@@ -13,7 +13,10 @@ data class NotificationItem(
     val messageTitle: String,
     val messageBody: String,
     val createdAt: String,
-    val isCompleted: Boolean
+    val isRead: Boolean,
+    val action: Boolean,
+    val actionDone: Boolean,
+    val processedAt: String?
 ) {
     fun createdAtMillis(): Long {
         return try {
@@ -44,7 +47,6 @@ data class NotificationItem(
             val messageTitle = data["messageTitle"] ?: ""
             val messageBody = data["messageBody"] ?: ""
             val createdAt = data["createdAt"] ?: return null
-            val isCompleted = data["isCompleted"]?.toBoolean() ?: false
 
             return NotificationItem(
                 notificationId = notificationId,
@@ -55,7 +57,10 @@ data class NotificationItem(
                 messageTitle = messageTitle,
                 messageBody = messageBody,
                 createdAt = createdAt,
-                isCompleted = isCompleted
+                isRead = false,
+                action = true,
+                actionDone = false,
+                processedAt = null
             )
         }
     }

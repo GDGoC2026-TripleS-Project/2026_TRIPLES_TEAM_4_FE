@@ -23,6 +23,19 @@ class AuthApi(
             .build()
     }
 
+    fun socialLoginRequest(provider: String, accessToken: String): Request {
+        val body = JSONObject()
+            .put("provider", provider)
+            .put("accessToken", accessToken)
+            .toString()
+            .toRequestBody(JSON)
+
+        return Request.Builder()
+            .url("$baseUrl/api/auth/social/login")
+            .post(body)
+            .build()
+    }
+
     fun kakaoAuthorizeUrlRequest(): Request =
         Request.Builder()
             .url("$baseUrl/api/auth/kakao/authorize-url")

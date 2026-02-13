@@ -18,8 +18,7 @@ class NotificationAdapter(
     private val items = mutableListOf<ListItem>()
 
     fun submit(notifications: List<NotificationItem>) {
-        val sorted = notifications.sortedByDescending { it.createdAtMillis() }
-        val grouped = sorted.groupBy { it.alarmType }
+        val grouped = notifications.groupBy { it.alarmType }
 
         items.clear()
         for ((section, list) in grouped) {
@@ -88,8 +87,9 @@ class NotificationAdapter(
 
         fun bind(item: ListItem.Card) {
             val n = item.notification
+            val done = if (n.action) n.actionDone else n.isRead
             itemView.setBackgroundResource(
-                if (n.isCompleted) R.drawable.bg_notification_card_done
+                if (done) R.drawable.bg_notification_card_done
                 else R.drawable.bg_notification_card_unread
             )
             teamName.text = n.teamName.ifBlank { "Unknown" }
@@ -106,12 +106,17 @@ class NotificationAdapter(
                 }
             }
 
-            if (n.isCompleted) {
+            if (!n.action) {
+                button.visibility = View.GONE
+                button.setOnClickListener(null)
+            } else if (n.actionDone) {
+                button.visibility = View.VISIBLE
                 button.isEnabled = false
                 button.text = "콕누르기 완료"
                 button.setBackgroundResource(R.drawable.bg_notification_button_disabled)
                 button.setOnClickListener(null)
             } else {
+                button.visibility = View.VISIBLE
                 button.isEnabled = true
                 button.text = "확인 콕누르기"
                 button.setBackgroundResource(R.drawable.bg_notification_button_enabled)

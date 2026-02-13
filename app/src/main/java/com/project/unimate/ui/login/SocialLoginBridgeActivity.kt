@@ -1,8 +1,11 @@
 package com.project.unimate.ui.login
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -43,7 +46,7 @@ class SocialLoginBridgeActivity : ComponentActivity() {
 
         ApiClient.http.newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                finish()
+                finishWithError(e.message)
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -51,13 +54,18 @@ class SocialLoginBridgeActivity : ComponentActivity() {
                 val body = response.body?.string()
                 response.close()
                 if (code !in 200..299 || body.isNullOrBlank()) {
-                    finish()
+                    finishWithError("authorize-url 요청 실패 (code=$code)")
                     return
                 }
 
                 val json = JSONObject(body)
                 val authorizeUrl = json.optString("authorizeUrl", "")
                 val state = json.optString("state", "")
+
+                if (authorizeUrl.isBlank()) {
+                    finishWithError("authorizeUrl이 비어있습니다")
+                    return
+                }
 
                 runOnUiThread {
                     webView.webViewClient = object : WebViewClient() {
@@ -80,17 +88,43 @@ class SocialLoginBridgeActivity : ComponentActivity() {
 
         if (provider.uppercase() == "KAKAO" && url.startsWith("$baseUrl/api/auth/kakao/callback")) {
             val code = uri.getQueryParameter("code") ?: return true
-            vm.kakaoCallbackLogin(code) { _, _ -> runOnUiThread { finish() } }
+            vm.kakaoCallbackLogin(code) { ok, err ->
+                runOnUiThread {
+                    if (!ok && !err.isNullOrBlank()) {
+                        Toast.makeText(this, err, Toast.LENGTH_SHORT).show()
+                        finishWithError(err)
+                        return@runOnUiThread
+                    }
+                    setResult(Activity.RESULT_OK)
+                    finish()
+                }
+            }
             return true
         }
 
         if (provider.uppercase() == "NAVER" && url.startsWith("$baseUrl/api/auth/naver/callback")) {
             val code = uri.getQueryParameter("code") ?: return true
             val state = uri.getQueryParameter("state") ?: stateFromAuthorize
-            vm.naverCallbackLogin(code, state) { _, _ -> runOnUiThread { finish() } }
+            vm.naverCallbackLogin(code, state) { ok, err ->
+                runOnUiThread {
+                    if (!ok && !err.isNullOrBlank()) {
+                        Toast.makeText(this, err, Toast.LENGTH_SHORT).show()
+                        finishWithError(err)
+                        return@runOnUiThread
+                    }
+                    setResult(Activity.RESULT_OK)
+                    finish()
+                }
+            }
             return true
         }
 
         return false
+    }
+
+    private fun finishWithError(message: String?) {
+        val intent = Intent().putExtra("error", message ?: "로그인 실패")
+        setResult(Activity.RESULT_CANCELED, intent)
+        finish()
     }
 }

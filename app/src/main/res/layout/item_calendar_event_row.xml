@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="0dp">
+
+    <View
+        android:id="@+id/eventDot"
+        android:layout_width="5dp"
+        android:layout_height="5dp"
+        android:background="@drawable/bg_circle"
+        tools:background="@color/team_cherish" />
+
+    <TextView
+        android:id="@+id/eventTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="3dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textSize="11sp"
+        android:fontFamily="@font/pretendard_regular"
+        android:textColor="@color/black"
+        tools:text="유니 마감" />
+</LinearLayout>
