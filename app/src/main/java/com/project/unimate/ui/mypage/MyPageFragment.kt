@@ -9,10 +9,19 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
+import com.project.unimate.auth.AuthApi
+import com.project.unimate.auth.JwtStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.ApiClient
+import com.project.unimate.network.Env
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
+import java.io.IOException
 
 class MyPageFragment : Fragment() {
 
@@ -26,6 +35,7 @@ class MyPageFragment : Fragment() {
         val mypageUserName = root.findViewById<TextView>(R.id.mypageUserName)
         val mypageUserEmail = root.findViewById<TextView>(R.id.mypageUserEmail)
         val mypageJoinButton = root.findViewById<View>(R.id.mypageJoinButton)
+        val logoutButton = root.findViewById<View>(R.id.btnLogout)
         val mypageParticipatingContainer = root.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
         val mypageCompletedContainer = root.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
 
@@ -35,6 +45,7 @@ class MyPageFragment : Fragment() {
         mypageJoinButton.setOnClickListener {
             findNavController().navigate(R.id.joinTeamSpaceFragment)
         }
+        logoutButton.setOnClickListener { logout() }
 
         bindTeamLists(layoutInflater, mypageParticipatingContainer, mypageCompletedContainer)
         return root
@@ -101,5 +112,39 @@ class MyPageFragment : Fragment() {
             item.findViewById<TextView>(R.id.completedTeamName).text = team.name
             mypageCompletedContainer.addView(item)
         }
+    }
+
+    private fun logout() {
+        val jwt = JwtStore.load(requireContext())
+        if (jwt.isNullOrBlank()) {
+            finishLogoutLocally()
+            return
+        }
+
+        val req = AuthApi(Env.BASE_URL).logoutRequest(jwt)
+        ApiClient.http.newCall(req).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                if (!isAdded) return
+                requireActivity().runOnUiThread { finishLogoutLocally() }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.close()
+                if (!isAdded) return
+                requireActivity().runOnUiThread { finishLogoutLocally() }
+            }
+        })
+    }
+
+    private fun finishLogoutLocally() {
+        JwtStore.clear(requireContext())
+        findNavController().navigate(
+            R.id.loginFragment,
+            null,
+            NavOptions.Builder()
+                .setPopUpTo(R.id.nav_graph, true)
+                .setLaunchSingleTop(true)
+                .build()
+        )
     }
 }

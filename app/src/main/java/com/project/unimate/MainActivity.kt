@@ -105,6 +105,19 @@ class MainActivity : AppCompatActivity() {
                     binding.bottomNavigation.visibility = View.VISIBLE
                 }
             }
+
+            when (destination.id) {
+                R.id.homeFragment,
+                R.id.calendarFragment,
+                R.id.cockFragment,
+                R.id.myPageFragment -> {
+                    navView.menu.findItem(destination.id)?.isChecked = true
+                }
+                R.id.notificationFragment -> {
+                    // 홈 헤더 종 버튼에서 들어온 알림 화면은 하단탭을 홈 상태로 유지
+                    navView.menu.findItem(R.id.homeFragment)?.isChecked = true
+                }
+            }
         }
     }
 
@@ -176,4 +189,3 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
-
