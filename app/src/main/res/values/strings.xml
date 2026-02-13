@@ -6,6 +6,7 @@
     <string name="personal_schedule">개인일정</string>
     <string name="my_team_space">나의 팀 스페이스</string>
     <string name="profile_edit">프로필 수정</string>
+    <string name="logout">로그아웃</string>
     <string name="participating_teams">참여중인 팀플</string>
     <string name="completed_teams">완료된 팀플</string>
     <string name="personal_schedule_only">개인일정</string>
