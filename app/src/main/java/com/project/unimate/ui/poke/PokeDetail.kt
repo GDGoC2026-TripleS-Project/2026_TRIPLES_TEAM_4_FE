@@ -1,0 +1,128 @@
+package com.project.unimate.ui.poke
+
+import android.content.res.ColorStateList
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.project.unimate.R
+
+class PokeDetailFragment : Fragment() {
+
+    private var selectedMembers: ArrayList<PokeData.Member>? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // 이전 화면에서 보낸 데이터 받기
+        arguments?.let {
+            // "selected_members" 라는 키로 데이터를 꺼냄
+            selectedMembers = it.getParcelableArrayList("selected_members")
+        }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_poke_detail, container, false)
+
+        val rvSelectedUsers = view.findViewById<RecyclerView>(R.id.rvSelectedUsers)
+        val tvSelectedCount = view.findViewById<TextView>(R.id.tvSelectedCount)
+        val btnBack = view.findViewById<ImageView>(R.id.btnBack)
+
+        val layoutMessageDropdown = view.findViewById<ConstraintLayout>(R.id.layoutMessageDropdown)
+        val tvSelectedMessage = view.findViewById<TextView>(R.id.tvSelectedMessage)
+        val ivDropdownArrow = view.findViewById<ImageView>(R.id.ivDropdownArrow)
+        val rvMessageList = view.findViewById<RecyclerView>(R.id.rvMessageList)
+        val btnSendPoke = view.findViewById<Button>(R.id.btnSendPoke)
+
+        // 1. 선택된 유저 목록 설정
+        selectedMembers?.let { members ->
+            tvSelectedCount.text = "${members.size}"
+
+            // 유저 리스트 어댑터 연결
+            rvSelectedUsers.layoutManager = LinearLayoutManager(context)
+            rvSelectedUsers.adapter = SelectedUserAdapter(members)
+        }
+
+        // 2. 메시지 리스트 데이터
+        val messages = listOf(
+            "자료를 기다리고 있는 팀원의 간절한 눈빛이 느껴져요 👀",
+            "혹시 바쁜 일정에 마감일을 잊으신 건 아니죠? ⏰",
+            "팀원이 전한 메시지가 답변을 기다리고 있어요 💌",
+            "지금 바로 회의 가능한 시간을 콕 찍어주실래요? 👉",
+            "놓치면 안 될 중요한 팀 공지가 도착해 있어요 📢"
+        )
+
+        // 3. 메시지 선택 시 동작
+        val messageAdapter = MessageAdapter(messages) { selectedMsg ->
+            // 드롭다운 텍스트 변경
+            tvSelectedMessage.text = selectedMsg
+            tvSelectedMessage.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+
+            // 리스트 닫기 & 화살표 원위치
+            rvMessageList.visibility = View.GONE
+            ivDropdownArrow.animate().rotation(0f).start()
+
+            // ★ 버튼 활성화 (메인 그린 색상)
+            btnSendPoke.isEnabled = true
+            btnSendPoke.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.main_green)
+            )
+            btnSendPoke.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+        }
+
+        rvMessageList.layoutManager = LinearLayoutManager(context)
+        rvMessageList.adapter = messageAdapter
+
+        // 4. 드롭다운 박스 클릭 (열기/닫기)
+        layoutMessageDropdown.setOnClickListener {
+            if (rvMessageList.visibility == View.VISIBLE) {
+                // 닫기
+                rvMessageList.visibility = View.GONE
+                ivDropdownArrow.animate().rotation(0f).start()
+            } else {
+                // 열기
+                rvMessageList.visibility = View.VISIBLE
+                ivDropdownArrow.animate().rotation(180f).start()
+            }
+        }
+
+        // 5. 뒤로가기
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
+        // 6. 찌르기 버튼 클릭 (토스트 메시지)
+        btnSendPoke.setOnClickListener {
+            if (!selectedMembers.isNullOrEmpty()) {
+                val firstUser = selectedMembers!![0].name
+                val extraCount = selectedMembers!!.size - 1
+
+                // "OOO님 외 3명에게..."
+                val toastMsg = if (extraCount > 0) {
+                    "${firstUser}님 외 ${extraCount}명에게 찌르기를 보냈어요 👋"
+                } else {
+                    "${firstUser}님에게 찌르기를 보냈어요 👋"
+                }
+
+                Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
+
+                // 완료 후 뒤로가기
+                findNavController().popBackStack()
+            }
+        }
+
+        return view
+    }
+}

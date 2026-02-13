@@ -3,21 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/splashFragment"> <fragment
-    android:id="@+id/splashFragment"
-    android:name="com.project.unimate.ui.splash.SplashFragment"
-    tools:layout="@layout/fragment_splash">
-    <action
-        android:id="@+id/action_splash_to_login"
-        app:destination="@id/loginFragment"
-        app:popUpTo="@id/splashFragment"
-        app:popUpToInclusive="true" />
-</fragment>
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.project.unimate.ui.splash.SplashFragment"
+        tools:layout="@layout/fragment_splash">
+        <action
+            android:id="@+id/action_splash_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.project.unimate.ui.login.LoginFragment"
-        tools:layout="@layout/activity_login">
+        tools:layout="@layout/fragment_login">
         <action
             android:id="@+id/action_login_to_profileCreate"
             app:destination="@id/profileCreateFragment" />
@@ -26,7 +28,7 @@
     <fragment
         android:id="@+id/profileCreateFragment"
         android:name="com.project.unimate.ui.profile.ProfileCreateFragment"
-        tools:layout="@layout/activity_profile_create">
+        tools:layout="@layout/fragment_profile_create">
         <action
             android:id="@+id/action_profileCreate_to_team_nav"
             app:destination="@id/team_nav"
@@ -47,15 +49,24 @@
         tools:layout="@layout/fragment_calendar" />
 
     <fragment
-        android:id="@+id/cockFragment"
-        android:name="com.project.unimate.ui.cock.CockFragment"
-        tools:layout="@layout/fragment_cock" />
+        android:id="@+id/pokeFragment"
+        android:name="com.project.unimate.ui.poke.PokeFragment"
+        tools:layout="@layout/fragment_poke">
+
+        <action
+            android:id="@+id/action_pokeFragment_to_pokeDetailFragment"
+            app:destination="@id/pokeDetailFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/myPageFragment"
         android:name="com.project.unimate.ui.mypage.MyPageFragment"
         tools:layout="@layout/fragment_my_page" />
 
-
+    <fragment
+        android:id="@+id/pokeDetailFragment"
+        android:name="com.project.unimate.ui.poke.PokeDetailFragment"
+        tools:layout="@layout/fragment_poke_detail"
+        android:label="찌르기 상세" />
 
 </navigation>
