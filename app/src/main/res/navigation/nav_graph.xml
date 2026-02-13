@@ -29,4 +29,66 @@
         android:label="MyPage"
         tools:layout="@layout/fragment_my_page" />
 
+    <fragment
+        android:id="@+id/teamSpaceFragment"
+        android:name="com.project.unimate.ui.teamspace.TeamSpaceFragment"
+        android:label="팀 스페이스"
+        tools:layout="@layout/fragment_team_space">
+        <argument
+            android:name="teamId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editTeamSpaceFragment"
+        android:name="com.project.unimate.ui.teamspace.EditTeamSpaceFragment"
+        android:label="팀 스페이스 수정"
+        tools:layout="@layout/fragment_edit_team_space">
+        <argument
+            android:name="teamId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/joinTeamSpaceFragment"
+        android:name="com.project.unimate.ui.mypage.JoinTeamSpaceFragment"
+        android:label="초대코드로 팀 참여"
+        tools:layout="@layout/fragment_join_team_space" />
+
+    <fragment
+        android:id="@+id/addPersonalTaskFragment"
+        android:name="com.project.unimate.ui.calendar.AddPersonalTaskFragment"
+        android:label="새 일정"
+        tools:layout="@layout/fragment_add_personal_task" />
+
+    <fragment
+        android:id="@+id/addTeamTaskFragment"
+        android:name="com.project.unimate.ui.calendar.AddTeamTaskFragment"
+        android:label="새 일정 팀"
+        tools:layout="@layout/fragment_add_team_task">
+        <argument
+            android:name="teamId"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editPersonalTaskFragment"
+        android:name="com.project.unimate.ui.calendar.EditPersonalTaskFragment"
+        android:label="일정 편집"
+        tools:layout="@layout/fragment_add_personal_task">
+        <argument
+            android:name="personalId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editTeamTaskFragment"
+        android:name="com.project.unimate.ui.calendar.EditTeamTaskFragment"
+        android:label="일정 편집 팀"
+        tools:layout="@layout/fragment_add_team_task">
+        <argument
+            android:name="taskId"
+            app:argType="string" />
+    </fragment>
 </navigation>

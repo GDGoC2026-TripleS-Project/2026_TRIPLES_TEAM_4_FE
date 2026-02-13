@@ -15,9 +15,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationBarView
 import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.databinding.ActivityMainBinding
@@ -39,14 +41,26 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        // 네비게이션바 초기화 로직
+        // 네비게이션바 초기화 로직 (홈/캘린더/찌르기/마이페이지만 이동, 팀스페이스 등 서브 화면은 pop)
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         val navView: BottomNavigationView = binding.bottomNavigation
         navView.itemIconTintList = null // 아이콘 원래 색상 유지
         navView.itemActiveIndicatorColor = ColorStateList.valueOf(Color.TRANSPARENT)
-        navView.setupWithNavController(navController)
+        navView.setOnItemSelectedListener(NavigationBarView.OnItemSelectedListener { item ->
+            val navOptions = NavOptions.Builder()
+                .setPopUpTo(R.id.homeFragment, true)
+                .setLaunchSingleTop(true)
+                .build()
+            navController.navigate(item.itemId, null, navOptions)
+            true
+        })
         applyBottomNavGap(navView, gapDp = 6)
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val hideNav = destination.id == R.id.editTeamSpaceFragment || destination.id == R.id.joinTeamSpaceFragment
+            navView.visibility = if (hideNav) View.GONE else View.VISIBLE
+        }
 
 
 

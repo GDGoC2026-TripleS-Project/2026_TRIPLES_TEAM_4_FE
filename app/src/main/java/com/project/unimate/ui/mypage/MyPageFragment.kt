@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
@@ -24,26 +25,64 @@ class MyPageFragment : Fragment() {
 
         val mypageUserName = root.findViewById<TextView>(R.id.mypageUserName)
         val mypageUserEmail = root.findViewById<TextView>(R.id.mypageUserEmail)
+        val mypageJoinButton = root.findViewById<View>(R.id.mypageJoinButton)
         val mypageParticipatingContainer = root.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
         val mypageCompletedContainer = root.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
 
         mypageUserName.text = "이주연"
         mypageUserEmail.text = "juyenLe24@naver.com"
 
+        mypageJoinButton.setOnClickListener {
+            findNavController().navigate(R.id.joinTeamSpaceFragment)
+        }
+
+        bindTeamLists(layoutInflater, mypageParticipatingContainer, mypageCompletedContainer)
+        return root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        view?.let { v ->
+            val participating = v.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
+            val completed = v.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
+            if (participating != null && completed != null) {
+                participating.removeAllViews()
+                completed.removeAllViews()
+                bindTeamLists(layoutInflater, participating, completed)
+            }
+        }
+    }
+
+    private fun bindTeamLists(
+        inflater: LayoutInflater,
+        mypageParticipatingContainer: LinearLayout,
+        mypageCompletedContainer: LinearLayout
+    ) {
         DummyRepository.getParticipatingTeamProjects().forEach { team ->
             val card = inflater.inflate(R.layout.item_mypage_team_card, mypageParticipatingContainer, false)
             card.isClickable = true
             card.isFocusable = true
-            card.setOnClickListener { /* 버튼으로만, 기능 없음 */ }
+            card.setOnClickListener {
+                findNavController().navigate(R.id.teamSpaceFragment, Bundle().apply { putString("teamId", team.id) })
+            }
             card.findViewById<TextView>(R.id.cardTeamName).text = team.name
             card.findViewById<TextView>(R.id.cardTeamStatus).text =
                 getString(R.string.status_progress) + " · " + getString(R.string.status_members, team.memberCount)
             val deadlineTv = card.findViewById<TextView>(R.id.cardDeadline)
-            if (team.deadlineDays != null) {
+            val daysUntilEnd: Int? = if (team.workEndMillis != null) {
+                val now = System.currentTimeMillis()
+                val end = team.workEndMillis!!
+                val dayMs = 24 * 60 * 60 * 1000L
+                ((end - now) / dayMs).toInt()
+            } else team.deadlineDays
+            if (daysUntilEnd != null) {
                 deadlineTv.visibility = View.VISIBLE
-                deadlineTv.text = getString(R.string.deadline_d, team.deadlineDays)
+                deadlineTv.text = getString(R.string.deadline_d, daysUntilEnd.coerceAtLeast(0))
             } else {
                 deadlineTv.visibility = View.GONE
+            }
+            card.findViewById<View>(R.id.cardEditButton).setOnClickListener {
+                findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", team.id) })
             }
             mypageParticipatingContainer.addView(card)
         }
@@ -52,7 +91,9 @@ class MyPageFragment : Fragment() {
             val item = inflater.inflate(R.layout.item_mypage_completed_team, mypageCompletedContainer, false)
             item.isClickable = true
             item.isFocusable = true
-            item.setOnClickListener { /* 버튼으로만, 기능 없음 */ }
+            item.setOnClickListener {
+                findNavController().navigate(R.id.teamSpaceFragment, Bundle().apply { putString("teamId", team.id) })
+            }
             val completedCard = item.findViewById<MaterialCardView>(R.id.completedTeamCard)
             completedCard.strokeColor = Color.parseColor(team.colorHex)
             val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
@@ -60,7 +101,5 @@ class MyPageFragment : Fragment() {
             item.findViewById<TextView>(R.id.completedTeamName).text = team.name
             mypageCompletedContainer.addView(item)
         }
-
-        return root
     }
 }

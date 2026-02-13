@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".ui.teamspace.TeamSpaceFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="100dp">
+
+            <!-- 상단 앱 바: 뒤로가기 + 편집  -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="0dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="12dp">
+
+                <ImageButton
+                    android:id="@+id/teamSpaceBack"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="뒤로가기"
+                    android:src="@drawable/ic_backward" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/teamSpaceEdit"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:minWidth="35dp"
+                    android:minHeight="35dp"
+                    android:padding="0dp"
+                    android:layout_margin="5dp"
+                    android:text="@string/edit"
+                    android:textSize="16sp"
+                    android:textColor="@color/gray06"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+            </LinearLayout>
+
+            <!-- 팀 색 동그라미 + 팀 이름 + 공유 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="8dp">
+
+                <View
+                    android:id="@+id/teamSpaceColorCircle"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp" />
+
+                <TextView
+                    android:id="@+id/teamSpaceTeamName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    style="@style/head2_b_24"
+                    android:textColor="@color/gray09"
+                    tools:text="메가커피릿" />
+
+                <ImageButton
+                    android:id="@+id/teamSpaceShare"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="공유"
+                    android:src="@drawable/ic_share" />
+            </LinearLayout>
+
+            <!-- 소개/규정 + 소개 문구  -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/teamSpaceIntroTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/gray08"
+                    android:paddingBottom="8dp"
+                    style="@style/title2_m_18"
+                    tools:text="메가커피릿 소개/규정" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <ScrollView
+                        android:id="@+id/teamSpaceIntroContentWrapper"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:fillViewport="true">
+
+                        <TextView
+                            android:id="@+id/teamSpaceIntroText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="85dp"
+                            android:maxWidth="360dp"
+                            android:textColor="@color/gray07"
+                            style="@style/body2_r_14"
+                            tools:text="A+을 위해 혼을 갈아넣을 자들..." />
+                    </ScrollView>
+
+                    <ImageButton
+                        android:id="@+id/teamSpaceIntroExpandArrow"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:minHeight="36dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="접기/펼치기"
+                        android:src="@drawable/ic_arrow_down" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 함께하는 팀원  -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="4dp">
+
+                <TextView
+                    android:id="@+id/teamSpaceMembersTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/title2_m_18"
+                    android:text="함께하는 팀원" />
+
+                <TextView
+                    android:id="@+id/teamSpaceMembersCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    style="@style/title2_m_18"
+                    android:textColor="@color/gray06"
+                    tools:text="6" />
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="16dp">
+
+                <LinearLayout
+                    android:id="@+id/teamSpaceMembersIcons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+            </HorizontalScrollView>
+
+            <!-- 팀 일정  -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/teamSpaceScheduleLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/title2_m_18"
+                    android:text="팀 일정" />
+
+                <TextView
+                    android:id="@+id/teamSpaceScheduleCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    style="@style/title2_m_18"
+                    android:textColor="@color/gray07"
+                    tools:text="48" />
+            </LinearLayout>
+
+            <!-- 캘린더: 월 + 이전/다음 + 팀/개인 토글 버튼 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="8dp">
+
+                <!-- 순서: 날짜, 전달 화살표, 다음달 화살표, 팀/개인 버튼 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/teamSpaceMonthYear"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        style="@style/body2_m_14"
+                        tools:text="2026년 2월" />
+
+                    <ImageButton
+                        android:id="@+id/teamSpacePrevMonth"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/prev_month"
+                        android:src="@drawable/ic_calender_left" />
+
+                    <ImageButton
+                        android:id="@+id/teamSpaceNextMonth"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/next_month"
+                        android:src="@drawable/ic_calender_right" />
+
+                    <!-- 팀/개인 토글 버튼  -->
+                    <FrameLayout
+                        android:id="@+id/teamSpaceCalendarTeamPersonalToggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_team_space_toggle"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:minWidth="36dp"
+                        android:minHeight="36dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/teamSpaceCalendarToggleLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            style="@style/body2_m_14"
+                            android:textColor="@color/gray07"
+                            android:text="@string/team_calendar_team_label" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- 요일 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="일" android:textColor="@color/sunday_red" style="@style/body2_r_14" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="월" style="@style/body2_r_14" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="화" style="@style/body2_r_14" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="수" style="@style/body2_r_14" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="목" style="@style/body2_r_14" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="금" style="@style/body2_r_14" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="토" style="@style/body2_r_14" />
+                </LinearLayout>
+
+                <GridLayout
+                    android:id="@+id/teamSpaceMonthGrid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="7"
+                    android:paddingTop="4dp" />
+            </LinearLayout>
+
+            <!-- 모임 날짜 선택 버튼  -->
+            <LinearLayout
+                android:id="@+id/teamSpaceSelectMeetingDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:minHeight="48dp"
+                android:background="@drawable/bg_select_meeting_date"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select_meeting_date"
+                    android:textColor="@color/gray09"
+                    android:textSize="16sp"
+                    android:fontFamily="@font/pretendard_medium" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginHorizontal="16dp"
+                android:background="@color/gray_light" />
+
+            <!-- 선택된 날짜 (월일 형식) -->
+            <TextView
+                android:id="@+id/teamSpaceSelectedDateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="8dp"
+                style="@style/title2_m_18"
+                android:textColor="@color/black"
+                tools:text="2월 20일" />
+
+            <!-- 일정 체크리스트 (작성자별 구분) -->
+            <LinearLayout
+                android:id="@+id/teamSpaceDayTasksContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="16dp" />
+
+            <!-- 일정 없는 팀원 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/teamSpaceNoScheduleCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/gray01"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/teamSpaceNoScheduleTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="12dp"
+                        style="@style/body1_m_16"
+                        android:textColor="@color/gray08"
+                        android:text="@string/no_schedule_members" />
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:id="@+id/teamSpaceNoScheduleMembersInner"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical" />
+                    </HorizontalScrollView>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </ScrollView>
+
+    <ImageButton
+        android:id="@+id/teamSpaceFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_fab_black"
+        android:contentDescription="@string/add_schedule"
+        app:srcCompat="@drawable/ic_calendar_add" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

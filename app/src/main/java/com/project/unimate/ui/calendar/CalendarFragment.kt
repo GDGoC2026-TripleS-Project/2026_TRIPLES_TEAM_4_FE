@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
@@ -87,7 +88,9 @@ class CalendarFragment : Fragment() {
                     val titleTv = taskRow.findViewById<TextView>(R.id.taskTitle)
                     titleTv.isClickable = true
                     titleTv.isFocusable = true
-                    titleTv.setOnClickListener { /* 추후 다른 페이지 연결 */ }
+                    titleTv.setOnClickListener {
+                        findNavController().navigate(R.id.editTeamTaskFragment, Bundle().apply { putString("taskId", task.id) })
+                    }
                     checkBtn.setImageResource(if (task.isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
                     titleTv.text = task.title
                     if (task.isChecked) {
@@ -120,7 +123,9 @@ class CalendarFragment : Fragment() {
                         val titleTv = personalRow.findViewById<TextView>(R.id.taskTitle)
                         titleTv.isClickable = true
                         titleTv.isFocusable = true
-                        titleTv.setOnClickListener { /* 추후 다른 페이지 연결 */ }
+                        titleTv.setOnClickListener {
+                            findNavController().navigate(R.id.editPersonalTaskFragment, Bundle().apply { putString("personalId", item.id) })
+                        }
                         checkBtn.setImageResource(if (item.isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
                         titleTv.text = item.title
                         if (item.isChecked) {
@@ -292,7 +297,9 @@ class CalendarFragment : Fragment() {
         refreshDayTasks()
         calendarPersonalToggle.setImageResource(if (personalVisible) R.drawable.ic_personal_on else R.drawable.ic_personal_off)
 
-        calendarFabAdd.setOnClickListener { /* 일정 추가 버튼: 기능 연결 전까지 빈 동작 */ }
+        calendarFabAdd.setOnClickListener {
+            findNavController().navigate(R.id.addPersonalTaskFragment)
+        }
 
         return root
     }

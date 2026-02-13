@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
 import java.util.Calendar
@@ -95,6 +96,9 @@ class HomeFragment : Fragment() {
                         DummyRepository.setTaskChecked(task.id, !task.isChecked)
                         refreshTodayTasks()
                     }
+                    titleTv.setOnClickListener {
+                        findNavController().navigate(R.id.editTeamTaskFragment, Bundle().apply { putString("taskId", task.id) })
+                    }
                 homeTodayTasksContainer.addView(row)
             }
             }
@@ -128,6 +132,9 @@ class HomeFragment : Fragment() {
                     checkBtn.setOnClickListener {
                         DummyRepository.setPersonalChecked(item.id, !item.isChecked)
                         refreshTodayTasks()
+                    }
+                    titleTv.setOnClickListener {
+                        findNavController().navigate(R.id.editPersonalTaskFragment, Bundle().apply { putString("personalId", item.id) })
                     }
                     homePersonalTasksContainer.addView(row)
                 }
@@ -203,11 +210,24 @@ class HomeFragment : Fragment() {
             val item = inflater.inflate(R.layout.item_home_team_icon, homeTeamSpaceIcons, false)
             item.isClickable = true
             item.isFocusable = true
-            item.setOnClickListener { /* 버튼으로만, 기능 없음 */ }
+            item.setOnClickListener {
+                findNavController().navigate(R.id.teamSpaceFragment, Bundle().apply { putString("teamId", team.id) })
+            }
             val card = item.findViewById<com.google.android.material.card.MaterialCardView>(R.id.teamIconCard)
             card.strokeColor = Color.parseColor(team.colorHex)
-            val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
-            if (resId != 0) item.findViewById<ImageView>(R.id.teamIconImage).setImageResource(resId)
+            val iconImage = item.findViewById<ImageView>(R.id.teamIconImage)
+            val iconLetter = item.findViewById<TextView>(R.id.teamIconLetter)
+            val resId = if (team.imageResName.isNotBlank()) resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName) else 0
+            if (resId != 0) {
+                iconImage.visibility = View.VISIBLE
+                iconImage.setImageResource(resId)
+                iconLetter.visibility = View.GONE
+            } else {
+                iconImage.visibility = View.GONE
+                iconLetter.visibility = View.VISIBLE
+                iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
+            }
             item.findViewById<TextView>(R.id.teamIconName).text = team.name
             homeTeamSpaceIcons.addView(item)
         }
