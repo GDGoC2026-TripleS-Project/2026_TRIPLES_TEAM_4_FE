@@ -11,9 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
-import com.project.unimate.notification.NotificationApi
-import com.project.unimate.notification.NotificationItem
-import com.project.unimate.notification.NotificationStore
 
 class CockFragment : Fragment() {
     private lateinit var adapter: NotificationAdapter
@@ -28,21 +25,11 @@ class CockFragment : Fragment() {
         val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.notification_list)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         emptyView = view.findViewById(R.id.empty_state)
+        emptyView.text = getString(R.string.no_schedule)
 
         adapter = NotificationAdapter(
-            onCompleteClicked = { item, onResult ->
-                val api = NotificationApi()
-                api.markActionDone(requireContext(), item.notificationId) { success ->
-                    if (success) {
-                        val updated = item.copy(actionDone = true)
-                        if (isAdded) {
-                            requireActivity().runOnUiThread {
-                                NotificationStore.upsert(requireContext(), updated)
-                                onResult(updated)
-                            }
-                        }
-                    }
-                }
+            onCompleteClicked = { _, _ ->
+                // 찌르기 탭에서는 알림 액션을 제공하지 않음
             }
         )
         recyclerView.adapter = adapter
@@ -52,33 +39,7 @@ class CockFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val items = NotificationStore.loadAll(requireContext())
-        render(items)
-        syncFromServerIfAvailable()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        syncFromServerIfAvailable()
-    }
-
-    private fun syncFromServerIfAvailable() {
-        val api = NotificationApi()
-        api.getNotifications(requireContext()) { server ->
-            if (!isAdded) return@getNotifications
-            val local = NotificationStore.loadAll(requireContext())
-            val merged = NotificationStore.mergeWithServer(local, server)
-            requireActivity().runOnUiThread {
-                for (item in merged) {
-                    NotificationStore.upsert(requireContext(), item)
-                }
-                render(merged)
-            }
-        }
-    }
-
-    private fun render(items: List<NotificationItem>) {
-        adapter.submit(items)
-        emptyView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+        adapter.submit(emptyList())
+        emptyView.visibility = View.VISIBLE
     }
 }
