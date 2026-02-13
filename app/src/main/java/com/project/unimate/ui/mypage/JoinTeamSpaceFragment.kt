@@ -105,16 +105,26 @@ class JoinTeamSpaceFragment : Fragment() {
         val toast = Toast(requireContext())
         toast.duration = Toast.LENGTH_LONG
         val dm = resources.displayMetrics
+
         val marginH = (10 * dm.density).toInt()
+        val widthPx = (dm.widthPixels - 2 * marginH).coerceAtLeast(0)
         val bottomMargin = (100 * dm.density).toInt()
+
         toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, bottomMargin)
+
         val layout = layoutInflater.inflate(R.layout.toast_team_join_complete, null)
         layout.elevation = 8f
-        val widthPx = (dm.widthPixels - 2 * marginH).coerceAtLeast(0)
+
+
+        layout.minimumWidth = widthPx
+
         val heightPx = (62 * dm.density).toInt()
         layout.layoutParams = android.widget.FrameLayout.LayoutParams(widthPx, heightPx)
+
         val tv = layout.findViewById<TextView>(R.id.toastMessage)
         tv.text = getString(R.string.team_join_complete_toast) + " 🎉"
+        tv.gravity = Gravity.CENTER
+
         toast.view = layout
         toast.show()
     }
