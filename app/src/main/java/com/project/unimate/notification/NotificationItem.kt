@@ -3,6 +3,7 @@ package com.project.unimate.notification
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 data class NotificationItem(
     val notificationId: Long,
@@ -19,15 +20,32 @@ data class NotificationItem(
     val processedAt: String?
 ) {
     fun createdAtMillis(): Long {
-        return try {
-            val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
-            val date = fmt.parse(createdAt)
-            date?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
-        } catch (e: IllegalArgumentException) {
-            0L
+        val text = createdAt.trim()
+        if (text.isBlank()) return 0L
+
+        val patterns = listOf(
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        )
+
+        for (pattern in patterns) {
+            try {
+                val fmt = SimpleDateFormat(pattern, Locale.US).apply {
+                    isLenient = false
+                    if (!pattern.contains("XXX")) {
+                        timeZone = TimeZone.getDefault()
+                    }
+                }
+                val date = fmt.parse(text)
+                if (date != null) return date.time
+            } catch (_: ParseException) {
+            } catch (_: IllegalArgumentException) {
+            }
         }
+
+        return 0L
     }
 
     fun createdAtMillisOrMin(): Long {
