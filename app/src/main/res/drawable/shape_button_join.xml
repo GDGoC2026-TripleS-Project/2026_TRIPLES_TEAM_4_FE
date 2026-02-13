@@ -1,5 +1,14 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 내부를 채우는 색상: 원하는 색상 코드로 변경하세요 -->
-    <solid android:color="@color/green05" />
-    <corners android:radius="16dp" />
-</shape>
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:state_enabled="false">
+    <shape android:shape="rectangle">
+        <solid android:color="@color/gray02" /> <corners android:radius="16dp" />
+    </shape>
+</item>
+
+<item>
+    <shape android:shape="rectangle">
+        <solid android:color="@color/green05" /> <corners android:radius="16dp" />
+    </shape>
+</item>
+</selector>
