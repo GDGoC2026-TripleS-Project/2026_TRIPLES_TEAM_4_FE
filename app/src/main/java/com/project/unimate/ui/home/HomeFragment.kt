@@ -46,6 +46,10 @@ class HomeFragment : Fragment() {
         val homeCardInner = root.findViewById<LinearLayout>(R.id.homeTodayCardInner)
         val homeCardContentWrapper = root.findViewById<android.widget.ScrollView>(R.id.homeTodayCardContentWrapper)
 
+        root.findViewById<View>(R.id.headerNotification)?.setOnClickListener {
+            findNavController().navigate(R.id.notificationFragment)
+        }
+
         fun refreshTodayTasks() {
             homeTodayTasksContainer.removeAllViews()
             val today = selectedDay

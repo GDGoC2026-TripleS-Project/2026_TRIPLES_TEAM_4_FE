@@ -18,7 +18,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
 import com.project.unimate.auth.FcmRegistrar
@@ -31,7 +30,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val TAG = "UnimateFCM"
-    // 메인 브랜치의 백엔드 설정 보존
     private val BASE_URL = Env.BASE_URL
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +49,7 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "Navigation Setup Error: ${e.message}")
         }
 
-        // 3. 권한 및 푸시 알림 설정 - 메인 브랜치 주석 및 로직 보존
+        // 3. 권한 및 푸시 알림 설정
         requestNotificationPermissionIfNeeded()
         handlePushIntent(intent)
 
@@ -96,11 +94,10 @@ class MainActivity : AppCompatActivity() {
         // 목적지 변경 리스너
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                // 1. 메인 브랜치 숨김 목록
+                // 숨김 목록
                 R.id.splashFragment, R.id.loginFragment, R.id.profileCreateFragment,
                 R.id.teamAddFragment, R.id.teamCreateFragment, R.id.teamJoinFragment,
                 R.id.teamCompleteFragment, R.id.teamJoinedSuccessFragment,
-                    // 2. 내 브랜치 추가 숨김 목록
                 R.id.editTeamSpaceFragment, R.id.joinTeamSpaceFragment -> {
                     binding.bottomNavigation.visibility = View.GONE
                 }
@@ -151,7 +148,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- UI 간격 조정 로직 ---
+    // UI 간격 조정 로직
     private fun applyBottomNavGap(navView: BottomNavigationView, gapDp: Int) {
         navView.post {
             val gapPx = (gapDp * resources.displayMetrics.density)
