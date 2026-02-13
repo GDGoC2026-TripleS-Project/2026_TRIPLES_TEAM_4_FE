@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="62dp"
+    android:minHeight="62dp"
+    android:background="@drawable/bg_toast_team_join"
+    android:paddingHorizontal="12dp">
+
+    <TextView
+        android:id="@+id/toastMessage"
+        style="@style/body1_m_16"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:textColor="@color/toast_text_dark"
+        android:textSize="16sp" />
+</FrameLayout>

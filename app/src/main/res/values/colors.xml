@@ -1,42 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Unimate brand -->
+    <color name="unimate_i">#FFB4D75C</color>
+
+    <!-- Team colors -->
+    <color name="team_megacoffe">#FFFFACAC</color>
+    <color name="team_cherish">#FFF495E0</color>
+    <color name="team_momami">#FF98ADFF</color>
+    <!-- Calendar filter pill colors (similar tones) -->
+    <color name="filter_capstone">#FFE8E0A0</color>
+    <color name="filter_megacoffe">#FFD4C8F0</color>
+    <color name="filter_mamosari">#FFC8E6C8</color>
+    <color name="filter_cherish">#FFE8C8E8</color>
+    <!-- UI -->
+    <color name="gray_light">#FFE0E0E0</color>
+    <color name="gray_medium">#FF9E9E9E</color>
+    <color name="gray_dark">#FF616161</color>
+    <color name="sunday_red">#FFF44336</color>
+    <color name="calendar_selected_bg">#FF9E9E9E</color>
+    <color name="calendar_today_bg">#FFF5F5F5</color>
+    <color name="home_selected_bg">#FFF5F5F5</color>
+    <color name="mypage_card_bg">#FFEDF3D7</color>
+    <color name="deadline_green">#FF4CAF50</color>
+    <!-- GrayScale-->
+
+    <color name="gray01">#F5F5F5</color>
+    <color name="gray02">#EBEBEB</color>
+    <color name="gray03">#DDDDDD</color>
+    <color name="gray04">#C2C2C2</color>
+    <color name="gray05">#AEAEAE</color>
+    <color name="gray06">#848484</color>
+    <color name="gray07">#6D6D6D</color>
+    <color name="gray08">#4B4B4B</color>
+    <color name="gray09">#2F2F2F</color>
+    <color name="gray10">#151515</color>
+    <color name="border_gray">#E3E6DF</color>
 
 
-<!--    <color name="unimate_green">#294B01</color>\-->
-<!--    <color name="unimate_sub_text">#666666</color>-->
-<!--    <color name="unimate_main">#D2E441</color>-->
+    <color name="border_schedule">#DDECB5</color>
 
 
-        <color name="white">#FFFFFF</color>
-        <color name="gray01">#F5F5F5</color>
-        <color name="gray02">#EBEBEB</color>
-        <color name="gray03">#DDDDDD</color>
-        <color name="gray04">#C2C2C2</color>
-        <color name="gray05">#AEAEAE</color>
-        <color name="gray06">#848484</color>
-        <color name="gray07">#6D6D6D</color>
-        <color name="gray08">#4B4B4B</color>
-        <color name="gray09">#2F2F2F</color>
-        <color name="gray10">#151515</color>
-        <color name="black">#000000</color>
-        <color name="border_gray">#E3E6DF</color>
+    <color name="main_green">#B4D75C</color>
+    <color name="sub_green">#EFFFC8</color>
 
+    <color name="green01">#FAFFED</color>
+    <color name="green02">#F8FFE0</color>
+    <color name="green03">#ECF4D6</color>
+    <color name="green04">#DDECB5</color>
+    <color name="green05">#D9F592</color>
+    <color name="green06">#D3EF9E</color>
+    <color name="green07">#98C625</color>
+    <color name="green08">#7EA618</color>
+    <color name="green09">#415904</color>
+    <color name="green10">#294B01</color>
 
-        <color name="main_green">#B4D75C</color>
-        <color name="sub_green">#EFFFC8</color>
-
-        <color name="green01">#FAFFED</color>
-        <color name="green02">#F8FFE0</color>
-        <color name="green03">#ECF4D6</color>
-        <color name="green04">#DDECB5</color>
-        <color name="green05">#D9F592</color>
-        <color name="green06">#D3EF9E</color>
-        <color name="green07">#98C625</color>
-        <color name="green08">#7EA618</color>
-        <color name="green09">#415904</color>
-        <color name="green10">#294B01</color>
-
-<!--팀컬러 색상-->
+    <!--팀컬러 색상-->
     <color name="team_mint">#3FE9C0</color>
     <color name="team_periwinkle">#90A3ED</color>
     <color name="team_aqua">#C2FFF0</color>
@@ -60,7 +81,12 @@
     <color name="bg_light_green">#F0F6DA</color>
     <color name="point_red">#D28787</color> //달력 휴일 색상
 
-
-
-
+    <!-- 완료된 팀플 원형 썸네일 테두리  -->
+    <color name="completed_team_border">#FFD4C0D8</color>
+    <!-- 팀 참여·토스트  -->
+    <color name="button_green_text">#294B01</color>
+    <color name="toast_text_dark">#2F3A1F</color>
+    <color name="toast_bg">#EFFFC8</color>
+    <color name="option_selected_bg">#EFFFC8</color>
+    <color name="sud_orange">#EFFFC8</color>
 </resources>

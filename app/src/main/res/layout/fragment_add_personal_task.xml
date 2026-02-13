@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true"
+    tools:context=".ui.calendar.AddPersonalTaskFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_card_modal_top"
+        android:elevation="16dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="32dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="12dp">
+                <TextView
+                    android:id="@+id/addPersonalCancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|start"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingVertical="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="@string/cancel"
+                    android:textColor="@color/gray09"
+                    android:textSize="16sp" />
+                <TextView
+                    android:id="@+id/addPersonalTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:text="@string/new_schedule"
+                    android:textColor="@color/gray09"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/addPersonalSave"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|end"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingVertical="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="@string/save"
+                    android:textColor="@color/main_green"
+                    android:textSize="16sp" />
+            </FrameLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/gray_light" />
+
+            <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="20dp">
+            <TextView
+                android:id="@+id/addPersonalToggleTeam"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:background="@drawable/bg_schedule_toggle_unselected"
+                android:text="@string/team"
+                android:textColor="@color/gray07"
+                android:textSize="14sp"
+                android:layout_marginEnd="4dp" />
+            <TextView
+                android:id="@+id/addPersonalTogglePersonal"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:background="@drawable/bg_schedule_toggle_selected"
+                android:text="@string/personal"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <!-- 일정명  -->
+        <EditText
+            android:id="@+id/addPersonalScheduleName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_schedule_name_single"
+            android:hint="@string/enter_schedule_name"
+            android:textColorHint="@color/gray06"
+            android:inputType="text"
+            android:paddingHorizontal="12dp"
+            android:textSize="14sp"
+            android:textColor="@color/gray06" />
+
+        <!-- 하루종일 + 시작 + 종료 같은 컨테이너 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_section_box_ddecb5"
+            android:orientation="vertical"
+            android:padding="14dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/all_day"
+                    android:textColor="@color/gray09"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:id="@+id/addPersonalAlldayIcon"
+                    android:layout_width="53dp"
+                    android:layout_height="23dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_allday_unselected"
+                    android:contentDescription="하루 종일" />
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="14dp"
+                android:background="@color/gray_light" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/start"
+                    android:textColor="@color/gray09"
+                    android:textSize="14sp" />
+                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                <Button
+                    android:id="@+id/addPersonalStartDate"
+                    style="@style/body2_m_14"
+                    android:layout_width="88dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_date_time_btn"
+                    android:backgroundTint="@null"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pretendard_medium"
+                    android:paddingHorizontal="0dp"
+                    android:paddingVertical="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    tools:text="2026. 2. 23" />
+                <Button
+                    android:id="@+id/addPersonalStartTime"
+                    style="@style/body2_m_14"
+                    android:layout_width="88dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_date_time_btn"
+                    android:backgroundTint="@null"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pretendard_medium"
+                    android:paddingHorizontal="0dp"
+                    android:paddingVertical="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    tools:text="오후 1:00" />
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="14dp"
+                android:background="@color/gray_light" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/end"
+                    android:textColor="@color/gray09"
+                    android:textSize="14sp" />
+                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                <Button
+                    android:id="@+id/addPersonalEndDate"
+                    style="@style/body2_m_14"
+                    android:layout_width="88dp"
+                    android:layout_height="32dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_date_time_btn"
+                    android:backgroundTint="@null"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pretendard_medium"
+                    android:paddingHorizontal="0dp"
+                    android:paddingVertical="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    tools:text="2026. 2. 23" />
+                <Button
+                    android:id="@+id/addPersonalEndTime"
+                    style="@style/body2_m_14"
+                    android:layout_width="88dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_date_time_btn"
+                    android:backgroundTint="@null"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/pretendard_medium"
+                    android:paddingHorizontal="0dp"
+                    android:paddingVertical="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    tools:text="오후 2:00" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 알림  -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_section_box_ddecb5"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/notification"
+                android:textColor="@color/gray09"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/addPersonalNotificationBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:background="@drawable/bg_btn_white_borderless"
+                android:text="@string/none"
+                android:textColor="@color/gray06"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 일정 카테고리  -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_section_box_ddecb5"
+            android:orientation="vertical"
+            android:padding="12dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/schedule_category"
+                    android:textColor="@color/gray09"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/addPersonalCategoryBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_gravity="end"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="12dp"
+                    android:background="@drawable/bg_btn_white_borderless"
+                    android:text="@string/select"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp" />
+            </LinearLayout>
+            <EditText
+                android:id="@+id/addPersonalCategoryEt"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                android:background="@drawable/bg_date_time_btn"
+                android:hint="@string/category_etc"
+                android:paddingHorizontal="12dp"
+                android:textColor="@color/gray06"
+                android:textSize="14sp" />
+        </LinearLayout>
+        <!-- 일정 카테고리 목록  -->
+        <ScrollView
+            android:id="@+id/addPersonalCategoryListScroll"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            android:background="@drawable/bg_dropdown_list_shadow"
+            android:elevation="8dp"
+            android:fillViewport="true">
+            <LinearLayout
+                android:id="@+id/addPersonalCategoryList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="28dp">
+            <TextView
+                android:id="@+id/addPersonalPublicBtn"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:gravity="center"
+                android:background="@drawable/bg_schedule_toggle_unselected"
+                android:text="@string/public_visibility"
+                android:textColor="@color/gray07"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/addPersonalPrivateBtn"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:background="@drawable/bg_schedule_toggle_selected"
+                android:text="@string/private_visibility"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+    </ScrollView>
+</FrameLayout>
