@@ -7,7 +7,6 @@
     android:background="@color/white"
     android:paddingHorizontal="24dp">
 
-    <!-- 로고 위치 조정 (가이드라인에 따라 중앙 배치) -->
     <ImageView
         android:id="@+id/ivJoinLogo"
         android:layout_width="167dp"
@@ -30,7 +29,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ivJoinLogo" />
 
-    <!-- 입력창: 글자색을 더 명확하게(gray09) 수정하고 힌트 색상 추가 제안 -->
     <EditText
         android:id="@+id/etJoinCode"
         android:layout_width="match_parent"
@@ -48,7 +46,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvLabelJoinCode" />
 
-    <!-- 확인 버튼: 글자색을 흰색으로 변경(배경이 진할 경우 대비) 또는 현재 유지 -->
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnJoinConfirm"
         android:layout_width="0dp"
@@ -60,7 +57,7 @@
         android:stateListAnimator="@null"
         android:text="확인"
         android:textAllCaps="false"
-        android:textColor="@color/white"
+        android:textColor="@color/green10"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

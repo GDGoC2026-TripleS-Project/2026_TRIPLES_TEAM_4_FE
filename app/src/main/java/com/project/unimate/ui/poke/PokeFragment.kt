@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -30,7 +31,7 @@ class PokeFragment : Fragment() {
         setupDummyData()
 
         val rvPokeList = view.findViewById<RecyclerView>(R.id.rvPokeList)
-        val btnPokeAction = view.findViewById<Button>(R.id.btnPokeAction)
+        val btnPokeAction = view.findViewById<Button>(R.id.btnSendPoke)
 
         // 초기 버튼 상태 설정 (비활성화)
         updateButtonState(btnPokeAction)
@@ -78,9 +79,9 @@ class PokeFragment : Fragment() {
         dataList.clear() // 중복 방지 초기화
 
         // 색상 정의 (colors.xml의 색상과 유사하게 설정)
-        val cherryColor = "#FF4081" // 체리시 (분홍)
-        val megaColor = "#FFC107"   // 메가커피 (노랑)
-        val monimoColor = "#3366FF" // 모니모 (파랑)
+        val cherryColor = "#3FE9C0" // 체리시 (분홍)
+        val megaColor = "#F488D4"   // 메가커피 (노랑)
+        val monimoColor = "#FFF8D3" // 모니모 (파랑)
 
         // --- Team 1: 체리시 ---
         dataList.add(PokeData.Header("체리시", cherryColor))
@@ -106,11 +107,14 @@ class PokeFragment : Fragment() {
         // 선택된 멤버 수 계산
         val selectedCount = dataList.count { it is PokeData.Member && it.isSelected }
 
+        val typeFace = ResourcesCompat.getFont(requireContext(), R.font.pretendard_semibold)
+        button.typeface = typeFace
+
         if (selectedCount > 0) {
             // [활성화 상태] - 메인 그린 색상
             button.isEnabled = true
             button.backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(requireContext(), R.color.main_green)
+                ContextCompat.getColor(requireContext(), R.color.green05)
             )
             button.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
             button.text = "찌르기 (${selectedCount})" // (선택사항) 몇 명인지 표시
