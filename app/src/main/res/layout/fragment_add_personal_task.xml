@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -39,7 +40,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:text="@string/cancel"
-                    android:textColor="@color/gray09"
+                    android:textColor="@color/gray06"
                     android:textSize="16sp" />
                 <TextView
                     android:id="@+id/addPersonalTitle"
@@ -265,17 +266,52 @@
                 android:text="@string/notification"
                 android:textColor="@color/gray09"
                 android:textSize="14sp" />
-            <TextView
-                android:id="@+id/addPersonalNotificationBtn"
+            <LinearLayout
+                android:id="@+id/addPersonalNotificationBtnWrap"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_gravity="end"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="12dp"
                 android:background="@drawable/bg_btn_white_borderless"
-                android:text="@string/none"
-                android:textColor="@color/gray06"
-                android:textSize="14sp" />
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:id="@+id/addPersonalNotificationBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/none"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="21dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="20dp"
+                    android:src="@drawable/ic_arrow_down"
+                    android:contentDescription="@null"
+                    app:tint="@color/gray07" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 알림 드롭다운  -->
+        <LinearLayout
+            android:id="@+id/addPersonalNotificationDropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"
+            android:orientation="vertical"
+            android:background="@drawable/bg_dropdown_list_shadow"
+            android:elevation="8dp"
+            android:paddingVertical="8dp">
+            <TextView android:id="@+id/addPersonalNotificationItem0" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="@string/none" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addPersonalNotificationItem1" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="5분 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addPersonalNotificationItem2" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="15분 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addPersonalNotificationItem3" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="30분 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addPersonalNotificationItem4" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="1시간 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
         </LinearLayout>
 
         <!-- 일정 카테고리  -->
@@ -299,17 +335,32 @@
                     android:text="@string/schedule_category"
                     android:textColor="@color/gray09"
                     android:textSize="14sp" />
-                <TextView
-                    android:id="@+id/addPersonalCategoryBtn"
+                <LinearLayout
+                    android:id="@+id/addPersonalCategoryBtnWrap"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:layout_gravity="end"
+                    android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:paddingHorizontal="12dp"
                     android:background="@drawable/bg_btn_white_borderless"
-                    android:text="@string/select"
-                    android:textColor="@color/gray06"
-                    android:textSize="14sp" />
+                    android:clickable="true"
+                    android:focusable="true">
+                    <TextView
+                        android:id="@+id/addPersonalCategoryBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/select"
+                        android:textColor="@color/gray06"
+                        android:textSize="14sp" />
+                    <ImageView
+                        android:layout_width="21dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="20dp"
+                        android:src="@drawable/ic_arrow_down"
+                        android:contentDescription="@null"
+                        app:tint="@color/gray07" />
+                </LinearLayout>
             </LinearLayout>
             <EditText
                 android:id="@+id/addPersonalCategoryEt"
@@ -327,7 +378,7 @@
         <ScrollView
             android:id="@+id/addPersonalCategoryListScroll"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="4dp"
             android:visibility="gone"

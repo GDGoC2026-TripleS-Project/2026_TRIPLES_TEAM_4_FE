@@ -171,7 +171,7 @@ object DummyRepository {
 
     /** 팀 스페이스 캘린더용: 해당 팀의 특정 날짜 일정 개수 */
     fun getDayEventCountForTeam(teamId: String, date: Calendar): Int =
-        allTaskItems.count { it.teamId == teamId && it.isSameDay(date) }
+        allTaskItems.count { it.teamId == teamId && it.isOnDate(date) }
 
     // ---- 일정 없는 팀원 (2026-01 ~ 2026-02, 팀별 날짜당 1~3명 랜덤) ----
     private val noScheduleMembersCache = mutableMapOf<Long, Map<String, List<TeamMember>>>()
@@ -211,15 +211,15 @@ object DummyRepository {
     private fun effectivePersonalLocked(item: PersonalScheduleItem): Boolean = personalLockedOverrides[item.id] ?: item.isLocked
     private fun effectivePersonalChecked(item: PersonalScheduleItem): Boolean = personalCheckedOverrides[item.id] ?: item.isChecked
 
-    /** 특정 날짜의 팀 할일 (팀 ID 필터 적용). 체크 상태는 오버라이드 반영 */
+    /** 특정 날짜의 팀 할일 (팀 ID 필터 적용). 체크 상태는 오버라이드 반영. 시작일~종료일 구간에 포함되는 날 모두 표시 */
     fun getTasksForDate(date: Calendar, teamIds: List<String>): List<TaskItem> =
-        allTaskItems.filter { it.isSameDay(date) && it.teamId in teamIds }.map { t ->
+        allTaskItems.filter { it.isOnDate(date) && it.teamId in teamIds }.map { t ->
             t.copy(isChecked = effectiveTaskChecked(t))
         }
 
-    /** 오늘 날짜의 팀 할일 (팀별 그룹용). 체크 상태 오버라이드 반영 */
+    /** 오늘 날짜의 팀 할일 (팀별 그룹용). 체크 상태 오버라이드 반영. 시작일~종료일 구간에 오늘이 포함되면 표시 */
     fun getTodayTasksByTeam(today: Calendar): Map<String, List<TaskItem>> {
-        val list = allTaskItems.filter { it.isSameDay(today) }.map { t ->
+        val list = allTaskItems.filter { it.isOnDate(today) }.map { t ->
             t.copy(isChecked = effectiveTaskChecked(t))
         }
         return list.groupBy { it.teamId }
@@ -263,17 +263,18 @@ object DummyRepository {
         if (idx >= 0) _allPersonalItems[idx] = item
     }
 
+    /** 특정 날짜의 개인일정. 시작일~종료일 구간에 포함되는 날 모두 표시 */
     fun getPersonalForDate(date: Calendar): List<PersonalScheduleItem> =
-        allPersonalItems.filter { it.isSameDay(date) }.map { p ->
+        allPersonalItems.filter { it.isOnDate(date) }.map { p ->
             p.copy(isLocked = effectivePersonalLocked(p), isChecked = effectivePersonalChecked(p))
         }
 
     fun getPersonalForToday(today: Calendar): List<PersonalScheduleItem> = getPersonalForDate(today)
 
-    /** 그날 일정 개수 (팀 할일 + 개인일정, 팀 구분 없이). 캘린더 날짜칸 표시용 */
+    /** 그날 일정 개수 (팀 할일 + 개인일정, 팀 구분 없이). 캘린더 날짜칸 표시용. 시작일~종료일 구간 포함 */
     fun getDayEventCount(date: Calendar, teamIds: List<String>): Int {
-        val taskCount = allTaskItems.count { it.isSameDay(date) && it.teamId in teamIds }
-        val personalCount = allPersonalItems.count { it.isSameDay(date) }
+        val taskCount = allTaskItems.count { it.isOnDate(date) && it.teamId in teamIds }
+        val personalCount = allPersonalItems.count { it.isOnDate(date) }
         return taskCount + personalCount
     }
 

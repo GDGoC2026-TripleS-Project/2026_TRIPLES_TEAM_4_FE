@@ -27,4 +27,15 @@ data class TaskItem(
         return date.get(Calendar.YEAR) == other.get(Calendar.YEAR) &&
             date.get(Calendar.DAY_OF_YEAR) == other.get(Calendar.DAY_OF_YEAR)
     }
+
+    /** 해당 날짜가 일정 구간(시작일~종료일) 안에 있으면 true. 여러 날에 걸친 일정이 그날에도 표시되도록. */
+    fun isOnDate(cal: Calendar): Boolean {
+        val dayStart = (cal.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val dayEnd = (cal.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59); set(Calendar.SECOND, 59); set(Calendar.MILLISECOND, 999)
+        }.timeInMillis
+        return endTimeMillis >= dayStart && startTimeMillis <= dayEnd
+    }
 }

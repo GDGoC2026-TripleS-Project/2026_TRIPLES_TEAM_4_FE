@@ -136,6 +136,13 @@
         <item name="android:windowBackground">@color/white</item>
         <item name="android:textColorPrimary">#151515</item>
     </style>
+    <style name="DatePickerDialogThemeGray" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="colorPrimary">@color/gray04</item>
+        <item name="colorOnPrimary">@android:color/black</item>
+        <item name="colorAccent">@color/gray04</item>
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+    </style>
 
 
     <style name="DatePickerButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
