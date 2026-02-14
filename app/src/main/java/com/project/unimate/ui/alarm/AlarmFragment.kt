@@ -2,7 +2,7 @@
 //개발 과정에 따라 파일을 삭제하거나 파일명을 변경해도 됩니다.
 // 파일명 수정 시 연결된 xml 파일명도 수정 필요
 
-package com.project.unimate.ui.cock
+package com.project.unimate.ui.alarm
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -15,7 +15,7 @@ import com.project.unimate.notification.NotificationApi
 import com.project.unimate.notification.NotificationItem
 import com.project.unimate.notification.NotificationStore
 
-class CockFragment : Fragment() {
+class AlarmFragment : Fragment() {
     private lateinit var adapter: NotificationAdapter
     private lateinit var emptyView: android.widget.TextView
 
@@ -23,7 +23,7 @@ class CockFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_cock, container, false)
+        val view = inflater.inflate(R.layout.fragment_alarm, container, false)
 
         val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.notification_list)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())

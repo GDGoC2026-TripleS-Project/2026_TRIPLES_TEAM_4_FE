@@ -1,4 +1,4 @@
-package com.project.unimate.ui.cock
+package com.project.unimate.ui.alarm
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable

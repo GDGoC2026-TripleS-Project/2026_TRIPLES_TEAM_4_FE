@@ -118,12 +118,18 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
      */
     private fun setupRecyclerView() {
         schoolAdapter = SchoolAdapter { selectedSchool ->
-            // 아이템 클릭 시 에디트텍스트에 값 입력 후 리스트 숨김
             isSelectingSchool = true
+
+            searchSeq++
+
             selectedUniversityId = selectedSchool.id
+
             binding.etSchoolSearch.setText(selectedSchool.name)
+
             binding.rvSchoolList.visibility = View.GONE
+
             binding.etSchoolSearch.clearFocus()
+
             isSelectingSchool = false
         }
 
@@ -132,18 +138,19 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
             layoutManager = LinearLayoutManager(requireContext())
         }
     }
-
     /**
      * 학교 이름 검색 로직 설정
      */
     private fun setupSearchLogic() {
         binding.etSchoolSearch.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val query = s.toString().trim()
-                if (!isSelectingSchool) {
-                    selectedUniversityId = null
+                if (isSelectingSchool) {
+                    return
                 }
 
+                selectedUniversityId = null
+
+                val query = s.toString().trim()
                 runSchoolSearch(query, forceToast = false)
             }
 
