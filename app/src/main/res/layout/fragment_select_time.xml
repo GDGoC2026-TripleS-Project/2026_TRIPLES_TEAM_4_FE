@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.project.unimate.ui.timepick.TimepickExcludeScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/selectTimeScrollRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="false"
+    tools:context=".ui.timepick.SelectTimeFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="16dp">
+
+    <!-- 고정: 뒤로가기 + 구분선 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp">
+        <ImageButton
+            android:id="@+id/selectTimeBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="뒤로가기"
+            android:src="@drawable/ic_backward" />
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray_light" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:text="@string/timepick_select_times"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/gray10" />
+
+    <!-- 타임픽: 시간+타임픽공간 한 세트. 7일 미만일 때는 패딩 0으로 블록만 중앙, 7일 이상은 16dp -->
+    <LinearLayout
+        android:id="@+id/selectTimeContentWrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/selectTimeContentRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.project.unimate.ui.timepick.TimepickTimeLabelStrip
+                android:id="@+id/selectTimeLabelStrip"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content" />
+
+            <com.project.unimate.ui.timepick.ScrollbarOnlyHorizontalScrollView
+                android:id="@+id/selectTimeScroll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:paddingBottom="20dp"
+                android:fillViewport="false"
+                android:scrollbars="horizontal"
+                android:fadeScrollbars="false">
+                <FrameLayout
+                    android:id="@+id/selectTimeScrollContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+                    <LinearLayout
+                        android:id="@+id/selectTimeGridWrapper"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center_horizontal">
+                        <com.project.unimate.ui.timepick.TimepickGridView
+                            android:id="@+id/selectTimeGrid"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:minHeight="120dp" />
+                    </LinearLayout>
+                </FrameLayout>
+            </com.project.unimate.ui.timepick.ScrollbarOnlyHorizontalScrollView>
+        </LinearLayout>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/selectTimeDone"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        app:cornerRadius="8dp"
+        android:backgroundTint="#D9F592"
+        android:text="@string/timepick_done"
+        android:textColor="@color/gray09"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+</com.project.unimate.ui.timepick.TimepickExcludeScrollView>

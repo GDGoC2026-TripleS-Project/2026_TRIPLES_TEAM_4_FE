@@ -82,7 +82,9 @@ class TeamSpaceFragment : Fragment() {
             findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", teamId) })
         }
         teamSpaceShare.setOnClickListener { /* 추후 연결 */ }
-        teamSpaceSelectMeetingDate.setOnClickListener { /* 추후 연결 */ }
+        teamSpaceSelectMeetingDate.setOnClickListener {
+            findNavController().navigate(R.id.createTimepickFragment, Bundle().apply { putString("teamId", teamId) })
+        }
         teamSpaceFab.setOnClickListener {
             findNavController().navigate(R.id.addTeamTaskFragment, Bundle().apply { putString("teamId", teamId) })
         }
@@ -147,9 +149,9 @@ class TeamSpaceFragment : Fragment() {
             val taskRow = inflater.inflate(R.layout.item_task_row, container, false)
             val checkBtn = taskRow.findViewById<ImageButton>(R.id.taskCheck)
             checkBtn.layoutParams = checkBtn.layoutParams?.apply {
-                width = 46.dpToPx()
-                height = 46.dpToPx()
-            } ?: LinearLayout.LayoutParams(46.dpToPx(), 46.dpToPx())
+                width = 42.dpToPx()
+                height = 42.dpToPx()
+            } ?: LinearLayout.LayoutParams(42.dpToPx(), 42.dpToPx())
             val titleTv = taskRow.findViewById<TextView>(R.id.taskTitle)
             titleTv.isClickable = true
             titleTv.isFocusable = true
@@ -157,7 +159,7 @@ class TeamSpaceFragment : Fragment() {
                 if (isPersonal) findNavController().navigate(R.id.editPersonalTaskFragment, Bundle().apply { putString("personalId", id) })
                 else findNavController().navigate(R.id.editTeamTaskFragment, Bundle().apply { putString("taskId", id) })
             }
-            checkBtn.setImageResource(if (isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
+            checkBtn.setImageResource(if (isChecked) R.drawable.ic_schedule_selected else R.drawable.ic_schedule_unselected)
             titleTv.text = title
             if (isChecked) {
                 titleTv.paintFlags = titleTv.paintFlags or 0x10

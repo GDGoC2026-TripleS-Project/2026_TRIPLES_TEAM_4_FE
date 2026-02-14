@@ -78,6 +78,7 @@ class CalendarFragment : Fragment() {
                 val teamHeader = TextView(requireContext()).apply {
                     text = team.name
                     setTextColor(android.graphics.Color.BLACK)
+                    setTypeface(typeface, android.graphics.Typeface.BOLD)
                     setPadding(0, 8.dpToPx(), 0, 4.dpToPx())
                     setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 17f)
                 }
@@ -91,7 +92,7 @@ class CalendarFragment : Fragment() {
                     titleTv.setOnClickListener {
                         findNavController().navigate(R.id.editTeamTaskFragment, Bundle().apply { putString("taskId", task.id) })
                     }
-                    checkBtn.setImageResource(if (task.isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
+                    checkBtn.setImageResource(if (task.isChecked) R.drawable.ic_schedule_selected else R.drawable.ic_schedule_unselected)
                     titleTv.text = task.title
                     if (task.isChecked) {
                         titleTv.paintFlags = titleTv.paintFlags or 0x10
@@ -126,7 +127,7 @@ class CalendarFragment : Fragment() {
                         titleTv.setOnClickListener {
                             findNavController().navigate(R.id.editPersonalTaskFragment, Bundle().apply { putString("personalId", item.id) })
                         }
-                        checkBtn.setImageResource(if (item.isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
+                        checkBtn.setImageResource(if (item.isChecked) R.drawable.ic_schedule_selected else R.drawable.ic_schedule_unselected)
                         titleTv.text = item.title
                         if (item.isChecked) {
                             titleTv.paintFlags = titleTv.paintFlags or 0x10
@@ -224,9 +225,27 @@ class CalendarFragment : Fragment() {
                 val chip = inflater.inflate(R.layout.item_team_chip, calendarFilterChips, false)
                 val chipTv = chip.findViewById<TextView>(R.id.chipTeamName)
                 chipTv.text = team.name
-                val radiusPx = 18 * resources.displayMetrics.density
+                val teamColor = android.graphics.Color.parseColor(team.colorHex)
+                val tr = android.graphics.Color.red(teamColor)
+                val tg = android.graphics.Color.green(teamColor)
+                val tb = android.graphics.Color.blue(teamColor)
+                val pastelBg = android.graphics.Color.rgb(
+                    (tr * 0.35f + 255 * 0.65f).toInt().coerceIn(0, 255),
+                    (tg * 0.35f + 255 * 0.65f).toInt().coerceIn(0, 255),
+                    (tb * 0.35f + 255 * 0.65f).toInt().coerceIn(0, 255)
+                )
+                val pr = android.graphics.Color.red(pastelBg)
+                val pg = android.graphics.Color.green(pastelBg)
+                val pb = android.graphics.Color.blue(pastelBg)
+                val borderColor = android.graphics.Color.rgb(
+                    (pr * 0.75f + tr * 0.25f).toInt().coerceIn(0, 255),
+                    (pg * 0.75f + tg * 0.25f).toInt().coerceIn(0, 255),
+                    (pb * 0.75f + tb * 0.25f).toInt().coerceIn(0, 255)
+                )
+                val radiusPx = 8 * resources.displayMetrics.density
                 chipTv.background = GradientDrawable().apply {
-                    setColor(android.graphics.Color.parseColor(team.colorHex))
+                    setColor(pastelBg)
+                    setStroke((2 * resources.displayMetrics.density).toInt(), borderColor)
                     cornerRadius = radiusPx
                 }
                 chip.findViewById<ImageButton>(R.id.chipRemove).setOnClickListener {

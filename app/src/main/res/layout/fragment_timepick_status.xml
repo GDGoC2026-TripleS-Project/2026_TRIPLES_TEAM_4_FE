@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <!-- 고정: 뒤로가기 + 모임 전체 시간표 같은 줄 + 구분선 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp">
+        <ImageButton
+            android:id="@+id/timepickStatusBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="뒤로가기"
+            android:src="@drawable/ic_backward" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/timepick_meeting_full_schedule"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/gray10" />
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray_light" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="32dp">
+
+            <TextView
+                android:id="@+id/timepickStatusParticipantCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="10dp"
+                style="@style/body2_m_14"
+                android:textColor="@color/gray08"
+                tools:text="7/7명 참여" />
+
+            <!-- 모두 가능한 시간 (첫 줄) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp">
+                <TextView
+                    android:id="@+id/timepickStatusAllAvailableBtn"
+                    android:layout_width="110dp"
+                    android:layout_height="26dp"
+                    android:gravity="center"
+                    android:background="@drawable/bg_timepick_filter_selected"
+                    style="@style/body2_m_14"
+                    android:textColor="@color/white"
+                    android:text="@string/timepick_all_available" />
+            </LinearLayout>
+
+            <!-- 전체, 이주연 등 (둘째 줄) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="15dp">
+                <LinearLayout
+                    android:id="@+id/timepickStatusMemberFilters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+            </HorizontalScrollView>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/gray_light" />
+
+            <LinearLayout
+                android:id="@+id/timepickStatusScrollWrapper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+                <LinearLayout
+                    android:id="@+id/timepickStatusContentRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <com.project.unimate.ui.timepick.TimepickTimeLabelStrip
+                        android:id="@+id/timepickStatusLabelStrip"
+                        android:layout_width="56dp"
+                        android:layout_height="wrap_content" />
+                    <HorizontalScrollView
+                        android:id="@+id/timepickStatusScroll"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="12dp"
+                        android:scrollbars="horizontal"
+                        android:fillViewport="false">
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center">
+                            <LinearLayout
+                                android:id="@+id/timepickStatusGridWrapper"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:gravity="center_horizontal">
+                                <com.project.unimate.ui.timepick.TimepickGridView
+                                    android:id="@+id/timepickStatusGrid"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="400dp" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </HorizontalScrollView>
+                </LinearLayout>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/timepickStatusEditTime"
+                android:layout_width="380dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                app:cornerRadius="8dp"
+                android:backgroundTint="@color/gray03"
+                android:text="@string/timepick_edit_time"
+                android:textColor="@color/gray09"
+                style="@style/body1_m_16" />
+
+            <Button
+                android:id="@+id/timepickStatusGoResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                app:cornerRadius="8dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/green05"
+                android:text="확정 페이지로 가기(테스트용)"
+                android:textColor="@color/gray09"
+                style="@style/body1_m_16" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

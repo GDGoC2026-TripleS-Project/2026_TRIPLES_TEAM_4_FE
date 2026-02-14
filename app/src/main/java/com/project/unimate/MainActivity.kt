@@ -98,7 +98,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.splashFragment, R.id.loginFragment, R.id.profileCreateFragment,
                 R.id.teamAddFragment, R.id.teamCreateFragment, R.id.teamJoinFragment,
                 R.id.teamCompleteFragment, R.id.teamJoinedSuccessFragment,
-                R.id.editTeamSpaceFragment, R.id.joinTeamSpaceFragment -> {
+                R.id.editTeamSpaceFragment, R.id.joinTeamSpaceFragment,
+                R.id.createTimepickFragment, R.id.selectTimeFragment, R.id.timepickStatusFragment,
+                R.id.timepickResultFragment, R.id.editTimepickFragment -> {
                     binding.bottomNavigation.visibility = View.GONE
                 }
                 else -> {

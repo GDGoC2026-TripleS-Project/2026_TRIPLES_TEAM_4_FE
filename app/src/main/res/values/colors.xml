@@ -6,10 +6,6 @@
     <!-- Unimate brand -->
     <color name="unimate_i">#FFB4D75C</color>
 
-    <!-- Team colors -->
-    <color name="team_megacoffe">#FFFFACAC</color>
-    <color name="team_cherish">#FFF495E0</color>
-    <color name="team_momami">#FF98ADFF</color>
     <!-- Calendar filter pill colors (similar tones) -->
     <color name="filter_capstone">#FFE8E0A0</color>
     <color name="filter_megacoffe">#FFD4C8F0</color>
@@ -56,6 +52,13 @@
     <color name="green08">#7EA618</color>
     <color name="green09">#415904</color>
     <color name="green10">#294B01</color>
+
+    <!-- 타임픽 그리드 (when2meet 스타일: 인원 수에 따른 농도) -->
+    <color name="timepick_darkest">#415904</color>
+    <color name="timepick_level_4">#5A7A06</color>
+    <color name="timepick_level_3">#7EA618</color>
+    <color name="timepick_level_2">#98C625</color>
+    <color name="timepick_level_1">#B4D75C</color>
 
     <!--팀컬러 색상-->
     <color name="team_mint">#3FE9C0</color>

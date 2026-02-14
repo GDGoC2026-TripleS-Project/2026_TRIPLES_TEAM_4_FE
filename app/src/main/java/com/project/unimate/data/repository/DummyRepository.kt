@@ -26,15 +26,15 @@ object DummyRepository {
         "ai_intro" to "인공지능 입문 팀 스페이스. 실습 과제와 팀 프로젝트 일정을 공유합니다."
     )
 
-    /** 팀 7개. 수정/추가 시 _allTeams 갱신. */
+    /** 팀 7개. 수정/추가 시 _allTeams 갱신.  */
     private val _allTeams: MutableList<Team> = listOf(
-        Team("capstone", "캡스톤", "#E8E0A0", "megacoffe_image", false, 4, 10, teamIntroMap["capstone"] ?: ""),
-        Team("cherish", "체리시", "#F495E0", "cherish_image", true, 4, 2, teamIntroMap["cherish"] ?: ""),
-        Team("mamosari", "마모사리", "#C8E6C8", "cherish_image", false, 6, 8, teamIntroMap["mamosari"] ?: ""),
-        Team("megacoffe", "메가커피릿", "#FFACAC", "megacoffe_image", true, 4, 1, teamIntroMap["megacoffe"] ?: ""),
-        Team("momami", "모마미", "#98ADFF", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: ""),
-        Team("psychology", "행복의 심리학", "#EDF3D7", "megacoffe_image", false, 4, 3, teamIntroMap["psychology"] ?: ""),
-        Team("ai_intro", "인공지능 입문", "#EDF3D7", "cherish_image", false, 6, 7, teamIntroMap["ai_intro"] ?: "")
+        Team("capstone", "캡스톤", "#FFE970", "megacoffe_image", false, 4, 10, teamIntroMap["capstone"] ?: ""),
+        Team("cherish", "체리시", "#F488D4", "cherish_image", true, 4, 2, teamIntroMap["cherish"] ?: ""),
+        Team("mamosari", "마모사리", "#D9F592", "cherish_image", false, 6, 8, teamIntroMap["mamosari"] ?: ""),
+        Team("megacoffe", "메가커피릿", "#FBB0A9", "megacoffe_image", true, 4, 1, teamIntroMap["megacoffe"] ?: ""),
+        Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: ""),
+        Team("psychology", "행복의 심리학", "#FFF8D3", "megacoffe_image", false, 4, 3, teamIntroMap["psychology"] ?: ""),
+        Team("ai_intro", "인공지능 입문", "#FF7A6E", "cherish_image", false, 6, 7, teamIntroMap["ai_intro"] ?: "")
     ).toMutableList()
 
     val allTeams: List<Team> get() = _allTeams

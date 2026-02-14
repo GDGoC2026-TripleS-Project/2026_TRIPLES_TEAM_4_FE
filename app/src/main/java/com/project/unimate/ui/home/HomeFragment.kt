@@ -75,18 +75,33 @@ class HomeFragment : Fragment() {
 
             byTeam.forEach { (teamId, tasks) ->
                 val team = teamMap[teamId] ?: return@forEach
-                val teamHeader = TextView(requireContext()).apply {
-                    text = team.name
-                    setTextColor(Color.parseColor(team.colorHex))
+                val teamHeaderRow = LinearLayout(requireContext()).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
                     setPadding(0, 12.dpToPx(), 0, 4.dpToPx())
+                }
+                val circle = View(requireContext()).apply {
+                    layoutParams = LinearLayout.LayoutParams(15.dpToPx(), 15.dpToPx()).apply {
+                        marginEnd = 6.dpToPx()
+                    }
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        setShape(android.graphics.drawable.GradientDrawable.OVAL)
+                        setColor(Color.parseColor(team.colorHex))
+                    }
+                }
+                val teamNameTv = TextView(requireContext()).apply {
+                    text = team.name
+                    setTextColor(Color.BLACK)
                     setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f)
                 }
-                homeTodayTasksContainer.addView(teamHeader)
+                teamHeaderRow.addView(circle)
+                teamHeaderRow.addView(teamNameTv)
+                homeTodayTasksContainer.addView(teamHeaderRow)
                 tasks.forEach { task ->
                     val row = inflater.inflate(R.layout.item_task_row, homeTodayTasksContainer, false)
                     val checkBtn = row.findViewById<ImageButton>(R.id.taskCheck)
                     val titleTv = row.findViewById<TextView>(R.id.taskTitle)
-                    checkBtn.setImageResource(if (task.isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
+                    checkBtn.setImageResource(if (task.isChecked) R.drawable.ic_schedule_selected else R.drawable.ic_schedule_unselected)
                     titleTv.text = task.title
                     if (task.isChecked) {
                         titleTv.paintFlags = titleTv.paintFlags or 0x10
@@ -117,7 +132,7 @@ class HomeFragment : Fragment() {
                     val row = inflater.inflate(R.layout.item_task_row, homePersonalTasksContainer, false)
                     val checkBtn = row.findViewById<ImageButton>(R.id.taskCheck)
                     val titleTv = row.findViewById<TextView>(R.id.taskTitle)
-                    checkBtn.setImageResource(if (item.isChecked) R.drawable.ic_check_on else R.drawable.ic_check_off)
+                    checkBtn.setImageResource(if (item.isChecked) R.drawable.ic_schedule_selected else R.drawable.ic_schedule_unselected)
                     titleTv.text = item.title
                     if (item.isChecked) {
                         titleTv.paintFlags = titleTv.paintFlags or 0x10
@@ -152,12 +167,21 @@ class HomeFragment : Fragment() {
                 )
             if (isChecklistExpanded) {
                 lp.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                homeCardContentWrapper.setMinimumHeight(collapsedContentH.coerceAtLeast(0))
+                homeCardContentWrapper.setMinimumHeight(0)
+                homeCardContentWrapper.layoutParams = lp
+                homeCardContentWrapper.post {
+                    val contentH = homeCardContentWrapper.getChildAt(0)?.height ?: 0
+                    if (contentH in 1 until collapsedContentH) {
+                        val lp2 = homeCardContentWrapper.layoutParams as? LinearLayout.LayoutParams ?: return@post
+                        lp2.height = collapsedContentH.coerceAtLeast(0)
+                        homeCardContentWrapper.layoutParams = lp2
+                    }
+                }
             } else {
                 homeCardContentWrapper.setMinimumHeight(0)
                 lp.height = collapsedContentH.coerceAtLeast(0)
+                homeCardContentWrapper.layoutParams = lp
             }
-            homeCardContentWrapper.layoutParams = lp
         }
 
         fun refreshWeek() {

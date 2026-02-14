@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="60dp"
+    android:layout_height="28dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_timepick_chip"
+    android:paddingStart="10dp"
+    android:paddingEnd="6dp">
+
+    <TextView
+        android:id="@+id/timepickChipDateText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="16sp"
+        android:textColor="@color/white"
+        android:maxLines="1"
+        android:ellipsize="none"
+        android:singleLine="true" />
+
+    <ImageButton
+        android:id="@+id/timepickChipClose"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="제거"
+        android:src="@drawable/ic_close_x"
+        android:scaleType="centerInside"
+        android:padding="2dp"
+        app:tint="@color/white" />
+</LinearLayout>

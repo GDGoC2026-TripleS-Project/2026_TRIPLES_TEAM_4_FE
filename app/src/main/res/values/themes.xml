@@ -56,8 +56,21 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
+
+    <style name="caption1_r_12" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
     <style name="caption2_m_12" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="caption2_r_12" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_regular</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/black</item>
     </style>

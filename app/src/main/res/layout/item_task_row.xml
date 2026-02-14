@@ -9,11 +9,11 @@
 
     <ImageButton
         android:id="@+id/taskCheck"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/notification"
-        android:src="@drawable/ic_check_off"
+        android:src="@drawable/ic_schedule_unselected"
         android:scaleType="centerInside" />
 
     <TextView
