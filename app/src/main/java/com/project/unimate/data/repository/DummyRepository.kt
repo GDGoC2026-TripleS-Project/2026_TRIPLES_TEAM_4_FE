@@ -73,6 +73,33 @@ object DummyRepository {
 
     val allTeams: List<Team> get() = _allTeams
 
+    /** 현재 사용자 이름 (마이페이지·프로필 수정). 앱 실행 중에만 반영. */
+    private var currentUserName: String = "이주연"
+    fun getCurrentUserName(): String = currentUserName
+    fun setCurrentUserName(name: String) {
+        if (name.isBlank()) return
+        val oldName = currentUserName
+        currentUserName = name
+        updateAllUserNameReferences(oldName, name)
+    }
+    private fun updateAllUserNameReferences(oldName: String, newName: String) {
+        for (i in _allTaskItems.indices) {
+            if (_allTaskItems[i].creatorName == oldName) {
+                _allTaskItems[i] = _allTaskItems[i].copy(creatorName = newName)
+            }
+        }
+        _teamMembersMap.values.forEach { list ->
+            for (i in list.indices) {
+                if (list[i].name == oldName) list[i] = list[i].copy(name = newName)
+            }
+        }
+        extraTeamMembers.keys.toList().forEach { teamId ->
+            extraTeamMembers[teamId] = (extraTeamMembers[teamId] ?: emptyList()).map { member ->
+                if (member.name == oldName) member.copy(name = newName) else member
+            }
+        }
+    }
+
     /** 팀 삭제 (앱 실행 중에만 반영, 재시작 시 데이터 복구). 팀·해당 팀 일정·추가 팀원 데이터 제거. */
     fun deleteTeam(teamId: String) {
         _allTeams.removeAll { it.id == teamId }
@@ -115,7 +142,7 @@ object DummyRepository {
             team.copy(workStartMillis = team.workStartMillis ?: defaultOngoingStartMillis, workEndMillis = team.workEndMillis ?: defaultOngoingEndMillis)
         } else team
         _allTeams.add(toAdd)
-        val count = teamMembersMap[toAdd.id]?.size ?: 4
+        val count = _teamMembersMap[toAdd.id]?.size ?: 4
         val names = koreanNamesPool.drop(toAdd.id.hashCode().and(0x7FFFFFFF) % (koreanNamesPool.size - count).coerceAtLeast(0)).take(count)
             .let { if (it.size >= count) it.take(count) else it + koreanNamesPool.take(count - it.size) }
         extraTeamMembers[toAdd.id] = names.mapIndexed { i, name -> TeamMember("m-${toAdd.id}-$i", name, "ic_user") }
@@ -160,17 +187,17 @@ object DummyRepository {
         "강현석", "송동현", "김수연", "박민아", "이준호", "최민국", "김태진", "김지민", "이수민", "박서진"
     )
 
-    private val teamMembersMap: Map<String, List<TeamMember>> = run {
-        val teamIds = allTeams.map { it.id }
+    private val _teamMembersMap: MutableMap<String, MutableList<TeamMember>> = run {
+        val teamIds = _allTeams.map { it.id }
         teamIds.mapIndexed { index, teamId ->
             val count = if (index % 3 == 0) 5 else 4
             val names = koreanNamesPool.drop(index * 2).take(5).let { if (it.size >= count) it.take(count) else it + koreanNamesPool.take(count - it.size) }
-            teamId to names.mapIndexed { i, name -> TeamMember("m-$teamId-$i", name, "ic_user") }
-        }.toMap()
+            teamId to names.mapIndexed { i, name -> TeamMember("m-$teamId-$i", name, "ic_user") }.toMutableList()
+        }.toMap().toMutableMap()
     }
 
-    /** 팀 스페이스용: 해당 팀의 팀원 목록 (기존 팀 = teamMembersMap, 추가 팀 = extraTeamMembers) */
-    fun getTeamMembers(teamId: String): List<TeamMember> = teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+    /** 팀 스페이스용: 해당 팀의 팀원 목록 (기존 팀 = _teamMembersMap, 추가 팀 = extraTeamMembers) */
+    fun getTeamMembers(teamId: String): List<TeamMember> = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
 
     fun getTeamIntro(teamId: String): String = getTeamById(teamId)?.intro ?: teamIntroMap[teamId] ?: ""
 

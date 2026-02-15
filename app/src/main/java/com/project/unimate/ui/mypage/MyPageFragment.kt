@@ -25,13 +25,17 @@ class MyPageFragment : Fragment() {
 
         val mypageUserName = root.findViewById<TextView>(R.id.mypageUserName)
         val mypageUserEmail = root.findViewById<TextView>(R.id.mypageUserEmail)
+        val mypageProfileEdit = root.findViewById<View>(R.id.mypageProfileEdit)
         val mypageJoinButton = root.findViewById<View>(R.id.mypageJoinButton)
         val mypageParticipatingContainer = root.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
         val mypageCompletedContainer = root.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
 
-        mypageUserName.text = "이주연"
+        mypageUserName.text = DummyRepository.getCurrentUserName()
         mypageUserEmail.text = "juyenLe24@naver.com"
 
+        mypageProfileEdit.setOnClickListener {
+            findNavController().navigate(R.id.action_myPage_to_editProfile)
+        }
         mypageJoinButton.setOnClickListener {
             findNavController().navigate(R.id.joinTeamSpaceFragment)
         }
@@ -43,6 +47,7 @@ class MyPageFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         view?.let { v ->
+            v.findViewById<TextView>(R.id.mypageUserName)?.text = DummyRepository.getCurrentUserName()
             val participating = v.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
             val completed = v.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
             if (participating != null && completed != null) {
