@@ -149,4 +149,9 @@
     <style name="DatePickerButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
         <item name="android:textColor">@color/main_green</item>
     </style>
+
+    <!-- 팀 스페이스 종료 팝업 (가로는 코드에서 setLayout으로 지정) -->
+    <style name="TeamEndDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 </resources>

@@ -2,17 +2,20 @@ package com.project.unimate
 
 import android.Manifest
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -22,6 +25,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
 import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.auth.JwtStore
+import com.project.unimate.data.entity.Team
+import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
 
@@ -66,6 +71,62 @@ class MainActivity : AppCompatActivity() {
         val jwt = JwtStore.load(this)
         Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()} len=${jwt?.length ?: 0}")
         FcmRegistrar.registerIfPossible(this, BASE_URL)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkAndShowTeamEndPopups()
+    }
+
+    private val teamEndPopupPrefs: SharedPreferences
+        get() = getSharedPreferences("team_end_popup", MODE_PRIVATE)
+
+    private fun hasShownTeamEndPopup(teamId: String): Boolean =
+        teamEndPopupPrefs.getBoolean("shown_$teamId", false)
+
+    private fun markTeamEndPopupShown(teamId: String) {
+        teamEndPopupPrefs.edit().putBoolean("shown_$teamId", true).apply()
+    }
+
+    private fun checkAndShowTeamEndPopups() {
+        val now = System.currentTimeMillis()
+        val endedTeams = DummyRepository.getCalendarFilterTeams()
+            .filter { it.workEndMillis != null && it.workEndMillis < now }
+            .filter { !hasShownTeamEndPopup(it.id) }
+        if (endedTeams.isEmpty()) return
+        showNextTeamEndPopup(endedTeams.toMutableList())
+    }
+
+    private fun showNextTeamEndPopup(queue: MutableList<Team>) {
+        if (queue.isEmpty()) return
+        val team = queue.removeAt(0)
+        val view = layoutInflater.inflate(R.layout.dialog_team_space_ended, null)
+        val dialog = AlertDialog.Builder(this, R.style.TeamEndDialogTheme)
+            .setView(view)
+            .setCancelable(false)
+            .create()
+        view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener { dialog.dismiss() }
+        dialog.setOnDismissListener {
+            markTeamEndPopupShown(team.id)
+            if (queue.isNotEmpty()) showNextTeamEndPopup(queue)
+        }
+        val dm = resources.displayMetrics
+        val wPx = (dm.widthPixels * 0.9f).toInt()
+        val hPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 260f, dm).toInt()
+        dialog.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.attributes?.let { params ->
+                params.width = wPx
+                params.height = hPx
+                window.attributes = params
+            }
+            window.setDimAmount(0.6f)
+        }
+        dialog.show()
+        dialog.window?.let { window ->
+            window.setLayout(wPx, hPx)
+            view.post { window.setLayout(wPx, hPx) }
+        }
     }
 
     private fun setupNavigation() {

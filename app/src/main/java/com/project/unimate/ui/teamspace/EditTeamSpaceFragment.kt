@@ -3,6 +3,7 @@ package com.project.unimate.ui.teamspace
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -246,7 +247,38 @@ class EditTeamSpaceFragment : Fragment() {
                 setCompleted = setEndedTeam,
                 completedAtMillis = completedAt
             )
-            findNavController().popBackStack()
+            if (setEndedTeam) {
+                showTeamEndDialog()
+            } else {
+                findNavController().popBackStack()
+            }
+        }
+    }
+
+    private fun showTeamEndDialog() {
+        val view = layoutInflater.inflate(R.layout.dialog_team_space_ended, null)
+        val dialog = AlertDialog.Builder(requireContext(), R.style.TeamEndDialogTheme)
+            .setView(view)
+            .setCancelable(false)
+            .create()
+        view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener { dialog.dismiss() }
+        dialog.setOnDismissListener { findNavController().popBackStack() }
+        val dm = resources.displayMetrics
+        val wPx = (dm.widthPixels * 0.9f).toInt()
+        val hPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 260f, dm).toInt()
+        dialog.window?.let { window ->
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.attributes?.let { params ->
+                params.width = wPx
+                params.height = hPx
+                window.attributes = params
+            }
+            window.setDimAmount(0.6f)
+        }
+        dialog.show()
+        dialog.window?.let { window ->
+            window.setLayout(wPx, hPx)
+            view.post { window.setLayout(wPx, hPx) }
         }
     }
 }

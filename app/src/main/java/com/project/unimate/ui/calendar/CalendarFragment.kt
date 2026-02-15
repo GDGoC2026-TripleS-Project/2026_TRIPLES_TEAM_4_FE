@@ -252,23 +252,28 @@ class CalendarFragment : Fragment() {
                     cornerRadius = radiusPx
                 }
                 val chipRemoveWrap = chip.findViewById<View>(R.id.chipRemoveWrap)
-                chipRemoveWrap.setOnClickListener {
+                val chipRemove = chip.findViewById<View>(R.id.chipRemove)
+                val onRemove: (View) -> Unit = {
                     selectedFilterTeamIds.remove(team.id)
                     refreshChips()
                     refreshGrid()
                     refreshDayTasks()
                 }
+                chipRemoveWrap.setOnClickListener(onRemove)
+                chipRemove.setOnClickListener(onRemove)
                 calendarFilterChips.addView(chip)
                 chip.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
                     override fun onGlobalLayout() {
                         chip.viewTreeObserver.removeOnGlobalLayoutListener(this)
                         val rect = Rect()
                         chipRemoveWrap.getHitRect(rect)
-                        val expandPx = 56.dpToPx()
-                        rect.left -= expandPx
-                        rect.top -= expandPx
-                        rect.right += expandPx
-                        rect.bottom += expandPx
+                        val expandHorzPx = 56.dpToPx()
+                        val expandTopPx = 80.dpToPx()
+                        val expandBottomPx = 40.dpToPx()
+                        rect.left -= expandHorzPx
+                        rect.top -= expandTopPx
+                        rect.right += expandHorzPx
+                        rect.bottom += expandBottomPx
                         chip.touchDelegate = TouchDelegate(rect, chipRemoveWrap)
                     }
                 })
