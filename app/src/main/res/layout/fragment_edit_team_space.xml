@@ -336,5 +336,16 @@
             android:text="@string/complete"
             android:textColor="@color/white"
             android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/deleteTeamSpace"
+            android:layout_width="wrap_content"
+            android:layout_height="45dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/delete_team"
+            android:textColor="@color/gray06"
+            style="@style/body2_r_16" />
     </LinearLayout>
 </ScrollView>
