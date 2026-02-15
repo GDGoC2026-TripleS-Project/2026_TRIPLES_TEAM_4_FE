@@ -10,34 +10,39 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
 import com.project.unimate.notification.NotificationItem
+import com.project.unimate.notification.NotificationUiMapper
 
 class NotificationAdapter(
     private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    private val sourceItems = mutableListOf<NotificationItem>()
     private val items = mutableListOf<ListItem>()
 
     fun submit(notifications: List<NotificationItem>) {
-        val grouped = notifications.groupBy { it.alarmType }
+        sourceItems.clear()
+        sourceItems.addAll(notifications)
+        rebuildUiItems()
+    }
 
+    fun updateItem(updated: NotificationItem) {
+        val idx = sourceItems.indexOfFirst { it.notificationId == updated.notificationId }
+        if (idx >= 0) {
+            sourceItems[idx] = updated
+            rebuildUiItems()
+        }
+    }
+
+    private fun rebuildUiItems() {
+        val sections = NotificationUiMapper.toSections(sourceItems)
         items.clear()
-        for ((section, list) in grouped) {
-            items.add(ListItem.Section(section))
-            for (n in list) {
+        for (section in sections) {
+            items.add(ListItem.Section(section.title))
+            for (n in section.items) {
                 items.add(ListItem.Card(n))
             }
         }
         notifyDataSetChanged()
-    }
-
-    fun updateItem(updated: NotificationItem) {
-        val idx = items.indexOfFirst {
-            it is ListItem.Card && it.notification.notificationId == updated.notificationId
-        }
-        if (idx >= 0) {
-            items[idx] = ListItem.Card(updated)
-            notifyItemChanged(idx)
-        }
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -70,12 +75,11 @@ class NotificationAdapter(
     class SectionHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val title: TextView = itemView.findViewById(R.id.section_title)
         fun bind(item: ListItem.Section) {
-            val raw = item.title.trim()
-            title.text = if (raw.startsWith("찌르기 ")) raw else "찌르기 $raw"
+            title.text = item.title
         }
     }
 
-    class CardHolder(
+    inner class CardHolder(
         itemView: View,
         private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
@@ -122,7 +126,7 @@ class NotificationAdapter(
                 button.setBackgroundResource(R.drawable.bg_notification_button_enabled)
                 button.setOnClickListener {
                     onCompleteClicked(n) { updated ->
-                        bind(ListItem.Card(updated))
+                        updateItem(updated)
                     }
                 }
             }
