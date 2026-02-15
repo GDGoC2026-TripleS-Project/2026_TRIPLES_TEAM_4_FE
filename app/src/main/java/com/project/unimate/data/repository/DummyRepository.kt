@@ -76,6 +76,12 @@ object DummyRepository {
     /** 현재 사용자 이름 (마이페이지·프로필 수정). 앱 실행 중에만 반영. */
     private var currentUserName: String = "이주연"
     fun getCurrentUserName(): String = currentUserName
+
+    /** 현재 사용자 프로필 사진 (마이페이지·프로필 수정). "file:파일명" 또는 drawable 리소스명 또는 "". 앱 실행 중에만 반영. */
+    private var currentUserProfileImageResName: String = ""
+    fun getCurrentUserProfileImageResName(): String = currentUserProfileImageResName
+    fun setCurrentUserProfileImageResName(value: String) { currentUserProfileImageResName = value }
+
     fun setCurrentUserName(name: String) {
         if (name.isBlank()) return
         val oldName = currentUserName
@@ -107,7 +113,7 @@ object DummyRepository {
         _allTaskItems.removeAll { it.teamId == teamId }
     }
 
-    /** 팀 정보 수정. 종료 체크 해제 후 저장 시 진행중으로 전환. */
+    /** 팀 정보 수정. 종료 체크 해제 후 저장 시 진행중으로 전환. imageResName이 null이면 기존 유지. */
     fun updateTeam(
         teamId: String,
         name: String,
@@ -115,7 +121,8 @@ object DummyRepository {
         workStartMillis: Long?,
         workEndMillis: Long?,
         setCompleted: Boolean,
-        completedAtMillis: Long?
+        completedAtMillis: Long?,
+        imageResName: String? = null
     ) {
         val idx = _allTeams.indexOfFirst { it.id == teamId }
         if (idx < 0) return
@@ -125,6 +132,7 @@ object DummyRepository {
         _allTeams[idx] = t.copy(
             name = name,
             intro = intro,
+            imageResName = imageResName ?: t.imageResName,
             workStartMillis = workStartMillis,
             workEndMillis = workEndMillis,
             isCompleted = setCompleted,

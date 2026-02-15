@@ -25,6 +25,7 @@ class MyPageFragment : Fragment() {
 
         val mypageUserName = root.findViewById<TextView>(R.id.mypageUserName)
         val mypageUserEmail = root.findViewById<TextView>(R.id.mypageUserEmail)
+        val mypageUserIcon = root.findViewById<ImageView>(R.id.mypageUserIcon)
         val mypageProfileEdit = root.findViewById<View>(R.id.mypageProfileEdit)
         val mypageJoinButton = root.findViewById<View>(R.id.mypageJoinButton)
         val mypageParticipatingContainer = root.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
@@ -32,6 +33,7 @@ class MyPageFragment : Fragment() {
 
         mypageUserName.text = DummyRepository.getCurrentUserName()
         mypageUserEmail.text = "juyenLe24@naver.com"
+        applyUserProfileImage(mypageUserIcon, DummyRepository.getCurrentUserProfileImageResName())
 
         mypageProfileEdit.setOnClickListener {
             findNavController().navigate(R.id.action_myPage_to_editProfile)
@@ -48,6 +50,9 @@ class MyPageFragment : Fragment() {
         super.onResume()
         view?.let { v ->
             v.findViewById<TextView>(R.id.mypageUserName)?.text = DummyRepository.getCurrentUserName()
+            v.findViewById<ImageView>(R.id.mypageUserIcon)?.let { iv ->
+                applyUserProfileImage(iv, DummyRepository.getCurrentUserProfileImageResName())
+            }
             val participating = v.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
             val completed = v.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
             if (participating != null && completed != null) {
@@ -137,6 +142,36 @@ class MyPageFragment : Fragment() {
             }
             item.findViewById<TextView>(R.id.completedTeamName).text = team.name
             mypageCompletedContainer.addView(item)
+        }
+    }
+
+    private fun applyUserProfileImage(imageView: ImageView, imageResName: String) {
+        when {
+            imageResName.startsWith("file:") -> {
+                val file = java.io.File(requireContext().filesDir, imageResName.removePrefix("file:"))
+                if (file.exists()) {
+                    android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.let {
+                        imageView.setImageBitmap(it)
+                        imageView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
+                    }
+                } else {
+                    imageView.setImageResource(com.project.unimate.R.drawable.ic_user)
+                    imageView.scaleType = ImageView.ScaleType.CENTER_INSIDE
+                }
+            }
+            imageResName.isNotBlank() -> {
+                val resId = resources.getIdentifier(imageResName, "drawable", requireContext().packageName)
+                if (resId != 0) {
+                    imageView.setImageResource(resId)
+                    imageView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    imageView.scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+            }
+            else -> {
+                imageView.setImageResource(com.project.unimate.R.drawable.ic_user)
+                imageView.scaleType = ImageView.ScaleType.CENTER_INSIDE
+            }
         }
     }
 }
