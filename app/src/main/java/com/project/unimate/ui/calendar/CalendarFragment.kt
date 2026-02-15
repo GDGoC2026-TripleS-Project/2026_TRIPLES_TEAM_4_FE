@@ -1,11 +1,14 @@
 package com.project.unimate.ui.calendar
 
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.CheckBox
 import android.widget.GridLayout
 import android.widget.ImageButton
@@ -248,13 +251,27 @@ class CalendarFragment : Fragment() {
                     setStroke((2 * resources.displayMetrics.density).toInt(), borderColor)
                     cornerRadius = radiusPx
                 }
-                chip.findViewById<ImageButton>(R.id.chipRemove).setOnClickListener {
+                val chipRemoveWrap = chip.findViewById<View>(R.id.chipRemoveWrap)
+                chipRemoveWrap.setOnClickListener {
                     selectedFilterTeamIds.remove(team.id)
                     refreshChips()
                     refreshGrid()
                     refreshDayTasks()
                 }
                 calendarFilterChips.addView(chip)
+                chip.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        chip.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                        val rect = Rect()
+                        chipRemoveWrap.getHitRect(rect)
+                        val expandPx = 56.dpToPx()
+                        rect.left -= expandPx
+                        rect.top -= expandPx
+                        rect.right += expandPx
+                        rect.bottom += expandPx
+                        chip.touchDelegate = TouchDelegate(rect, chipRemoveWrap)
+                    }
+                })
             }
         }
 

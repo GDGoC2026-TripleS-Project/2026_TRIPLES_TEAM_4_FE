@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -116,7 +117,8 @@ class AddPersonalTaskFragment : Fragment() {
         updateTimeButtonsEnabled()
 
         startDateBtn.setOnClickListener {
-            val dlg = DatePickerDialog(requireContext(), R.style.DatePickerDialogThemeGray, { _, y, m, d ->
+            val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = DatePickerDialog(ctx, { _, y, m, d ->
                 startCal.set(y, m, d)
                 if (allDay) endCal.set(y, m, d)
                 if (startCal.after(endCal)) {
@@ -126,12 +128,7 @@ class AddPersonalTaskFragment : Fragment() {
                 }
                 refreshDateTime()
             }, startCal.get(Calendar.YEAR), startCal.get(Calendar.MONTH), startCal.get(Calendar.DAY_OF_MONTH))
-            dlg.setOnShowListener {
-                dlg.window?.decorView?.let { v ->
-                    v.post { applyBlackText(v) }
-                    v.postDelayed({ applyBlackText(v) }, 150)
-                }
-            }
+            styleDatePicker(dlg)
             dlg.show()
         }
         fun showTimeOptionPicker(cal: Calendar, onConfirm: () -> Unit) {
@@ -160,7 +157,8 @@ class AddPersonalTaskFragment : Fragment() {
         }
         startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { refreshDateTime() } }
         endDateBtn.setOnClickListener {
-            val dlg = DatePickerDialog(requireContext(), R.style.DatePickerDialogThemeGray, { _, y, m, d ->
+            val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = DatePickerDialog(ctx, { _, y, m, d ->
                 endCal.set(y, m, d)
                 if (endCal.before(startCal)) {
                     startCal.set(Calendar.YEAR, endCal.get(Calendar.YEAR))
@@ -169,12 +167,7 @@ class AddPersonalTaskFragment : Fragment() {
                 }
                 refreshDateTime()
             }, endCal.get(Calendar.YEAR), endCal.get(Calendar.MONTH), endCal.get(Calendar.DAY_OF_MONTH))
-            dlg.setOnShowListener {
-                dlg.window?.decorView?.let { v ->
-                    v.post { applyBlackText(v) }
-                    v.postDelayed({ applyBlackText(v) }, 150)
-                }
-            }
+            styleDatePicker(dlg)
             dlg.show()
         }
         endTimeBtn.setOnClickListener {
@@ -299,6 +292,16 @@ class AddPersonalTaskFragment : Fragment() {
         )
         DummyRepository.addPersonalSchedule(item)
         findNavController().popBackStack()
+    }
+
+    private fun styleDatePicker(dialog: DatePickerDialog) {
+        dialog.setButton(DatePickerDialog.BUTTON_POSITIVE, "확인", dialog)
+        dialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "취소", dialog)
+        dialog.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
     }
 
     private fun applyBlackText(view: View) {

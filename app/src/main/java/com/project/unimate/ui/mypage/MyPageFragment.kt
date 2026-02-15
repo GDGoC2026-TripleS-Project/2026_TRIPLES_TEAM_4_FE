@@ -96,8 +96,40 @@ class MyPageFragment : Fragment() {
             }
             val completedCard = item.findViewById<MaterialCardView>(R.id.completedTeamCard)
             completedCard.strokeColor = Color.parseColor(team.colorHex)
-            val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
-            if (resId != 0) item.findViewById<ImageView>(R.id.completedTeamImage).setImageResource(resId)
+            val teamImage = item.findViewById<ImageView>(R.id.completedTeamImage)
+            val teamLetter = item.findViewById<TextView>(R.id.completedTeamLetter)
+            when {
+                team.imageResName.startsWith("file:") -> {
+                    val file = java.io.File(requireContext().filesDir, team.imageResName.removePrefix("file:"))
+                    if (file.exists()) {
+                        android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.let { teamImage.setImageBitmap(it); teamImage.setBackgroundColor(android.graphics.Color.TRANSPARENT); teamLetter.visibility = View.GONE }
+                    } else {
+                        teamImage.setImageDrawable(null)
+                        teamImage.setBackgroundColor(Color.parseColor(team.colorHex))
+                        teamLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                        teamLetter.visibility = View.VISIBLE
+                    }
+                }
+                team.imageResName.isNotBlank() -> {
+                    val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
+                    if (resId != 0) {
+                        teamImage.setImageResource(resId)
+                        teamImage.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        teamLetter.visibility = View.GONE
+                    } else {
+                        teamImage.setImageDrawable(null)
+                        teamImage.setBackgroundColor(Color.parseColor(team.colorHex))
+                        teamLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                        teamLetter.visibility = View.VISIBLE
+                    }
+                }
+                else -> {
+                    teamImage.setImageDrawable(null)
+                    teamImage.setBackgroundColor(Color.parseColor(team.colorHex))
+                    teamLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                    teamLetter.visibility = View.VISIBLE
+                }
+            }
             item.findViewById<TextView>(R.id.completedTeamName).text = team.name
             mypageCompletedContainer.addView(item)
         }

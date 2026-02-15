@@ -1,7 +1,9 @@
 package com.project.unimate.ui.home
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
+import java.io.File
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -245,21 +247,52 @@ class HomeFragment : Fragment() {
             card.strokeColor = Color.parseColor(team.colorHex)
             val iconImage = item.findViewById<ImageView>(R.id.teamIconImage)
             val iconLetter = item.findViewById<TextView>(R.id.teamIconLetter)
-            val resId = if (team.imageResName.isNotBlank()) resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName) else 0
-            if (resId != 0) {
-                iconImage.visibility = View.VISIBLE
-                iconImage.setImageResource(resId)
-                iconLetter.visibility = View.GONE
-            } else {
-                iconImage.visibility = View.GONE
-                iconLetter.visibility = View.VISIBLE
-                iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
-                iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
+            when {
+                team.imageResName.startsWith("file:") -> {
+                    val file = File(requireContext().filesDir, team.imageResName.removePrefix("file:"))
+                    if (file.exists()) {
+                        BitmapFactory.decodeFile(file.absolutePath)?.let { bmp ->
+                            iconImage.visibility = View.VISIBLE
+                            iconImage.setImageBitmap(bmp)
+                            iconLetter.visibility = View.GONE
+                        } ?: run {
+                            iconImage.visibility = View.GONE
+                            iconLetter.visibility = View.VISIBLE
+                            iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                            iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
+                        }
+                    } else {
+                        iconImage.visibility = View.GONE
+                        iconLetter.visibility = View.VISIBLE
+                        iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                        iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
+                    }
+                }
+                team.imageResName.isNotBlank() -> {
+                    val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
+                    if (resId != 0) {
+                        iconImage.visibility = View.VISIBLE
+                        iconImage.setImageResource(resId)
+                        iconLetter.visibility = View.GONE
+                    } else {
+                        iconImage.visibility = View.GONE
+                        iconLetter.visibility = View.VISIBLE
+                        iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                        iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
+                    }
+                }
+                else -> {
+                    iconImage.visibility = View.GONE
+                    iconLetter.visibility = View.VISIBLE
+                    iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                    iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
+                }
             }
             item.findViewById<TextView>(R.id.teamIconName).text = team.name
             homeTeamSpaceIcons.addView(item)
         }
         val plusBtn = inflater.inflate(R.layout.item_home_team_plus, homeTeamSpaceIcons, false)
+        plusBtn.findViewById<ImageButton>(R.id.teamPlusButton).setOnClickListener { findNavController().navigate(R.id.action_home_to_teamAdd) }
         homeTeamSpaceIcons.addView(plusBtn)
         (plusBtn.layoutParams as? LinearLayout.LayoutParams)?.gravity = android.view.Gravity.CENTER_VERTICAL
 

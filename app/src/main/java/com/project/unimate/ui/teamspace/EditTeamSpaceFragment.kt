@@ -13,11 +13,15 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import android.graphics.BitmapFactory
+import android.graphics.Color
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
+import java.io.File
 import java.util.Calendar
 
 class EditTeamSpaceFragment : Fragment() {
@@ -49,6 +53,7 @@ class EditTeamSpaceFragment : Fragment() {
 
         val back = view.findViewById<ImageButton>(R.id.editTeamSpaceBack)
         val userIcon = view.findViewById<ImageView>(R.id.editTeamSpaceUserIcon)
+        val userIconLetter = view.findViewById<TextView>(R.id.editTeamSpaceUserIconLetter)
         val photoEdit = view.findViewById<ImageButton>(R.id.editTeamSpacePhotoEdit)
         val nameEt = view.findViewById<EditText>(R.id.editTeamSpaceName)
         val introEt = view.findViewById<EditText>(R.id.editTeamSpaceIntro)
@@ -66,12 +71,42 @@ class EditTeamSpaceFragment : Fragment() {
         nameEt.setText(team.name)
         introEt.setText(team.intro)
 
-        if (team.workStartMillis != null) {
-            startCal.timeInMillis = team.workStartMillis
+        when {
+            team.imageResName.startsWith("file:") -> {
+                val file = File(requireContext().filesDir, team.imageResName.removePrefix("file:"))
+                if (file.exists()) {
+                    BitmapFactory.decodeFile(file.absolutePath)?.let { userIcon.setImageBitmap(it); userIcon.setBackgroundColor(Color.TRANSPARENT); userIconLetter.visibility = View.GONE }
+                } else {
+                    userIcon.setImageDrawable(null)
+                    userIcon.setBackgroundColor(Color.parseColor(team.colorHex))
+                    userIconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                    userIconLetter.visibility = View.VISIBLE
+                }
+            }
+            team.imageResName.isNotBlank() -> {
+                val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
+                if (resId != 0) {
+                    userIcon.setImageResource(resId)
+                    userIcon.setBackgroundColor(Color.TRANSPARENT)
+                    userIconLetter.visibility = View.GONE
+                } else {
+                    userIcon.setImageDrawable(null)
+                    userIcon.setBackgroundColor(Color.parseColor(team.colorHex))
+                    userIconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                    userIconLetter.visibility = View.VISIBLE
+                }
+            }
+            else -> {
+                userIcon.setImageDrawable(null)
+                userIcon.setBackgroundColor(Color.parseColor(team.colorHex))
+                userIconLetter.text = team.name.firstOrNull()?.toString() ?: ""
+                userIconLetter.visibility = View.VISIBLE
+            }
         }
-        if (team.workEndMillis != null) {
-            endCal.timeInMillis = team.workEndMillis
-        }
+        userIcon.scaleType = ImageView.ScaleType.CENTER_CROP
+
+        startCal.timeInMillis = team.workStartMillis ?: System.currentTimeMillis()
+        endCal.timeInMillis = team.workEndMillis ?: System.currentTimeMillis()
 
         fun formatDate(cal: Calendar): String =
             "${cal.get(Calendar.YEAR)}. ${cal.get(Calendar.MONTH) + 1}. ${cal.get(Calendar.DAY_OF_MONTH)}"
@@ -103,13 +138,20 @@ class EditTeamSpaceFragment : Fragment() {
         fun showDatePicker(cal: Calendar, onSet: (y: Int, m: Int, d: Int) -> Unit) {
             val dlg = DatePickerDialog(
                 requireContext(),
+                R.style.MyDatePickerDialogTheme,
                 { _, y, m, d -> onSet(y, m, d) },
                 cal.get(Calendar.YEAR),
                 cal.get(Calendar.MONTH),
                 cal.get(Calendar.DAY_OF_MONTH)
             )
+            dlg.setButton(DatePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+            dlg.setButton(DatePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+            dlg.setOnShowListener {
+                val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+                dlg.getButton(DatePickerDialog.BUTTON_POSITIVE)?.setTextColor(colorBlack)
+                dlg.getButton(DatePickerDialog.BUTTON_NEGATIVE)?.setTextColor(colorBlack)
+            }
             dlg.show()
-            dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(resources.getColor(android.R.color.black, null))
         }
 
         fun showTimeOptionPicker(cal: Calendar, onSet: (hour: Int, minute: Int) -> Unit) {
@@ -143,6 +185,11 @@ class EditTeamSpaceFragment : Fragment() {
                 startCal.set(Calendar.YEAR, y)
                 startCal.set(Calendar.MONTH, m)
                 startCal.set(Calendar.DAY_OF_MONTH, d)
+                if (startCal.after(endCal)) {
+                    endCal.set(Calendar.YEAR, startCal.get(Calendar.YEAR))
+                    endCal.set(Calendar.MONTH, startCal.get(Calendar.MONTH))
+                    endCal.set(Calendar.DAY_OF_MONTH, startCal.get(Calendar.DAY_OF_MONTH))
+                }
                 refreshDateTimeButtons()
             }
         }
@@ -152,6 +199,11 @@ class EditTeamSpaceFragment : Fragment() {
                 endCal.set(Calendar.YEAR, y)
                 endCal.set(Calendar.MONTH, m)
                 endCal.set(Calendar.DAY_OF_MONTH, d)
+                if (endCal.before(startCal)) {
+                    startCal.set(Calendar.YEAR, endCal.get(Calendar.YEAR))
+                    startCal.set(Calendar.MONTH, endCal.get(Calendar.MONTH))
+                    startCal.set(Calendar.DAY_OF_MONTH, endCal.get(Calendar.DAY_OF_MONTH))
+                }
                 refreshDateTimeButtons()
             }
         }
@@ -178,8 +230,13 @@ class EditTeamSpaceFragment : Fragment() {
             }
             val intro = introEt.text.toString().trim()
             val workStart = startCal.timeInMillis
-            val workEnd = endCal.timeInMillis
-            val completedAt = if (setEndedTeam) System.currentTimeMillis() else null
+            val now = System.currentTimeMillis()
+            val workEnd = if (setEndedTeam && !team.isCompleted) now else endCal.timeInMillis
+            val completedAt = when {
+                setEndedTeam && !team.isCompleted -> now
+                setEndedTeam && team.isCompleted -> team.completedAtMillis
+                else -> null
+            }
             DummyRepository.updateTeam(
                 teamId = team.id,
                 name = name,

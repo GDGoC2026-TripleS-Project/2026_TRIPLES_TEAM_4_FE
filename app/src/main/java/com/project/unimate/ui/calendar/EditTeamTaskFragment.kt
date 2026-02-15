@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -82,10 +83,23 @@ class EditTeamTaskFragment : Fragment() {
         nameEt.setText(task.title)
         teamSpaceBtn.text = DummyRepository.getTeamById(task.teamId)?.name ?: task.teamId
         val taskTeam = DummyRepository.getTeamById(task.teamId)
-        if (taskTeam?.isCompleted == true) {
+        val isCompletedTeam = taskTeam?.isCompleted == true
+        if (isCompletedTeam) {
             teamSpaceBtnWrap.isEnabled = false
             teamSpaceBtnWrap.isClickable = false
             teamSpaceBtnWrap.alpha = 0.6f
+            alldayRow.isEnabled = false
+            alldayRow.isClickable = false
+            alldayRow.alpha = 0.6f
+            startDateBtn.isEnabled = false
+            startDateBtn.isClickable = false
+            startTimeBtn.isEnabled = false
+            startTimeBtn.isClickable = false
+            endDateBtn.isEnabled = false
+            endDateBtn.isClickable = false
+            endTimeBtn.isEnabled = false
+            endTimeBtn.isClickable = false
+            listOf(startDateBtn, startTimeBtn, endDateBtn, endTimeBtn).forEach { it.alpha = 0.6f }
         }
         startCal.timeInMillis = task.startTimeMillis
         endCal.timeInMillis = task.endTimeMillis
@@ -166,12 +180,14 @@ class EditTeamTaskFragment : Fragment() {
         }
 
         fun updateTimeButtonsEnabled() {
+            if (isCompletedTeam) return
             startTimeBtn.isEnabled = !allDay
             startTimeBtn.isClickable = !allDay
             endTimeBtn.isEnabled = !allDay
             endTimeBtn.isClickable = !allDay
         }
         alldayRow.setOnClickListener {
+            if (isCompletedTeam) return@setOnClickListener
             allDay = !allDay
             alldayIcon.setImageResource(if (allDay) R.drawable.ic_allday_selected else R.drawable.ic_allday_unselected)
             if (allDay) {
@@ -184,7 +200,9 @@ class EditTeamTaskFragment : Fragment() {
         updateTimeButtonsEnabled()
 
         startDateBtn.setOnClickListener {
-            val dlg = DatePickerDialog(requireContext(), R.style.DatePickerDialogThemeGray, { _, y, m, d ->
+            if (isCompletedTeam) return@setOnClickListener
+            val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = DatePickerDialog(ctx, { _, y, m, d ->
                 startCal.set(y, m, d)
                 if (allDay) endCal.set(y, m, d)
                 if (startCal.after(endCal)) {
@@ -194,12 +212,7 @@ class EditTeamTaskFragment : Fragment() {
                 }
                 refreshDateTime()
             }, startCal.get(Calendar.YEAR), startCal.get(Calendar.MONTH), startCal.get(Calendar.DAY_OF_MONTH))
-            dlg.setOnShowListener {
-                dlg.window?.decorView?.let { v ->
-                    v.post { applyBlackText(v) }
-                    v.postDelayed({ applyBlackText(v) }, 150)
-                }
-            }
+            styleDatePicker(dlg)
             dlg.show()
         }
         fun showTimeOptionPicker(cal: Calendar, onConfirm: () -> Unit) {
@@ -226,9 +239,11 @@ class EditTeamTaskFragment : Fragment() {
             }
             dialog.show()
         }
-        startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { refreshDateTime() } }
+        startTimeBtn.setOnClickListener { if (!isCompletedTeam) showTimeOptionPicker(startCal) { refreshDateTime() } }
         endDateBtn.setOnClickListener {
-            val dlg = DatePickerDialog(requireContext(), R.style.DatePickerDialogThemeGray, { _, y, m, d ->
+            if (isCompletedTeam) return@setOnClickListener
+            val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = DatePickerDialog(ctx, { _, y, m, d ->
                 endCal.set(y, m, d)
                 if (endCal.before(startCal)) {
                     startCal.set(Calendar.YEAR, endCal.get(Calendar.YEAR))
@@ -237,15 +252,11 @@ class EditTeamTaskFragment : Fragment() {
                 }
                 refreshDateTime()
             }, endCal.get(Calendar.YEAR), endCal.get(Calendar.MONTH), endCal.get(Calendar.DAY_OF_MONTH))
-            dlg.setOnShowListener {
-                dlg.window?.decorView?.let { v ->
-                    v.post { applyBlackText(v) }
-                    v.postDelayed({ applyBlackText(v) }, 150)
-                }
-            }
+            styleDatePicker(dlg)
             dlg.show()
         }
         endTimeBtn.setOnClickListener {
+            if (isCompletedTeam) return@setOnClickListener
             showTimeOptionPicker(endCal) {
                 refreshDateTime()
                 if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && endCal.timeInMillis < startCal.timeInMillis) {
@@ -261,7 +272,7 @@ class EditTeamTaskFragment : Fragment() {
         val name = view?.findViewById<EditText>(R.id.addTeamScheduleName)?.text?.toString()?.trim() ?: ""
         if (name.isEmpty()) return
         if (DummyRepository.allTeams.none { it.id == teamId }) {
-            DummyRepository.addTeam(Team(teamId, teamId, "#C2C2C2", "", false, 0, 0, ""))
+            DummyRepository.addTeam(Team(teamId, teamId, "#C2C2C2", "", false, 4, 7, ""))
         }
         val date = (startCal.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
         val updated = original.copy(
@@ -273,6 +284,16 @@ class EditTeamTaskFragment : Fragment() {
         )
         DummyRepository.updateTask(updated)
         findNavController().popBackStack()
+    }
+
+    private fun styleDatePicker(dialog: DatePickerDialog) {
+        dialog.setButton(DatePickerDialog.BUTTON_POSITIVE, "확인", dialog)
+        dialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "취소", dialog)
+        dialog.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
     }
 
     private fun applyBlackText(view: View) {

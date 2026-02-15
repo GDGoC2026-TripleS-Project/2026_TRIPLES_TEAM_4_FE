@@ -24,19 +24,17 @@
                 android:id="@+id/header"
                 layout="@layout/include_header_calendar" />
 
-            <!-- 개인 토글 + 세로 구분선 + 팀플 칩 가로 스크롤 -->
+            <!-- 개인 토글 + 세로 구분선 + 팀플 칩 (행 높이 48dp = 칩에 맞춤) -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="12dp">
+                android:paddingHorizontal="16dp">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -58,11 +56,12 @@
                     android:layout_height="24dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
+                    android:layout_gravity="center_vertical"
                     android:background="@color/gray_light" />
 
                 <HorizontalScrollView
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:scrollbars="none"
                     android:fillViewport="false">
@@ -70,7 +69,7 @@
                     <LinearLayout
                         android:id="@+id/calendarFilterChips"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:orientation="horizontal"
                         android:gravity="center_vertical" />
                 </HorizontalScrollView>

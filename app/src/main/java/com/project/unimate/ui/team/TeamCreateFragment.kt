@@ -23,7 +23,11 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.entity.Team
+import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.FragmentTeamCreateBinding
+import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -45,6 +49,20 @@ class TeamCreateFragment : Fragment() {
             )
         }
     }
+
+    /** 팀 생성 시 DB 저장용 색상 hex (버튼 id → hex) */
+    private val colorButtonToHex: Map<Int, String> = mapOf(
+        R.id.btnColorYellow to "#FFE970",
+        R.id.btnColorBeige to "#FFF8D3",
+        R.id.btnColorPeriwinkle to "#90A3ED",
+        R.id.btnColorLavender to "#D9E1FF",
+        R.id.btnColorMagenta to "#F488D4",
+        R.id.btnColorPinkLight to "#FFD8F3",
+        R.id.btnColorCoral to "#FF7A6E",
+        R.id.btnColorCoralLight to "#FBB0A9",
+        R.id.btnColorMint to "#3FE9C0",
+        R.id.btnColorAqua to "#C2FFF0"
+    )
 
 
     // 갤러리 이미지 선택 런처
@@ -83,6 +101,7 @@ class TeamCreateFragment : Fragment() {
 
         setupImagePicker() // 이미지 선택 리스너 연결
         setupDateAndTimeListeners()
+        setInitialDateAndTimeToNow()
         setupColorListeners()
         setupCompleteButton()
     }
@@ -107,6 +126,24 @@ class TeamCreateFragment : Fragment() {
         binding.tvStartTime.setOnClickListener { showTimePicker(binding.tvStartTime) }
         binding.tvEndDate.setOnClickListener { showDatePicker(binding.tvEndDate) }
         binding.tvEndTime.setOnClickListener { showTimePicker(binding.tvEndTime) }
+    }
+
+    /** 페이지 첫 진입 시 시작/종료 날짜·시간을 현재 날짜·시간으로 표시 */
+    private fun setInitialDateAndTimeToNow() {
+        val cal = Calendar.getInstance()
+        val year = cal.get(Calendar.YEAR)
+        val month = cal.get(Calendar.MONTH) + 1
+        val day = cal.get(Calendar.DAY_OF_MONTH)
+        val dateStr = "$year. $month. $day"
+        val h = cal.get(Calendar.HOUR_OF_DAY)
+        val m = cal.get(Calendar.MINUTE)
+        val amPm = if (h < 12) "오전" else "오후"
+        val hour = if (h % 12 == 0) 12 else h % 12
+        val timeStr = "$amPm ${hour}:${String.format("%02d", m)}"
+        binding.tvStartDate.text = dateStr
+        binding.tvStartTime.text = timeStr
+        binding.tvEndDate.text = dateStr
+        binding.tvEndTime.text = timeStr
     }
 
     private fun showDatePicker(textView: TextView) {
@@ -224,13 +261,82 @@ class TeamCreateFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // 모든 검사 통과 시 다음 화면으로 이동
+            // DB에 팀 추가 (다른 팀플과 동일하게 더미 팀원 등 생성됨)
             val tempInviteCode = generateRandomCode()
+            val teamId = "created_${System.currentTimeMillis()}"
+            val colorHex = colorButtons.find { it.tag == "SELECTED" }?.id?.let { colorButtonToHex[it] } ?: "#90A3ED"
+            val (workStart, workEnd) = parseWorkDateTimes(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString(), binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
+            val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, teamId) } ?: ""
+            val intro = binding.etTeamDesc.text?.toString()?.trim() ?: ""
+            val newTeam = Team(
+                id = teamId,
+                name = teamName,
+                colorHex = colorHex,
+                imageResName = imageResName,
+                isCompleted = false,
+                memberCount = 4,
+                deadlineDays = 7,
+                intro = intro,
+                workStartMillis = workStart,
+                workEndMillis = workEnd,
+                completedAtMillis = null
+            )
+            DummyRepository.addTeam(newTeam)
+
             val bundle = Bundle().apply {
                 putString("inviteCode", tempInviteCode)
                 putString("teamName", teamName)
             }
             findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
+        }
+    }
+
+    /** 갤러리에서 선택한 이미지를 앱 내부 저장소에 저장. 반환: "file:team_<teamId>.jpg" (실패 시 "") */
+    private fun saveTeamImageToFile(uri: Uri, teamId: String): String {
+        val fileName = "team_$teamId.jpg"
+        return try {
+            requireContext().contentResolver.openInputStream(uri)?.use { input ->
+                val file = File(requireContext().filesDir, fileName)
+                FileOutputStream(file).use { output ->
+                    input.copyTo(output)
+                }
+                "file:$fileName"
+            } ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /** 시작일시/종료일시 파싱 (기본값이면 null) */
+    private fun parseWorkDateTimes(startDateStr: String, startTimeStr: String, endDateStr: String, endTimeStr: String): Pair<Long?, Long?> {
+        val defaultDate = "2026. 2. 23"
+        if (startDateStr == defaultDate || endDateStr == defaultDate) return null to null
+        val dateFmt = SimpleDateFormat("yyyy. M. d", Locale.KOREA)
+        val timeFmt = SimpleDateFormat("a h:mm", Locale.KOREA)
+        return try {
+            val startDate = dateFmt.parse(startDateStr) ?: return null to null
+            val startTime = timeFmt.parse(startTimeStr) ?: return null to null
+            val endDate = dateFmt.parse(endDateStr) ?: return null to null
+            val endTime = timeFmt.parse(endTimeStr) ?: return null to null
+            val calStart = Calendar.getInstance().apply {
+                time = startDate
+                val t = Calendar.getInstance().apply { time = startTime }
+                set(Calendar.HOUR_OF_DAY, t.get(Calendar.HOUR_OF_DAY))
+                set(Calendar.MINUTE, t.get(Calendar.MINUTE))
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val calEnd = Calendar.getInstance().apply {
+                time = endDate
+                val t = Calendar.getInstance().apply { time = endTime }
+                set(Calendar.HOUR_OF_DAY, t.get(Calendar.HOUR_OF_DAY))
+                set(Calendar.MINUTE, t.get(Calendar.MINUTE))
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            calStart.timeInMillis to calEnd.timeInMillis
+        } catch (e: Exception) {
+            null to null
         }
     }
 

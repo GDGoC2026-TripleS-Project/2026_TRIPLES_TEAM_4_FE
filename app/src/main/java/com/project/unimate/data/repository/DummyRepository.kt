@@ -26,20 +26,54 @@ object DummyRepository {
         "ai_intro" to "인공지능 입문 팀 스페이스. 실습 과제와 팀 프로젝트 일정을 공유합니다."
     )
 
-    /** 팀 7개. 수정/추가 시 _allTeams 갱신.  */
+    /** 종료 팀플의 종료일: 2026년 2월 20일 이전으로 통일 */
+    private val completedTeamEndMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, 19, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+
+    /** 진행중 팀플 기본 시작일/종료일 (수정 페이지·마감 D-N 표시용) */
+    private val defaultOngoingStartMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+    /** 모든 팀플 종료일 2026년 2월 20일 전 */
+    private val defaultOngoingEndMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, 19, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+    /** 종료 팀플 기본 시작일 */
+    private val defaultCompletedStartMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.JANUARY, 10, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+
+    /** 팀 7개. 체리시·메가커피 진행중, 캡스톤·마모사리·모마미 종료. 사진은 cherish/megacoffe/momami만. 종료일 전부 2026-02-20 전. */
     private val _allTeams: MutableList<Team> = listOf(
-        Team("capstone", "캡스톤", "#FFE970", "megacoffe_image", false, 4, 10, teamIntroMap["capstone"] ?: ""),
-        Team("cherish", "체리시", "#F488D4", "cherish_image", true, 4, 2, teamIntroMap["cherish"] ?: ""),
-        Team("mamosari", "마모사리", "#D9F592", "cherish_image", false, 6, 8, teamIntroMap["mamosari"] ?: ""),
-        Team("megacoffe", "메가커피릿", "#FBB0A9", "megacoffe_image", true, 4, 1, teamIntroMap["megacoffe"] ?: ""),
-        Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: ""),
-        Team("psychology", "행복의 심리학", "#FFF8D3", "megacoffe_image", false, 4, 3, teamIntroMap["psychology"] ?: ""),
-        Team("ai_intro", "인공지능 입문", "#FF7A6E", "cherish_image", false, 6, 7, teamIntroMap["ai_intro"] ?: "")
+        Team("capstone", "캡스톤", "#FFE970", "", true, 4, 10, teamIntroMap["capstone"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
+        Team("cherish", "체리시", "#F488D4", "cherish_image", false, 4, 2, teamIntroMap["cherish"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
+        Team("mamosari", "마모사리", "#D9F592", "", true, 6, 8, teamIntroMap["mamosari"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
+        Team("megacoffe", "메가커피릿", "#FBB0A9", "megacoffe_image", false, 4, 1, teamIntroMap["megacoffe"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
+        Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
+        Team("psychology", "행복의 심리학", "#FFF8D3", "", false, 4, 3, teamIntroMap["psychology"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
+        Team("ai_intro", "인공지능 입문", "#FF7A6E", "", false, 6, 7, teamIntroMap["ai_intro"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null)
     ).toMutableList()
 
     val allTeams: List<Team> get() = _allTeams
 
-    /** 팀 정보 수정 (팀 스페이스 수정 페이지 완료 시 호출) */
+    /** 팀 정보 수정. 종료 체크 해제 후 저장 시 진행중으로 전환. */
     fun updateTeam(
         teamId: String,
         name: String,
@@ -52,30 +86,63 @@ object DummyRepository {
         val idx = _allTeams.indexOfFirst { it.id == teamId }
         if (idx < 0) return
         val t = _allTeams[idx]
+        val now = System.currentTimeMillis()
+        val completedAt = if (setCompleted) (completedAtMillis ?: now) else null
         _allTeams[idx] = t.copy(
             name = name,
             intro = intro,
             workStartMillis = workStartMillis,
             workEndMillis = workEndMillis,
-            isCompleted = t.isCompleted || setCompleted,
-            completedAtMillis = if (setCompleted) (completedAtMillis ?: System.currentTimeMillis()) else t.completedAtMillis
+            isCompleted = setCompleted,
+            completedAtMillis = completedAt
         )
     }
 
-    /** 새 팀 추가 (초대코드 참여 완료 시 호출) */
+    /** 새 팀 추가 시 사용하는 팀원 더미 (기존 7개 팀은 teamMembersMap, 이후 추가 팀은 여기) */
+    private val extraTeamMembers = mutableMapOf<String, List<TeamMember>>()
+
+    /** 새 팀 추가 (초대코드 참여/팀 생성/일정에서 팀 선택 시 호출). 팀원 4명·일정 더미 함께 생성. 시작/종료일 null이면 기본값 설정. */
     fun addTeam(team: Team) {
         if (_allTeams.any { it.id == team.id }) return
-        _allTeams.add(team)
+        val toAdd = if (team.workStartMillis == null || team.workEndMillis == null) {
+            team.copy(workStartMillis = team.workStartMillis ?: defaultOngoingStartMillis, workEndMillis = team.workEndMillis ?: defaultOngoingEndMillis)
+        } else team
+        _allTeams.add(toAdd)
+        val count = teamMembersMap[toAdd.id]?.size ?: 4
+        val names = koreanNamesPool.drop(toAdd.id.hashCode().and(0x7FFFFFFF) % (koreanNamesPool.size - count).coerceAtLeast(0)).take(count)
+            .let { if (it.size >= count) it.take(count) else it + koreanNamesPool.take(count - it.size) }
+        extraTeamMembers[toAdd.id] = names.mapIndexed { i, name -> TeamMember("m-${toAdd.id}-$i", name, "ic_user") }
+        addDefaultTasksForTeam(toAdd.id, toAdd.name)
     }
 
-    /** 나의 팀 스페이스 (홈 하단): 참여중인 팀플 */
-    fun getMyTeamSpaceTeams(): List<Team> = allTeams.filter { !it.isCompleted }
+    /** 새 팀에 대해 기존 더미와 동일한 규칙으로 일정 다수 생성 (2026-01~02, 주당 3일 등) */
+    private fun addDefaultTasksForTeam(teamId: String, teamName: String) {
+        val weekDays = listOf(
+            listOf(1, 2, 3), listOf(4, 5, 6), listOf(11, 12, 13), listOf(18, 19, 20),
+            listOf(25, 26, 27), listOf(1, 2, 3), listOf(8, 9, 10)
+        )
+        val monthForWeek = listOf(1, 1, 1, 1, 1, 2, 2)
+        val members = getTeamMembers(teamId).map { it.name }
+        weekDays.forEachIndexed { wi, days ->
+            val month = monthForWeek[wi]
+            val year = 2026
+            days.forEachIndexed { di, day ->
+                val creator = members.getOrNull(di % members.size)
+                _allTaskItems.add(task(teamId, "$teamName 일정", year, month, day, false, creator))
+            }
+        }
+    }
 
-    /** 참여중인 팀플 (마이페이지) */
-    fun getParticipatingTeamProjects(): List<Team> = allTeams.filter { !it.isCompleted }
+    private fun isTeamPastDeadline(team: Team): Boolean = team.workEndMillis != null && team.workEndMillis < System.currentTimeMillis()
 
-    /** 완료된 팀플 (마이페이지) */
-    fun getCompletedTeamProjects(): List<Team> = allTeams.filter { it.isCompleted }
+    /** 나의 팀 스페이스 (홈 하단): 진행중인 팀플 (종료 체크 안 했고 마감일 미지남) */
+    fun getMyTeamSpaceTeams(): List<Team> = allTeams.filter { !it.isCompleted && !isTeamPastDeadline(it) }
+
+    /** 참여중인 팀플 (마이페이지). 마감일 지나면 완료로 내려감 */
+    fun getParticipatingTeamProjects(): List<Team> = allTeams.filter { !it.isCompleted && !isTeamPastDeadline(it) }
+
+    /** 완료된 팀플 (마이페이지). 종료 체크했거나 마감일 지남 */
+    fun getCompletedTeamProjects(): List<Team> = allTeams.filter { it.isCompleted || isTeamPastDeadline(it) }
 
     /** 캘린더 필터용 팀 목록 (전체 7개) */
     fun getCalendarFilterTeams(): List<Team> = allTeams
@@ -95,8 +162,8 @@ object DummyRepository {
         }.toMap()
     }
 
-    /** 팀 스페이스용: 해당 팀의 팀원 목록 */
-    fun getTeamMembers(teamId: String): List<TeamMember> = teamMembersMap[teamId] ?: emptyList()
+    /** 팀 스페이스용: 해당 팀의 팀원 목록 (기존 팀 = teamMembersMap, 추가 팀 = extraTeamMembers) */
+    fun getTeamMembers(teamId: String): List<TeamMember> = teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
 
     fun getTeamIntro(teamId: String): String = getTeamById(teamId)?.intro ?: teamIntroMap[teamId] ?: ""
 

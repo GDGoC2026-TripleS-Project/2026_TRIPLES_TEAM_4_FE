@@ -83,8 +83,12 @@ class JoinTeamSpaceFragment : Fragment() {
                 colorHex = "#EDF3D7",
                 imageResName = "",
                 isCompleted = false,
-                memberCount = 1,
-                deadlineDays = 7
+                memberCount = 4,
+                deadlineDays = 7,
+                intro = "",
+                workStartMillis = null,
+                workEndMillis = null,
+                completedAtMillis = null
             )
             DummyRepository.addTeam(newTeam)
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -42,19 +43,38 @@
                 android:textStyle="bold" />
         </FrameLayout>
 
-        <!-- 유저 아이콘 + 플러스 버튼 -->
+        <!-- 유저 아이콘 + 플러스 버튼 (TeamCreateFragment처럼 동그란 카드) -->
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:paddingBottom="24dp">
 
-            <ImageView
-                android:id="@+id/editTeamSpaceUserIcon"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="96dp"
                 android:layout_height="96dp"
-                android:src="@drawable/ic_user_edit"
-                android:contentDescription="팀 아이콘" />
+                app:cardCornerRadius="48dp"
+                app:cardElevation="0dp">
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <ImageView
+                        android:id="@+id/editTeamSpaceUserIcon"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_user_edit"
+                        android:contentDescription="팀 아이콘" />
+                    <TextView
+                        android:id="@+id/editTeamSpaceUserIconLetter"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:textColor="@android:color/white"
+                        android:textSize="36sp"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <ImageButton
                 android:id="@+id/editTeamSpacePhotoEdit"
