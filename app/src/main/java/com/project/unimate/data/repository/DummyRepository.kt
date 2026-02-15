@@ -73,6 +73,13 @@ object DummyRepository {
 
     val allTeams: List<Team> get() = _allTeams
 
+    /** 팀 삭제 (앱 실행 중에만 반영, 재시작 시 데이터 복구). 팀·해당 팀 일정·추가 팀원 데이터 제거. */
+    fun deleteTeam(teamId: String) {
+        _allTeams.removeAll { it.id == teamId }
+        extraTeamMembers.remove(teamId)
+        _allTaskItems.removeAll { it.teamId == teamId }
+    }
+
     /** 팀 정보 수정. 종료 체크 해제 후 저장 시 진행중으로 전환. */
     fun updateTeam(
         teamId: String,

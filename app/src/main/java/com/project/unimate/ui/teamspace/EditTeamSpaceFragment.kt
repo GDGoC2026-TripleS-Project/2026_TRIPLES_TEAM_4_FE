@@ -65,6 +65,7 @@ class EditTeamSpaceFragment : Fragment() {
         val setEndedLayout = view.findViewById<LinearLayout>(R.id.editTeamSpaceSetEnded)
         val endCheckIcon = view.findViewById<ImageView>(R.id.editTeamSpaceEndCheckIcon)
         val completeBtn = view.findViewById<Button>(R.id.editTeamSpaceComplete)
+        val deleteTeamSpace = view.findViewById<View>(R.id.deleteTeamSpace)
 
         back.setOnClickListener { findNavController().popBackStack() }
         photoEdit.setOnClickListener { /* 추후 구현: 사진 설정 */ }
@@ -253,6 +254,24 @@ class EditTeamSpaceFragment : Fragment() {
                 findNavController().popBackStack()
             }
         }
+
+        deleteTeamSpace.setOnClickListener { showDeleteConfirmDialog(team.id) }
+    }
+
+    private fun showDeleteConfirmDialog(teamId: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_team_delete_confirm, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        dialogView.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
+            DummyRepository.deleteTeam(teamId)
+            dialog.dismiss()
+            findNavController().popBackStack()
+        }
+        dialogView.findViewById<View>(R.id.dialogTeamEndCancel).setOnClickListener { dialog.dismiss() }
+        dialog.setOnCancelListener { }
+        dialog.show()
     }
 
     private fun showTeamEndDialog() {

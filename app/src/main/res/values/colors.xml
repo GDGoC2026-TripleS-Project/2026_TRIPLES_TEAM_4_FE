@@ -3,6 +3,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+
     <!-- Unimate brand -->
     <color name="unimate_i">#FFB4D75C</color>
 
@@ -16,6 +17,7 @@
     <color name="gray_medium">#FF9E9E9E</color>
     <color name="gray_dark">#FF616161</color>
     <color name="sunday_red">#FFF44336</color>
+    <color name="delete_red">#C1473E</color>
     <color name="calendar_selected_bg">#FF9E9E9E</color>
     <color name="calendar_today_bg">#FFF5F5F5</color>
     <color name="home_selected_bg">#FFF5F5F5</color>
