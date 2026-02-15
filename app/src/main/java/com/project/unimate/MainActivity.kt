@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
             when (destination.id) {
                 R.id.homeFragment,
                 R.id.calendarFragment,
-                R.id.cockFragment,
+                R.id.pokeFragment,
                 R.id.myPageFragment -> {
                     navView.menu.findItem(destination.id)?.isChecked = true
                 }

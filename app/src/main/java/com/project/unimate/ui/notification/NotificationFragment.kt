@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
 import com.project.unimate.notification.NotificationApi
 import com.project.unimate.notification.NotificationStore
-import com.project.unimate.ui.cock.NotificationAdapter
+import com.project.unimate.ui.alarm.NotificationAdapter
 
 class NotificationFragment : Fragment() {
 
