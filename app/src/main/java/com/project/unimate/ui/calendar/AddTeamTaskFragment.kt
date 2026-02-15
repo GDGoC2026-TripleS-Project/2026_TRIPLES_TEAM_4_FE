@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -15,21 +16,27 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
-import com.project.unimate.data.entity.TaskItem
-import com.project.unimate.data.entity.Team
-import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.model.CreateScheduleRequest
+import com.project.unimate.model.ScheduleDetail
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.TeamService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class AddTeamTaskFragment : Fragment() {
 
     private val startCal = Calendar.getInstance().apply { set(Calendar.MINUTE, 0) }
     private val endCal = Calendar.getInstance().apply { add(Calendar.HOUR_OF_DAY, 1); set(Calendar.MINUTE, 0) }
     private var allDay = false
-    private var isPrivate = true
     private var selectedTeamId: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -38,7 +45,9 @@ class AddTeamTaskFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        selectedTeamId = arguments?.getString("teamId") ?: selectedTeamId
+
+        selectedTeamId = arguments?.getString("teamId")
+
         val cancelBtn = view.findViewById<TextView>(R.id.addTeamCancel)
         val saveBtn = view.findViewById<TextView>(R.id.addTeamSave)
         val toggleTeam = view.findViewById<TextView>(R.id.addTeamToggleTeam)
@@ -47,7 +56,6 @@ class AddTeamTaskFragment : Fragment() {
         val teamSpaceBtn = view.findViewById<TextView>(R.id.addTeamTeamSpaceBtn)
         val teamSpaceBtnWrap = view.findViewById<View>(R.id.addTeamTeamSpaceBtnWrap)
         val teamSpaceListScroll = view.findViewById<View>(R.id.addTeamTeamSpaceListScroll)
-        val teamSpaceList = view.findViewById<LinearLayout>(R.id.addTeamTeamSpaceList)
         val alldayIcon = view.findViewById<ImageView>(R.id.addTeamAlldayIcon)
         val alldayRow = alldayIcon.parent as View
         val startDateBtn = view.findViewById<Button>(R.id.addTeamStartDate)
@@ -60,9 +68,11 @@ class AddTeamTaskFragment : Fragment() {
         var notificationLabel = getString(R.string.none)
 
         cancelBtn.setOnClickListener { findNavController().popBackStack() }
+
         notificationBtnWrap.setOnClickListener {
             notificationDropdown.visibility = if (notificationDropdown.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         }
+
         listOf(
             R.id.addTeamNotificationItem0 to getString(R.string.none),
             R.id.addTeamNotificationItem1 to "5분 전",
@@ -76,49 +86,22 @@ class AddTeamTaskFragment : Fragment() {
                 notificationDropdown.visibility = View.GONE
             }
         }
+
         saveBtn.setOnClickListener { saveTeam() }
+
         togglePersonal.setOnClickListener {
             findNavController().popBackStack()
             findNavController().navigate(R.id.addPersonalTaskFragment, null)
         }
-        toggleTeam.setOnClickListener { /* already team */ }
+        toggleTeam.setOnClickListener { }
 
-        val teams = DummyRepository.getMyTeamSpaceTeams()
-        selectedTeamId?.let { id ->
-            teams.find { it.id == id }?.let { teamSpaceBtn.text = it.name }
-        }
-
-        fun updateTeamRowBackgrounds() {
-            val teamIds = DummyRepository.getMyTeamSpaceTeams().map { it.id }
-            for (i in 0 until teamSpaceList.childCount) {
-                val row = teamSpaceList.getChildAt(i) as? TextView ?: continue
-                val teamId = teamIds.getOrNull(i)
-                row.setBackgroundResource(if (teamId == selectedTeamId) R.drawable.bg_option_selected else android.R.color.transparent)
-            }
-        }
-        teamSpaceBtnWrap.setOnClickListener {
-            teamSpaceListScroll.visibility = if (teamSpaceListScroll.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-            if (teamSpaceListScroll.visibility == View.VISIBLE && teamSpaceList.childCount == 0) {
-                val list = DummyRepository.getMyTeamSpaceTeams()
-                list.forEachIndexed { index, team ->
-                    val row = TextView(requireContext()).apply {
-                        text = team.name
-                        setPadding(32, 24, 32, 24)
-                        setTextColor(ContextCompat.getColor(requireContext(), R.color.gray09))
-                        setBackgroundResource(if (team.id == selectedTeamId || (selectedTeamId == null && index == 0)) R.drawable.bg_option_selected else android.R.color.transparent)
-                        setOnClickListener {
-                            selectedTeamId = team.id
-                            teamSpaceBtn.text = team.name
-                            updateTeamRowBackgrounds()
-                            teamSpaceListScroll.visibility = View.GONE
-                        }
-                    }
-                    teamSpaceList.addView(row)
-                }
-                if (selectedTeamId == null && list.isNotEmpty()) selectedTeamId = list[0].id
-            } else if (teamSpaceListScroll.visibility == View.VISIBLE) {
-                updateTeamRowBackgrounds()
-            }
+        // 팀 선택 로직 (팀 스페이스 내부에서 진입 시 선택 불가 처리)
+        if (selectedTeamId != null) {
+            teamSpaceBtn.text = "현재 팀" // 혹은 arguments로 teamName을 받아와서 설정 가능
+            teamSpaceBtnWrap.isClickable = false // 팀 변경 방지
+        } else {
+            // 캘린더 등 외부에서 진입했을 때의 처리 (필요시 구현)
+            teamSpaceBtn.text = "팀 선택"
         }
 
         fun formatDate(cal: Calendar) = "${cal.get(Calendar.YEAR)}. ${cal.get(Calendar.MONTH) + 1}. ${cal.get(Calendar.DAY_OF_MONTH)}"
@@ -129,6 +112,7 @@ class AddTeamTaskFragment : Fragment() {
             val h = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
             return "$amPm $h:${minute.toString().padStart(2, '0')}"
         }
+
         fun refreshDateTime() {
             startDateBtn.text = formatDate(startCal)
             startTimeBtn.text = formatTime(startCal)
@@ -137,7 +121,6 @@ class AddTeamTaskFragment : Fragment() {
         }
         refreshDateTime()
 
-        // 날짜/시간 버튼
         val dateTimeBg = ContextCompat.getDrawable(requireContext(), R.drawable.bg_date_time_btn)
         val gray06Color = ContextCompat.getColor(requireContext(), R.color.gray06)
         listOf(startDateBtn, startTimeBtn, endDateBtn, endTimeBtn).forEach { btn ->
@@ -152,6 +135,7 @@ class AddTeamTaskFragment : Fragment() {
             endTimeBtn.isEnabled = !allDay
             endTimeBtn.isClickable = !allDay
         }
+
         alldayRow.setOnClickListener {
             allDay = !allDay
             alldayIcon.setImageResource(if (allDay) R.drawable.ic_allday_selected else R.drawable.ic_allday_unselected)
@@ -179,6 +163,7 @@ class AddTeamTaskFragment : Fragment() {
             styleDatePicker(dlg)
             dlg.show()
         }
+
         fun showTimeOptionPicker(cal: Calendar, onConfirm: () -> Unit) {
             val v = layoutInflater.inflate(R.layout.dialog_time_option, null)
             val amPmSpinner = v.findViewById<Spinner>(R.id.dialogTimeAmPm)
@@ -203,7 +188,9 @@ class AddTeamTaskFragment : Fragment() {
             }
             dialog.show()
         }
+
         startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { refreshDateTime() } }
+
         endDateBtn.setOnClickListener {
             val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
             val dlg = DatePickerDialog(ctx, { _, y, m, d ->
@@ -218,6 +205,7 @@ class AddTeamTaskFragment : Fragment() {
             styleDatePicker(dlg)
             dlg.show()
         }
+
         endTimeBtn.setOnClickListener {
             showTimeOptionPicker(endCal) {
                 refreshDateTime()
@@ -230,25 +218,51 @@ class AddTeamTaskFragment : Fragment() {
     }
 
     private fun saveTeam() {
-        val teamId = selectedTeamId ?: return
-        val name = view?.findViewById<EditText>(R.id.addTeamScheduleName)?.text?.toString()?.trim() ?: ""
-        if (name.isEmpty()) return
-        if (DummyRepository.allTeams.none { it.id == teamId }) {
-            DummyRepository.addTeam(Team(teamId, teamId, "#C2C2C2", "", false, 4, 7, ""))
+        val teamIdStr = selectedTeamId
+        if (teamIdStr == null) {
+            Toast.makeText(context, "팀 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+            return
         }
-        val date = (startCal.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
-        val item = TaskItem(
-            id = "t-$teamId-${System.currentTimeMillis()}",
-            teamId = teamId,
+
+        val teamId = teamIdStr.toLongOrNull() ?: 0L
+        val name = view?.findViewById<EditText>(R.id.addTeamScheduleName)?.text?.toString()?.trim() ?: ""
+
+        if (name.isEmpty()) {
+            Toast.makeText(context, "일정 내용을 입력해주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val serverFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
+        val startAt = serverFmt.format(startCal.time)
+        val endAt = serverFmt.format(endCal.time)
+
+        val request = CreateScheduleRequest(
             title = name,
-            date = date,
-            startTimeMillis = startCal.timeInMillis,
-            endTimeMillis = endCal.timeInMillis,
-            isChecked = false,
-            creatorName = null
+            memo = "",
+            startAt = startAt,
+            endAt = endAt,
+            category = "OTHER",
+            categoryMemo = "기타",
+            alarmMinutes = 0
         )
-        DummyRepository.addTask(item)
-        findNavController().popBackStack()
+
+        val service = RetrofitClient.getInstance(requireContext()).create(TeamService::class.java)
+        service.createTeamSchedule(teamId, request).enqueue(object : Callback<ScheduleDetail> {
+            override fun onResponse(call: Call<ScheduleDetail>, response: Response<ScheduleDetail>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(context, "팀 일정이 추가되었습니다.", Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
+                } else {
+                    Log.e("AddTeamTask", "서버 에러: ${response.code()}")
+                    Toast.makeText(context, "일정 추가 실패", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<ScheduleDetail>, t: Throwable) {
+                Log.e("AddTeamTask", "네트워크 에러: ${t.message}")
+                Toast.makeText(context, "네트워크 오류", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun styleDatePicker(dialog: DatePickerDialog) {
@@ -259,10 +273,5 @@ class AddTeamTaskFragment : Fragment() {
             dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
             dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
         }
-    }
-
-    private fun applyBlackText(view: View) {
-        if (view is ViewGroup) for (i in 0 until view.childCount) applyBlackText(view.getChildAt(i))
-        if (view is TextView) view.setTextColor(Color.BLACK)
     }
 }

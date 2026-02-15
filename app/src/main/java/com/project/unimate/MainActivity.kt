@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         teamEndPopupPrefs.edit().putBoolean("shown_$teamId", true).apply()
     }
 
-    private fun checkAndShowTeamEndPopups() {
+    private fun checkAndShowTeamEndPopups(){
         val now = System.currentTimeMillis()
         val endedTeams = DummyRepository.getCalendarFilterTeams()
             .filter { it.workEndMillis != null && it.workEndMillis < now }

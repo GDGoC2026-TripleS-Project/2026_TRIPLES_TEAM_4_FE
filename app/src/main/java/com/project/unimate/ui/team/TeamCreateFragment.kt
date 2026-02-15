@@ -1,6 +1,5 @@
 package com.project.unimate.ui.team
 
-
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
@@ -9,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -18,16 +18,20 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.registerForActivityResult
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
-import com.project.unimate.data.entity.Team
-import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.FragmentTeamCreateBinding
-import java.io.File
-import java.io.FileOutputStream
+import com.project.unimate.model.AvailableColor
+import com.project.unimate.model.CreateTeamRequest
+import com.project.unimate.model.InviteCodeResponse
+import com.project.unimate.model.TeamCreateResponse
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.TeamService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,10 +40,6 @@ class TeamCreateFragment : Fragment() {
     private var _binding: FragmentTeamCreateBinding? = null
     private val binding get() = _binding!!
 
-    // 선택된 이미지 URI 저장
-
-
-    // 색상 버튼 리스트
     private val colorButtons by lazy {
         with(binding) {
             listOf(
@@ -50,22 +50,62 @@ class TeamCreateFragment : Fragment() {
         }
     }
 
-    /** 팀 생성 시 DB 저장용 색상 hex (버튼 id → hex) */
-    private val colorButtonToHex: Map<Int, String> = mapOf(
-        R.id.btnColorYellow to "#FFE970",
-        R.id.btnColorBeige to "#FFF8D3",
-        R.id.btnColorPeriwinkle to "#90A3ED",
-        R.id.btnColorLavender to "#D9E1FF",
-        R.id.btnColorMagenta to "#F488D4",
-        R.id.btnColorPinkLight to "#FFD8F3",
-        R.id.btnColorCoral to "#FF7A6E",
-        R.id.btnColorCoralLight to "#FBB0A9",
-        R.id.btnColorMint to "#3FE9C0",
-        R.id.btnColorAqua to "#C2FFF0"
+    private val colorButtonToServerCode: Map<Int, String> = mapOf(
+        R.id.btnColorYellow to "C01",
+        R.id.btnColorBeige to "C02",
+        R.id.btnColorPeriwinkle to "C03",
+        R.id.btnColorLavender to "C04",
+        R.id.btnColorMagenta to "C05",
+        R.id.btnColorPinkLight to "C06",
+        R.id.btnColorCoral to "C07",
+        R.id.btnColorCoralLight to "C08",
+        R.id.btnColorMint to "C09",
+        R.id.btnColorAqua to "C10"
     )
 
+    private val serverCodeToHex: Map<String, String> = mapOf(
+        "C01" to "#FFE970",
+        "C02" to "#FFF8D3",
+        "C03" to "#90A3ED",
+        "C04" to "#D9E1FF",
+        "C05" to "#F488D4",
+        "C06" to "#FFD8F3",
+        "C07" to "#FF7A6E",
+        "C08" to "#FBB0A9",
+        "C09" to "#9CE098",
+        "C10" to "#D4FFD1-"
+    )
+//색상 중복 방지
+    private fun fetchAvailableColors() {
+        val service = RetrofitClient.getInstance(requireContext()).create(TeamService::class.java)
 
-    // 갤러리 이미지 선택 런처
+        service.getAvailableColors().enqueue(object : Callback<List<AvailableColor>> {
+            override fun onResponse(call: Call<List<AvailableColor>>, response: Response<List<AvailableColor>>) {
+                if (response.isSuccessful) {
+                    val availableHexList = response.body()?.map {
+                        it.hex.uppercase().replace("#", "")
+                    } ?: emptyList()
+
+                    colorButtons.forEach { button ->
+                        val myColorCode = colorButtonToServerCode[button.id]
+                        val myHex = serverCodeToHex[myColorCode]?.uppercase()?.replace("#", "")
+
+                        val isAvailable = myHex != null && availableHexList.contains(myHex)
+
+                        button.isEnabled = isAvailable
+                        button.alpha = if (isAvailable) 1.0f else 0.3f
+
+                        Log.d("COLOR_CHECK", "Button: ${button.id}, Hex: $myHex, Available: $isAvailable")
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<List<AvailableColor>>, t: Throwable) {
+                Log.e("API_ERROR", "색상 로드 실패: ${t.message}")
+            }
+        })
+    }
+
     private var selectedImageUri: Uri? = null
 
     private val pickImageLauncher = registerForActivityResult(
@@ -75,7 +115,6 @@ class TeamCreateFragment : Fragment() {
             val imageUri = result.data?.data
             if (imageUri != null) {
                 selectedImageUri = imageUri
-                // ivProfilePlaceholder 대신 실제 XML에 정의된 ID인 ivTeamProfile 사용
                 binding.ivTeamProfile.apply {
                     setImageURI(imageUri)
                     scaleType = ImageView.ScaleType.CENTER_CROP
@@ -95,20 +134,22 @@ class TeamCreateFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // 초기화: 색상 버튼 체크 해제
         colorButtons.forEach { it.setImageResource(0) }
 
-        setupImagePicker() // 이미지 선택 리스너 연결
+        fetchAvailableColors()
+        setupImagePicker()
         setupDateAndTimeListeners()
         setInitialDateAndTimeToNow()
         setupColorListeners()
         setupCompleteButton()
     }
 
-    // --- 1. 이미지 선택 로직 ---
+    private fun getTodayDateString(): String {
+        val cal = Calendar.getInstance()
+        return "${cal.get(Calendar.YEAR)}. ${cal.get(Calendar.MONTH) + 1}. ${cal.get(Calendar.DAY_OF_MONTH)}"
+    }
+
     private fun setupImagePicker() {
-        // 프로필 이미지 영역 클릭 시 갤러리 열기
         binding.ivTeamProfile.setOnClickListener {
             openGallery()
         }
@@ -120,7 +161,6 @@ class TeamCreateFragment : Fragment() {
         pickImageLauncher.launch(intent)
     }
 
-    // --- 2. 날짜/시간 선택 로직 ---
     private fun setupDateAndTimeListeners() {
         binding.tvStartDate.setOnClickListener { showDatePicker(binding.tvStartDate) }
         binding.tvStartTime.setOnClickListener { showTimePicker(binding.tvStartTime) }
@@ -128,13 +168,9 @@ class TeamCreateFragment : Fragment() {
         binding.tvEndTime.setOnClickListener { showTimePicker(binding.tvEndTime) }
     }
 
-    /** 페이지 첫 진입 시 시작/종료 날짜·시간을 현재 날짜·시간으로 표시 */
     private fun setInitialDateAndTimeToNow() {
         val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val month = cal.get(Calendar.MONTH) + 1
-        val day = cal.get(Calendar.DAY_OF_MONTH)
-        val dateStr = "$year. $month. $day"
+        val dateStr = getTodayDateString()
         val h = cal.get(Calendar.HOUR_OF_DAY)
         val m = cal.get(Calendar.MINUTE)
         val amPm = if (h < 12) "오전" else "오후"
@@ -149,11 +185,9 @@ class TeamCreateFragment : Fragment() {
     private fun showDatePicker(textView: TextView) {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
-
         val datePickerDialog = DatePickerDialog(
             contextWrapper,
             { _, year, month, day ->
-                // 포맷 통일: yyyy. M. d
                 textView.text = "${year}. ${month + 1}. ${day}"
             },
             cal.get(Calendar.YEAR),
@@ -167,13 +201,11 @@ class TeamCreateFragment : Fragment() {
     private fun showTimePicker(textView: TextView) {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
-
         val timePickerDialog = TimePickerDialog(
             contextWrapper,
             { _, h, m ->
                 val amPm = if (h < 12) "오전" else "오후"
                 val hour = if (h % 12 == 0) 12 else h % 12
-                // 포맷 통일: 오전/오후 h:mm
                 textView.text = "$amPm ${hour}:${String.format("%02d", m)}"
             },
             cal.get(Calendar.HOUR_OF_DAY),
@@ -184,7 +216,6 @@ class TeamCreateFragment : Fragment() {
         timePickerDialog.show()
     }
 
-    // 다이얼로그 버튼 색상 스타일링 (코드 중복 제거)
     private fun styleDatePicker(dialog: DatePickerDialog) {
         dialog.setButton(DatePickerDialog.BUTTON_POSITIVE, "확인", dialog)
         dialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "취소", dialog)
@@ -205,7 +236,6 @@ class TeamCreateFragment : Fragment() {
         }
     }
 
-    // --- 3. 컬러 선택 로직 ---
     private fun setupColorListeners() {
         colorButtons.forEach { button ->
             button.setOnClickListener { onColorSelected(button) }
@@ -215,195 +245,120 @@ class TeamCreateFragment : Fragment() {
     private fun onColorSelected(selectedButton: ImageButton) {
         colorButtons.forEach { it.setImageResource(0) }
         colorButtons.forEach { it.tag = null }
-
         selectedButton.setImageResource(R.drawable.ic_check_white)
         selectedButton.tag = "SELECTED"
     }
 
-    // --- 4. 완료 버튼 및 유효성 검사 (팝업 포함) ---
-    // --- 완료 버튼 로직 ---
     private fun setupCompleteButton() {
         binding.btnCompleteCreate.setOnClickListener {
             val teamName = binding.etTeamName.text.toString().trim()
-
-            // 1. 팀 명 유효성 검사 (필수)
             if (teamName.isEmpty()) {
                 Toast.makeText(requireContext(), "팀 명을 입력해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 2. 날짜 논리 유효성 검사 (시작일이 종료일보다 뒤에 있으면 토스트 메시지)
-            val startDateStr = binding.tvStartDate.text.toString()
-            val endDateStr = binding.tvEndDate.text.toString()
-            val defaultDate = "2026. 2. 23" // XML에 설정된 기본값
+            if (!isValidDateRange()) return@setOnClickListener
 
-            // 시작일과 종료일이 모두 선택된 경우에만 비교
-            if (startDateStr != defaultDate && endDateStr != defaultDate) {
-                val sdf = java.text.SimpleDateFormat("yyyy. MM. dd", java.util.Locale.KOREA)
-                try {
-                    val startDate = sdf.parse(startDateStr)
-                    val endDate = sdf.parse(endDateStr)
-
-                    if (startDate != null && endDate != null && startDate.after(endDate)) {
-                        //  토스트 메시지 사용
-                        Toast.makeText(requireContext(), "시작일은 종료일보다 빨라야 합니다.", Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-
-            // 3. 컬러 선택 유효성 검사 (필수)
             val isColorSelected = colorButtons.any { it.tag == "SELECTED" }
             if (!isColorSelected) {
                 Toast.makeText(requireContext(), "팀 컬러를 선택해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // DB에 팀 추가 (다른 팀플과 동일하게 더미 팀원 등 생성됨)
-            val tempInviteCode = generateRandomCode()
-            val teamId = "created_${System.currentTimeMillis()}"
-            val colorHex = colorButtons.find { it.tag == "SELECTED" }?.id?.let { colorButtonToHex[it] } ?: "#90A3ED"
-            val (workStart, workEnd) = parseWorkDateTimes(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString(), binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
-            val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, teamId) } ?: ""
-            val intro = binding.etTeamDesc.text?.toString()?.trim() ?: ""
-            val newTeam = Team(
-                id = teamId,
-                name = teamName,
-                colorHex = colorHex,
-                imageResName = imageResName,
-                isCompleted = false,
-                memberCount = 4,
-                deadlineDays = 7,
-                intro = intro,
-                workStartMillis = workStart,
-                workEndMillis = workEnd,
-                completedAtMillis = null
-            )
-            DummyRepository.addTeam(newTeam)
+            val teamDesc = binding.etTeamDesc.text.toString().trim()
 
-            val bundle = Bundle().apply {
-                putString("inviteCode", tempInviteCode)
-                putString("teamName", teamName)
-            }
-            findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
+            val serverColorCode = colorButtons.find { it.tag == "SELECTED" }?.id?.let { colorButtonToServerCode[it] } ?: "C01"
+
+            val startAt = formatDateTimeForServer(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString())
+            val endAt = formatDateTimeForServer(binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
+
+            performCreateTeam(teamName, teamDesc, serverColorCode, startAt, endAt)
         }
     }
 
-    /** 갤러리에서 선택한 이미지를 앱 내부 저장소에 저장. 반환: "file:team_<teamId>.jpg" (실패 시 "") */
-    private fun saveTeamImageToFile(uri: Uri, teamId: String): String {
-        val fileName = "team_$teamId.jpg"
+    private fun formatDateTimeForServer(dateStr: String, timeStr: String): String {
+        val inputFormat = SimpleDateFormat("yyyy. M. d a h:mm", Locale.KOREA)
+        val outputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.KOREA)
         return try {
-            requireContext().contentResolver.openInputStream(uri)?.use { input ->
-                val file = File(requireContext().filesDir, fileName)
-                FileOutputStream(file).use { output ->
-                    input.copyTo(output)
-                }
-                "file:$fileName"
-            } ?: ""
+            val date = inputFormat.parse("$dateStr $timeStr")
+            outputFormat.format(date!!)
         } catch (e: Exception) {
             ""
         }
     }
 
-    /** 시작일시/종료일시 파싱 (기본값이면 null) */
-    private fun parseWorkDateTimes(startDateStr: String, startTimeStr: String, endDateStr: String, endTimeStr: String): Pair<Long?, Long?> {
-        val defaultDate = "2026. 2. 23"
-        if (startDateStr == defaultDate || endDateStr == defaultDate) return null to null
-        val dateFmt = SimpleDateFormat("yyyy. M. d", Locale.KOREA)
-        val timeFmt = SimpleDateFormat("a h:mm", Locale.KOREA)
-        return try {
-            val startDate = dateFmt.parse(startDateStr) ?: return null to null
-            val startTime = timeFmt.parse(startTimeStr) ?: return null to null
-            val endDate = dateFmt.parse(endDateStr) ?: return null to null
-            val endTime = timeFmt.parse(endTimeStr) ?: return null to null
-            val calStart = Calendar.getInstance().apply {
-                time = startDate
-                val t = Calendar.getInstance().apply { time = startTime }
-                set(Calendar.HOUR_OF_DAY, t.get(Calendar.HOUR_OF_DAY))
-                set(Calendar.MINUTE, t.get(Calendar.MINUTE))
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
+    private fun performCreateTeam(name: String, desc: String, color: String, start: String, end: String) {
+        val service = RetrofitClient.getInstance(requireContext()).create(TeamService::class.java)
+
+        val request = CreateTeamRequest(name, desc, color, start, end)
+
+
+        service.createTeam(request).enqueue(object : Callback<TeamCreateResponse> {
+            override fun onResponse(call: Call<TeamCreateResponse>, response: Response<TeamCreateResponse>) {
+                if (response.isSuccessful) {
+                    // [수정] response.body()?.teamId 라고 쓰면 에러가 납니다.
+                    // 위에서 만든 모델 구조에 따라 아래와 같이 단계별로 접근해야 합니다.
+                    val createdTeamId = response.body()?.team?.id ?: 0L
+
+                    Log.d("CREATE_CHECK", "생성된 팀 ID: $createdTeamId")
+
+                    // 이제 이 ID를 가지고 초대코드 API를 호출합니다.
+                    service.issueInviteCode(createdTeamId).enqueue(object : Callback<InviteCodeResponse> {
+                        override fun onResponse(call: Call<InviteCodeResponse>, res: Response<InviteCodeResponse>) {
+                            if (res.isSuccessful) {
+                                val realInviteCode = res.body()?.inviteCode
+
+                                val bundle = Bundle().apply {
+                                    putString("inviteCode", realInviteCode)
+                                    putString("teamName", name)
+                                }
+                                findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
+                            }
+                        }
+                        override fun onFailure(call: Call<InviteCodeResponse>, t: Throwable) {
+                            Toast.makeText(requireContext(), "코드 발급 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    })
+                } else {
+                    Toast.makeText(requireContext(), "팀 생성 실패", Toast.LENGTH_SHORT).show()
+                }
             }
-            val calEnd = Calendar.getInstance().apply {
-                time = endDate
-                val t = Calendar.getInstance().apply { time = endTime }
-                set(Calendar.HOUR_OF_DAY, t.get(Calendar.HOUR_OF_DAY))
-                set(Calendar.MINUTE, t.get(Calendar.MINUTE))
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
+            override fun onFailure(call: Call<TeamCreateResponse>, t: Throwable) {
+                Toast.makeText(requireContext(), "네트워크 오류", Toast.LENGTH_SHORT).show()
             }
-            calStart.timeInMillis to calEnd.timeInMillis
-        } catch (e: Exception) {
-            null to null
-        }
+        })
     }
 
-
-    /**
-     * 시작 일시와 종료 일시를 비교하는 함수
-     * 문제가 있으면 Alert Dialog를 띄우고 false를 반환
-     */
     private fun isValidDateRange(): Boolean {
         val startDateStr = binding.tvStartDate.text.toString()
         val startTimeStr = binding.tvStartTime.text.toString()
         val endDateStr = binding.tvEndDate.text.toString()
         val endTimeStr = binding.tvEndTime.text.toString()
 
-        // 기본 텍스트("2026. 2. 23" 등)가 그대로인지 확인 (날짜를 선택하지 않은 경우)
-        // 실제 앱에서는 기본값인지 확인하는 로직을 더 정교하게 하거나, 빈 값으로 시작하는 게 좋음
-        if (startDateStr == "2026. 2. 23" || endDateStr == "2026. 2. 23") {
-            Toast.makeText(context, "시작 및 종료 날짜를 모두 설정해주세요.", Toast.LENGTH_SHORT).show()
-            return false
-        }
-
-        // 날짜 포맷: "yyyy. M. d a h:mm" (Locale.KOREA 기준 "오전/오후" 파싱 가능)
         val dateFormat = SimpleDateFormat("yyyy. M. d a h:mm", Locale.KOREA)
-
-        try {
-            // 날짜와 시간을 합쳐서 Date 객체로 변환
-            // 예: "2026. 2. 23" + " " + "오후 1:05"
+        return try {
             val startFullDate = dateFormat.parse("$startDateStr $startTimeStr")
             val endFullDate = dateFormat.parse("$endDateStr $endTimeStr")
-
             if (startFullDate != null && endFullDate != null) {
                 if (startFullDate.after(endFullDate)) {
-                    // [팝업] 종료일이 시작일보다 빠름
                     showErrorDialog("종료 일시가 시작 일시보다 빠릅니다.\n날짜와 시간을 다시 확인해주세요.")
-                    return false
-                }
-                if (startFullDate == endFullDate) {
-                    // [팝업] 시작과 종료가 같음 (필요 시 주석 처리)
+                    false
+                } else if (startFullDate == endFullDate) {
                     showErrorDialog("시작 일시와 종료 일시가 같습니다.\n다시 확인해주세요.")
-                    return false
-                }
-            }
+                    false
+                } else true
+            } else true
         } catch (e: Exception) {
-            e.printStackTrace()
-            // 파싱 에러 시 그냥 통과시키거나 에러 메시지
-            return true
+            true
         }
-
-        return true
     }
 
-    /**
-     * 경고 팝업창 띄우기
-     */
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("날짜 설정 오류")
             .setMessage(message)
-            .setPositiveButton("확인") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setPositiveButton("확인") { dialog, _ -> dialog.dismiss() }
             .show()
-    }
-
-    private fun generateRandomCode(): String {
-        val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return (1..6).map { charset.random() }.joinToString("")
     }
 
     override fun onDestroyView() {

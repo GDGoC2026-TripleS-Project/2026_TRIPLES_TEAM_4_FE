@@ -1,31 +1,45 @@
 package com.project.unimate.ui.teamspace
 
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
-import com.project.unimate.data.entity.TeamMember
-import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.model.ScheduleDetail
+import com.project.unimate.model.TeamDetailResponse
+import com.project.unimate.model.TeamMember // TeamMember 모델 필요
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.TeamService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class TeamSpaceFragment : Fragment() {
 
-    private val teamId: String
+    private val teamIdStr: String
         get() = arguments?.getString(ARG_TEAM_ID) ?: ""
+
+    private val teamIdLong: Long
+        get() = teamIdStr.toLongOrNull() ?: 0L
 
     companion object {
         const val ARG_TEAM_ID = "teamId"
@@ -35,7 +49,26 @@ class TeamSpaceFragment : Fragment() {
     private var currentMonth = Calendar.getInstance().get(Calendar.MONTH)
     private var selectedDay: Calendar = Calendar.getInstance()
     private var isIntroExpanded = false
-    private var isCalendarTeamMode = true // true = 팀, false = 개인
+    private var isCalendarTeamMode = true
+
+    private val serverDayCounts = mutableMapOf<String, Int>()
+
+    private lateinit var teamSpaceColorCircle: View
+    private lateinit var teamSpaceTeamName: TextView
+    private lateinit var teamSpaceIntroTitle: TextView
+    private lateinit var teamSpaceIntroText: TextView
+    private lateinit var teamSpaceMembersCount: TextView
+    private lateinit var teamSpaceMembersIcons: LinearLayout
+    private lateinit var teamSpaceIntroContentWrapper: View
+    private lateinit var teamSpaceIntroExpandArrow: ImageButton
+    private lateinit var teamSpaceDayTasksContainer: LinearLayout
+    private lateinit var teamSpaceSelectedDateText: TextView
+    private lateinit var teamSpaceCalendarToggleLabel: TextView
+    private lateinit var teamSpaceCalendarTeamPersonalToggle: View
+    private lateinit var teamSpaceMonthGrid: GridLayout
+    private lateinit var teamSpaceMonthYear: TextView
+
+    private lateinit var teamService: TeamService
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,63 +76,58 @@ class TeamSpaceFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         val root = inflater.inflate(R.layout.fragment_team_space, container, false)
-        val team = DummyRepository.getTeamById(teamId) ?: run {
-            findNavController().navigateUp()
-            return root
-        }
-
-        fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
+        teamService = RetrofitClient.getInstance(requireContext()).create(TeamService::class.java)
 
         val teamSpaceBack = root.findViewById<ImageButton>(R.id.teamSpaceBack)
         val teamSpaceEdit = root.findViewById<TextView>(R.id.teamSpaceEdit)
-        val teamSpaceColorCircle = root.findViewById<View>(R.id.teamSpaceColorCircle)
-        val teamSpaceTeamName = root.findViewById<TextView>(R.id.teamSpaceTeamName)
+        teamSpaceColorCircle = root.findViewById<View>(R.id.teamSpaceColorCircle)
+        teamSpaceTeamName = root.findViewById<TextView>(R.id.teamSpaceTeamName)
         val teamSpaceShare = root.findViewById<ImageButton>(R.id.teamSpaceShare)
-        val teamSpaceIntroTitle = root.findViewById<TextView>(R.id.teamSpaceIntroTitle)
-        val teamSpaceIntroText = root.findViewById<TextView>(R.id.teamSpaceIntroText)
-        val teamSpaceIntroContentWrapper = root.findViewById<View>(R.id.teamSpaceIntroContentWrapper)
-        val teamSpaceIntroExpandArrow = root.findViewById<ImageButton>(R.id.teamSpaceIntroExpandArrow)
+        teamSpaceIntroTitle = root.findViewById<TextView>(R.id.teamSpaceIntroTitle)
+        teamSpaceIntroText = root.findViewById<TextView>(R.id.teamSpaceIntroText)
+        teamSpaceIntroContentWrapper = root.findViewById<View>(R.id.teamSpaceIntroContentWrapper)
+        teamSpaceIntroExpandArrow = root.findViewById<ImageButton>(R.id.teamSpaceIntroExpandArrow)
+
         val teamSpaceMembersTitle = root.findViewById<TextView>(R.id.teamSpaceMembersTitle)
-        val teamSpaceMembersCount = root.findViewById<TextView>(R.id.teamSpaceMembersCount)
-        val teamSpaceMembersIcons = root.findViewById<LinearLayout>(R.id.teamSpaceMembersIcons)
-        val teamSpaceScheduleLabel = root.findViewById<TextView>(R.id.teamSpaceScheduleLabel)
-        val teamSpaceScheduleCount = root.findViewById<TextView>(R.id.teamSpaceScheduleCount)
-        val teamSpaceMonthYear = root.findViewById<TextView>(R.id.teamSpaceMonthYear)
+        teamSpaceMembersCount = root.findViewById<TextView>(R.id.teamSpaceMembersCount)
+        teamSpaceMembersIcons = root.findViewById<LinearLayout>(R.id.teamSpaceMembersIcons)
+
+        teamSpaceMonthYear = root.findViewById<TextView>(R.id.teamSpaceMonthYear)
         val teamSpacePrevMonth = root.findViewById<ImageButton>(R.id.teamSpacePrevMonth)
         val teamSpaceNextMonth = root.findViewById<ImageButton>(R.id.teamSpaceNextMonth)
-        val teamSpaceCalendarTeamPersonalToggle = root.findViewById<View>(R.id.teamSpaceCalendarTeamPersonalToggle)
-        val teamSpaceCalendarToggleLabel = root.findViewById<TextView>(R.id.teamSpaceCalendarToggleLabel)
-        val teamSpaceMonthGrid = root.findViewById<GridLayout>(R.id.teamSpaceMonthGrid)
+        teamSpaceMonthGrid = root.findViewById<GridLayout>(R.id.teamSpaceMonthGrid)
+
         val teamSpaceSelectMeetingDate = root.findViewById<View>(R.id.teamSpaceSelectMeetingDate)
-        val teamSpaceSelectedDateText = root.findViewById<TextView>(R.id.teamSpaceSelectedDateText)
-        val teamSpaceDayTasksContainer = root.findViewById<LinearLayout>(R.id.teamSpaceDayTasksContainer)
-        val teamSpaceNoScheduleCard = root.findViewById<MaterialCardView>(R.id.teamSpaceNoScheduleCard)
-        val teamSpaceNoScheduleMembersInner = root.findViewById<LinearLayout>(R.id.teamSpaceNoScheduleMembersInner)
         val teamSpaceFab = root.findViewById<ImageButton>(R.id.teamSpaceFab)
 
+        teamSpaceDayTasksContainer = root.findViewById<LinearLayout>(R.id.teamSpaceDayTasksContainer)
+        teamSpaceSelectedDateText = root.findViewById<TextView>(R.id.teamSpaceSelectedDateText)
+        teamSpaceCalendarToggleLabel = root.findViewById<TextView>(R.id.teamSpaceCalendarToggleLabel)
+        teamSpaceCalendarTeamPersonalToggle = root.findViewById<View>(R.id.teamSpaceCalendarTeamPersonalToggle)
+
         teamSpaceBack.setOnClickListener { findNavController().navigateUp() }
+
         teamSpaceEdit.setOnClickListener {
-            findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", teamId) })
-        }
-        teamSpaceShare.setOnClickListener { findNavController().navigate(R.id.action_teamSpace_to_teamShare) }
-        teamSpaceSelectMeetingDate.setOnClickListener {
-            findNavController().navigate(R.id.createTimepickFragment, Bundle().apply { putString("teamId", teamId) })
-        }
-        teamSpaceFab.setOnClickListener {
-            findNavController().navigate(R.id.addTeamTaskFragment, Bundle().apply { putString("teamId", teamId) })
+            findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", teamIdStr) })
         }
 
-        val teamColor = android.graphics.Color.parseColor(team.colorHex)
-        teamSpaceColorCircle.background = GradientDrawable().apply {
-            setColor(teamColor)
-            shape = GradientDrawable.OVAL
+        teamSpaceShare.setOnClickListener {
+            findNavController().navigate(R.id.action_teamSpace_to_teamShare, Bundle().apply {
+                putString("teamId", teamIdStr)
+            })
         }
-        teamSpaceTeamName.text = team.name
-        teamSpaceIntroTitle.text = getString(R.string.team_intro_suffix).let { "${team.name} $it" }
-        teamSpaceIntroTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray08))
-        val introText = DummyRepository.getTeamIntro(teamId)
-        teamSpaceIntroText.text = introText
-        teamSpaceIntroText.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
+
+        teamSpaceSelectMeetingDate.setOnClickListener {
+            findNavController().navigate(R.id.createTimepickFragment, Bundle().apply { putString("teamId", teamIdStr) })
+        }
+
+        teamSpaceFab.setOnClickListener {
+            if (isCalendarTeamMode) {
+                findNavController().navigate(R.id.addTeamTaskFragment, Bundle().apply { putString("teamId", teamIdStr) })
+            } else {
+                Toast.makeText(context, "개인 일정 추가 기능 준비 중", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         val collapsedIntroHeightPx = (85 * resources.displayMetrics.density).toInt()
         fun refreshIntroHeight() {
@@ -114,257 +142,257 @@ class TeamSpaceFragment : Fragment() {
         }
         refreshIntroHeight()
 
-        val members = DummyRepository.getTeamMembers(teamId)
-        teamSpaceMembersTitle.text = "함께하는 팀원"
-        teamSpaceMembersCount.text = members.size.toString()
-        teamSpaceMembersIcons.removeAllViews()
-        members.forEach { member ->
-            val item = inflater.inflate(R.layout.item_team_space_member, teamSpaceMembersIcons, false)
-            val card = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
-            card.strokeColor = teamColor
-            val resId = resources.getIdentifier(member.iconResName, "drawable", requireContext().packageName)
-            if (resId != 0) item.findViewById<ImageView>(R.id.teamMemberIcon).setImageResource(resId)
-            item.findViewById<TextView>(R.id.teamMemberName).text = member.name
-            item.findViewById<TextView>(R.id.teamMemberName).setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
-            teamSpaceMembersIcons.addView(item)
-        }
-
-        val scheduleCount = DummyRepository.getTeamScheduleCount(teamId)
-        teamSpaceScheduleCount.text = scheduleCount.toString()
-
         fun refreshMonthLabel() {
             teamSpaceMonthYear.text = getString(R.string.date_format_year_month, currentYear, currentMonth + 1)
         }
 
-        fun addTaskRow(
-            title: String,
-            isChecked: Boolean,
-            id: String,
-            container: LinearLayout,
-            inflater: LayoutInflater,
-            onRefresh: () -> Unit,
-            isPersonal: Boolean = false,
-            isLocked: Boolean = false
-        ) {
-            val taskRow = inflater.inflate(R.layout.item_task_row, container, false)
-            val checkBtn = taskRow.findViewById<ImageButton>(R.id.taskCheck)
-            checkBtn.layoutParams = checkBtn.layoutParams?.apply {
-                width = 42.dpToPx()
-                height = 42.dpToPx()
-            } ?: LinearLayout.LayoutParams(42.dpToPx(), 42.dpToPx())
-            val titleTv = taskRow.findViewById<TextView>(R.id.taskTitle)
-            titleTv.isClickable = true
-            titleTv.isFocusable = true
-            titleTv.setOnClickListener {
-                if (isPersonal) findNavController().navigate(R.id.editPersonalTaskFragment, Bundle().apply { putString("personalId", id) })
-                else findNavController().navigate(R.id.editTeamTaskFragment, Bundle().apply { putString("taskId", id) })
-            }
-            checkBtn.setImageResource(if (isChecked) R.drawable.ic_schedule_selected else R.drawable.ic_schedule_unselected)
-            titleTv.text = title
-            if (isChecked) {
-                titleTv.paintFlags = titleTv.paintFlags or 0x10
-                titleTv.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray_medium))
-            } else {
-                titleTv.paintFlags = titleTv.paintFlags and 0x10.inv()
-                titleTv.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-            }
-            checkBtn.setOnClickListener {
-                if (isPersonal) DummyRepository.setPersonalChecked(id, !isChecked)
-                else DummyRepository.setTaskChecked(id, !isChecked)
-                onRefresh()
-            }
-            val lockBtn = taskRow.findViewById<ImageButton>(R.id.taskLock)
-            if (isPersonal) {
-                lockBtn.visibility = View.VISIBLE
-                lockBtn.setImageResource(if (isLocked) R.drawable.ic_personal_lock else R.drawable.ic_personal_unlock)
-                lockBtn.setOnClickListener {
-                    DummyRepository.setPersonalLocked(id, !isLocked)
-                    onRefresh()
-                }
-            } else {
-                lockBtn.visibility = View.GONE
-            }
-            container.addView(taskRow)
-        }
-
-        fun refreshDayTasks() {
-            teamSpaceSelectedDateText.text = getString(R.string.date_format_month_day,
-                selectedDay.get(Calendar.MONTH) + 1, selectedDay.get(Calendar.DAY_OF_MONTH))
-            teamSpaceDayTasksContainer.removeAllViews()
-            if (isCalendarTeamMode) {
-                val tasks = DummyRepository.getTasksForDate(selectedDay, listOf(teamId))
-                val byCreator = tasks.groupBy { it.creatorName ?: "" }
-                byCreator.forEach { (creatorName, taskList) ->
-                    if (creatorName.isNotEmpty()) {
-                        val header = TextView(requireContext()).apply {
-                            text = creatorName
-                            setTextColor(android.graphics.Color.BLACK)
-                            setPadding(0, 12.dpToPx(), 0, 4.dpToPx())
-                            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 17f)
-                        }
-                        teamSpaceDayTasksContainer.addView(header)
-                    }
-                    taskList.forEach { task ->
-                        addTaskRow(task.title, task.isChecked, task.id, teamSpaceDayTasksContainer, inflater, ::refreshDayTasks)
-                    }
-                }
-            } else {
-                val personalList = DummyRepository.getPersonalForDate(selectedDay)
-                if (personalList.isNotEmpty()) {
-                    val header = TextView(requireContext()).apply {
-                        text = getString(R.string.personal_schedule)
-                        setTextColor(android.graphics.Color.BLACK)
-                        setPadding(0, 12.dpToPx(), 0, 4.dpToPx())
-                        setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 17f)
-                    }
-                    teamSpaceDayTasksContainer.addView(header)
-                }
-                personalList.forEach { item ->
-                    addTaskRow(item.title, item.isChecked, item.id, teamSpaceDayTasksContainer, inflater, ::refreshDayTasks, isPersonal = true, isLocked = item.isLocked)
-                }
-            }
-        }
-
-        fun refreshNoScheduleMembers() {
-            val noSchedule = DummyRepository.getNoScheduleMembers(teamId, selectedDay)
-            teamSpaceNoScheduleMembersInner.removeAllViews()
-            if (noSchedule.isEmpty()) {
-                teamSpaceNoScheduleCard.visibility = View.GONE
-                return
-            }
-            teamSpaceNoScheduleCard.visibility = View.VISIBLE
-            noSchedule.forEach { member ->
-                val item = inflater.inflate(R.layout.item_team_space_member, teamSpaceNoScheduleMembersInner, false)
-                val memberCard = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
-                memberCard.strokeColor = teamColor
-                val resId = resources.getIdentifier(member.iconResName, "drawable", requireContext().packageName)
-                if (resId != 0) item.findViewById<ImageView>(R.id.teamMemberIcon).setImageResource(resId)
-                item.findViewById<TextView>(R.id.teamMemberName).text = member.name
-                item.findViewById<TextView>(R.id.teamMemberName).setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
-                (item.layoutParams as? LinearLayout.LayoutParams)?.marginEnd = 12.dpToPx()
-                teamSpaceNoScheduleMembersInner.addView(item)
-            }
-        }
-
-        fun refreshGrid() {
-            teamSpaceMonthGrid.removeAllViews()
-            val days = DummyRepository.getMonthCalendarDaysCurrentMonthOnly(currentYear, currentMonth + 1)
-            val badgeSize = 12.dpToPx()
-            days.forEachIndexed { index, dayOrNull ->
-                val cell = inflater.inflate(R.layout.item_calendar_day, teamSpaceMonthGrid, false)
-                val dayNumber = cell.findViewById<TextView>(R.id.calendarDayNumber)
-                val countBadge = cell.findViewById<FrameLayout>(R.id.calendarDayEventCountBadge)
-                val cellRoot = cell.findViewById<View>(R.id.calendarDayRoot)
-                if (dayOrNull == null) {
-                    dayNumber.text = ""
-                    dayNumber.visibility = View.INVISIBLE
-                    countBadge.visibility = View.GONE
-                    cellRoot.setBackgroundResource(0)
-                    cell.isClickable = false
-                    cell.isFocusable = false
-                } else {
-                    val day = dayOrNull
-                    dayNumber.visibility = View.VISIBLE
-                    dayNumber.text = day.get(Calendar.DAY_OF_MONTH).toString()
-                    dayNumber.alpha = 1f
-                    val today = Calendar.getInstance()
-                    val isToday = day.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-                        day.get(Calendar.MONTH) == today.get(Calendar.MONTH) &&
-                        day.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH)
-                    val isSelected = day.get(Calendar.YEAR) == selectedDay.get(Calendar.YEAR) &&
-                        day.get(Calendar.MONTH) == selectedDay.get(Calendar.MONTH) &&
-                        day.get(Calendar.DAY_OF_MONTH) == selectedDay.get(Calendar.DAY_OF_MONTH)
-                    cellRoot.setBackgroundResource(
-                        when {
-                            isSelected -> R.drawable.bg_calendar_day_selected
-                            isToday -> R.drawable.bg_calendar_today
-                            else -> 0
-                        }
-                    )
-                    cell.setOnClickListener {
-                        selectedDay.timeInMillis = day.timeInMillis
-                        refreshGrid()
-                        refreshDayTasks()
-                        refreshNoScheduleMembers()
-                    }
-                    val count = if (isCalendarTeamMode) {
-                        DummyRepository.getDayEventCountForTeam(teamId, day)
-                    } else {
-                        DummyRepository.getPersonalForDate(day).size
-                    }
-                    if (count > 0) {
-                        countBadge.visibility = View.VISIBLE
-                        countBadge.background = null
-                        countBadge.removeAllViews()
-                        val badgeRow = LinearLayout(requireContext()).apply {
-                            orientation = LinearLayout.HORIZONTAL
-                            gravity = Gravity.CENTER
-                        }
-                        val circle = View(requireContext()).apply {
-                            layoutParams = LinearLayout.LayoutParams(badgeSize, badgeSize)
-                            background = GradientDrawable().apply {
-                                setColor(teamColor)
-                                shape = GradientDrawable.OVAL
-                            }
-                        }
-                        val countText = TextView(requireContext()).apply {
-                            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                                marginStart = 4.dpToPx()
-                            }
-                            text = count.toString()
-                            setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12f)
-                            setTypeface(ResourcesCompat.getFont(requireContext(), R.font.pretendard_medium))
-                            setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-                        }
-                        badgeRow.addView(circle)
-                        badgeRow.addView(countText)
-                        countBadge.addView(badgeRow)
-                    } else {
-                        countBadge.visibility = View.GONE
-                    }
-                }
-                val row = index / 7
-                val col = index % 7
-                val cellHeightPx = 68.dpToPx()
-                val params = GridLayout.LayoutParams(GridLayout.spec(row), GridLayout.spec(col)).apply {
-                    width = 0
-                    height = cellHeightPx
-                    setGravity(Gravity.FILL)
-                    columnSpec = GridLayout.spec(col, 1f)
-                    rowSpec = GridLayout.spec(row)
-                }
-                teamSpaceMonthGrid.addView(cell, params)
-            }
-        }
-
-        teamSpaceCalendarTeamPersonalToggle.isClickable = true
-        teamSpaceCalendarTeamPersonalToggle.setOnClickListener {
-            isCalendarTeamMode = !isCalendarTeamMode
-            teamSpaceCalendarToggleLabel.text = if (isCalendarTeamMode) getString(R.string.team_calendar_team_label) else getString(R.string.personal)
-            refreshGrid()
-            refreshDayTasks()
-        }
-
-        refreshMonthLabel()
-        refreshGrid()
-        refreshDayTasks()
-        refreshNoScheduleMembers()
-
         teamSpacePrevMonth.setOnClickListener {
             if (currentMonth == 0) { currentYear--; currentMonth = 11 } else currentMonth--
             refreshMonthLabel()
-            refreshGrid()
-            refreshDayTasks()
-            refreshNoScheduleMembers()
+            fetchMonthlyData()
         }
+
         teamSpaceNextMonth.setOnClickListener {
             if (currentMonth == 11) { currentYear++; currentMonth = 0 } else currentMonth++
             refreshMonthLabel()
-            refreshGrid()
-            refreshDayTasks()
-            refreshNoScheduleMembers()
+            fetchMonthlyData()
+        }
+        refreshMonthLabel()
+
+        teamSpaceCalendarTeamPersonalToggle.setOnClickListener {
+            isCalendarTeamMode = !isCalendarTeamMode
+            teamSpaceCalendarToggleLabel.text = if (isCalendarTeamMode) getString(R.string.team_calendar_team_label) else getString(R.string.personal)
+            fetchMonthlyData()
+            fetchDateSchedules()
         }
 
+        fetchTeamDetail()
+        fetchDateSchedules()
+        fetchMonthlyData()
+        fetchTeamMembers() // 🔥 [추가] 팀원 목록 별도 호출
+
         return root
+    }
+
+    private fun fetchTeamDetail() {
+        teamService.getTeamDetail(teamIdLong).enqueue(object : Callback<TeamDetailResponse> {
+            override fun onResponse(call: Call<TeamDetailResponse>, response: Response<TeamDetailResponse>) {
+                if (response.isSuccessful) response.body()?.let { updateTeamInfoUI(it) }
+            }
+            override fun onFailure(call: Call<TeamDetailResponse>, t: Throwable) {}
+        })
+    }
+
+    // 🔥 [추가] 팀원 목록 조회 API 호출 함수
+    private fun fetchTeamMembers() {
+        teamService.getTeamMembers(teamIdLong).enqueue(object : Callback<List<TeamMember>> {
+            override fun onResponse(call: Call<List<TeamMember>>, response: Response<List<TeamMember>>) {
+                if (response.isSuccessful) {
+                    val members = response.body() ?: emptyList()
+                    updateMemberUI(members)
+                }
+            }
+            override fun onFailure(call: Call<List<TeamMember>>, t: Throwable) {
+                Log.e("TeamSpace", "멤버 로드 실패: ${t.message}")
+            }
+        })
+    }
+
+    private fun fetchDateSchedules() {
+        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedDay.time)
+        teamSpaceSelectedDateText.text = getString(R.string.date_format_month_day,
+            selectedDay.get(Calendar.MONTH) + 1, selectedDay.get(Calendar.DAY_OF_MONTH))
+        teamSpaceDayTasksContainer.removeAllViews()
+        val call = if (isCalendarTeamMode) {
+            teamService.getTeamSchedulesDaily(teamIdLong, dateStr)
+        } else {
+            teamService.getMySchedulesDaily(teamIdLong, dateStr)
+        }
+        call.enqueue(object : Callback<List<ScheduleDetail>> {
+            override fun onResponse(call: Call<List<ScheduleDetail>>, response: Response<List<ScheduleDetail>>) {
+                if (response.isSuccessful) {
+                    val schedules = response.body() ?: emptyList()
+                    updateScheduleListUI(schedules)
+                } else {
+                    addEmptyMessage("일정을 불러오지 못했습니다.")
+                }
+            }
+            override fun onFailure(call: Call<List<ScheduleDetail>>, t: Throwable) {
+                addEmptyMessage("네트워크 오류")
+            }
+        })
+    }
+
+    private fun fetchMonthlyData() {
+        val cal = Calendar.getInstance()
+        cal.set(currentYear, currentMonth, 1)
+        val lastDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val startStr = String.format("%04d-%02d-01", currentYear, currentMonth + 1)
+        val endStr = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, lastDay)
+        serverDayCounts.clear()
+        refreshGrid()
+        val call = if (isCalendarTeamMode) {
+            teamService.getTeamSchedulesMonthly(teamIdLong, startStr, endStr)
+        } else {
+            teamService.getMySchedulesMonthly(teamIdLong, startStr, endStr)
+        }
+        call.enqueue(object : Callback<List<ScheduleDetail>> {
+            override fun onResponse(call: Call<List<ScheduleDetail>>, response: Response<List<ScheduleDetail>>) {
+                if (response.isSuccessful) {
+                    val list = response.body() ?: emptyList()
+                    list.forEach { schedule ->
+                        if (schedule.startAt.length >= 10) {
+                            val dateKey = schedule.startAt.substring(0, 10)
+                            val currentCount = serverDayCounts[dateKey] ?: 0
+                            serverDayCounts[dateKey] = currentCount + 1
+                        }
+                    }
+                    refreshGrid()
+                }
+            }
+            override fun onFailure(call: Call<List<ScheduleDetail>>, t: Throwable) {}
+        })
+    }
+
+    private fun refreshGrid() {
+        teamSpaceMonthGrid.removeAllViews()
+        val cal = Calendar.getInstance()
+        cal.set(currentYear, currentMonth, 1)
+        val startDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1
+        val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+
+        for (i in 0 until 42) {
+            val cell = layoutInflater.inflate(R.layout.item_calendar_day, teamSpaceMonthGrid, false)
+            val dayNumber = cell.findViewById<TextView>(R.id.calendarDayNumber)
+            val countBadge = cell.findViewById<FrameLayout>(R.id.calendarDayEventCountBadge)
+            val root = cell.findViewById<View>(R.id.calendarDayRoot)
+
+            val day = i - startDayOfWeek + 1
+            if (day in 1..daysInMonth) {
+                dayNumber.text = day.toString()
+                dayNumber.visibility = View.VISIBLE
+                val dateKey = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, day)
+                val count = serverDayCounts[dateKey] ?: 0
+
+                if (count > 0) {
+                    countBadge.visibility = View.VISIBLE
+                    countBadge.removeAllViews()
+                    val dot = View(requireContext()).apply {
+                        val size = (5 * resources.displayMetrics.density).toInt()
+                        layoutParams = FrameLayout.LayoutParams(size, size).apply {
+                            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                            bottomMargin = (4 * resources.displayMetrics.density).toInt()
+                        }
+                        background = GradientDrawable().apply {
+                            val colorCode = if (isCalendarTeamMode) "#3FE9C0" else "#FFD8F3"
+                            setColor(Color.parseColor(colorCode))
+                            shape = GradientDrawable.OVAL
+                        }
+                    }
+                    countBadge.addView(dot)
+                } else {
+                    countBadge.visibility = View.GONE
+                }
+
+                val isSelected = (currentYear == selectedDay.get(Calendar.YEAR) &&
+                        currentMonth == selectedDay.get(Calendar.MONTH) &&
+                        day == selectedDay.get(Calendar.DAY_OF_MONTH))
+
+                if (isSelected) {
+                    root.setBackgroundResource(R.drawable.bg_calendar_day_selected)
+                    dayNumber.setTextColor(Color.WHITE)
+                } else {
+                    root.setBackgroundResource(0)
+                    dayNumber.setTextColor(Color.BLACK)
+                }
+
+                cell.setOnClickListener {
+                    selectedDay.set(currentYear, currentMonth, day)
+                    refreshGrid()
+                    fetchDateSchedules()
+                }
+            } else {
+                dayNumber.visibility = View.INVISIBLE
+                countBadge.visibility = View.GONE
+            }
+
+            val params = GridLayout.LayoutParams(GridLayout.spec(i / 7), GridLayout.spec(i % 7)).apply {
+                width = 0
+                height = (48 * resources.displayMetrics.density).toInt()
+                columnSpec = GridLayout.spec(i % 7, 1f)
+            }
+            teamSpaceMonthGrid.addView(cell, params)
+        }
+    }
+
+    private fun updateScheduleListUI(schedules: List<ScheduleDetail>) {
+        teamSpaceDayTasksContainer.removeAllViews()
+        if (schedules.isEmpty()) {
+            addEmptyMessage("등록된 일정이 없습니다.")
+            return
+        }
+        schedules.forEach { schedule ->
+            val row = layoutInflater.inflate(R.layout.item_task_row, teamSpaceDayTasksContainer, false)
+            val titleTv = row.findViewById<TextView>(R.id.taskTitle)
+            val checkBtn = row.findViewById<ImageButton>(R.id.taskCheck)
+            val lockBtn = row.findViewById<ImageButton>(R.id.taskLock)
+            titleTv.text = schedule.title
+            checkBtn.setImageResource(R.drawable.ic_schedule_unselected)
+            if (!isCalendarTeamMode) {
+                lockBtn.visibility = View.VISIBLE
+                lockBtn.setImageResource(R.drawable.ic_personal_unlock)
+            } else {
+                lockBtn.visibility = View.GONE
+            }
+            teamSpaceDayTasksContainer.addView(row)
+        }
+    }
+
+    private fun addEmptyMessage(msg: String) {
+        val tv = TextView(requireContext()).apply {
+            text = msg
+            setTextColor(Color.GRAY)
+            setPadding(0, 32, 0, 0)
+            gravity = Gravity.CENTER
+        }
+        teamSpaceDayTasksContainer.addView(tv)
+    }
+
+    private fun updateTeamInfoUI(data: TeamDetailResponse) {
+        teamSpaceTeamName.text = data.team.name
+        val colorHex = data.team.colorHex ?: "#CCCCCC"
+        try {
+            val color = Color.parseColor(colorHex)
+            teamSpaceColorCircle.background = GradientDrawable().apply {
+                setColor(color)
+                shape = GradientDrawable.OVAL
+            }
+        } catch (e: Exception) {}
+        teamSpaceIntroTitle.text = "${data.team.name} 팀 소개"
+        teamSpaceIntroText.text = data.team.description ?: ""
+        teamSpaceMembersCount.text = data.memberCount.toString()
+
+    }
+
+    private fun updateMemberUI(members: List<TeamMember>) {
+        teamSpaceMembersIcons.removeAllViews()
+        val inflater = LayoutInflater.from(requireContext())
+
+        members.forEach { member ->
+            val item = inflater.inflate(R.layout.item_team_space_member, teamSpaceMembersIcons, false)
+            val card = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
+            val nameTv = item.findViewById<TextView>(R.id.teamMemberName)
+
+            nameTv.text = member.nickname
+
+            // 서버에서 준 멤버 고유 색상 적용
+            try {
+                card.strokeColor = Color.parseColor(member.displayColorHex)
+            } catch (e: Exception) {
+                card.strokeColor = Color.LTGRAY
+            }
+
+            teamSpaceMembersIcons.addView(item)
+        }
     }
 }

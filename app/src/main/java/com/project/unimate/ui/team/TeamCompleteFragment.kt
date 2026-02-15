@@ -23,39 +23,37 @@ class TeamCompleteFragment : Fragment(R.layout.fragment_team_complete) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTeamCompleteBinding.bind(view)
 
-        // 1. 전달받은 초대코드 표시 + ViewModel에 동기화
-        val inviteCodeFromArgs = arguments?.getString("inviteCode")?.trim().orEmpty()
-        if (inviteCodeFromArgs.isNotBlank()) {
+        val inviteCodeFromArgs = arguments?.getString("inviteCode")?.trim()
+
+        if (!inviteCodeFromArgs.isNullOrBlank()) {
             viewModel.inviteCode.value = inviteCodeFromArgs
+        } else {
+            viewModel.inviteCode.value = ""
+            android.util.Log.e("TeamComplete", "초대코드를 전달받지 못했습니다.")
         }
 
         viewModel.inviteCode.observe(viewLifecycleOwner) { code ->
-            binding.tvInviteCode.text = code.orEmpty()
+            binding.tvInviteCode.text = if (code.isNullOrBlank()) "코드 생성 오류" else code
         }
 
-        // 2. 초대코드 복사 버튼
         binding.btnCopyCode.setOnClickListener {
             val code = binding.tvInviteCode.text?.toString()?.trim().orEmpty()
-            if (code.isBlank()) {
+            if (code == "코드 생성 오류" || code.isBlank()) {
                 Toast.makeText(context, "복사할 초대코드가 없습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val clipboard =
-                requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("TeamCode", code)
             clipboard.setPrimaryClip(clip)
             Toast.makeText(context, "코드가 복사되었습니다!", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnGoToTeam.setOnClickListener {
-            // navigate의 두 번째 인자로 navOptions 블록을 확실하게 전달합니다.
             findNavController().navigate(
                 R.id.homeFragment,
-                null, // Bundle (전달할 데이터가 없으므로 null)
-                androidx.navigation.navOptions { // 빌더를 직접 명시
-                    popUpTo(R.id.nav_graph) {
-                        inclusive = true
-                    }
+                null,
+                androidx.navigation.navOptions {
+                    popUpTo(R.id.nav_graph) { inclusive = true }
                 }
             )
         }

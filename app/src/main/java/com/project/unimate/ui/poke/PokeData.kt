@@ -13,10 +13,11 @@ sealed class PokeData : Parcelable { // 부모에도 Parcelable 추가
 
     @Parcelize
     data class Member(
-        val id: Int,
+        val userId: Long,
         val name: String,
         val teamName: String,
         val teamColor: String,
+        val teamId: Long,
         var isSelected: Boolean = false
     ) : PokeData()
 }
