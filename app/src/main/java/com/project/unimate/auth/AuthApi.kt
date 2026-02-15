@@ -59,4 +59,11 @@ class AuthApi(
             .url("$baseUrl/api/auth/naver/callback?code=$code&state=$state")
             .get()
             .build()
+
+    fun logoutRequest(jwt: String): Request =
+        Request.Builder()
+            .url("$baseUrl/api/auth/logout")
+            .post(ByteArray(0).toRequestBody(null, 0, 0))
+            .addHeader("Authorization", "Bearer $jwt")
+            .build()
 }
