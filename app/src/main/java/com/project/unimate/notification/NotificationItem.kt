@@ -65,6 +65,7 @@ data class NotificationItem(
             val messageTitle = data["messageTitle"] ?: ""
             val messageBody = data["messageBody"] ?: ""
             val createdAt = data["createdAt"] ?: return null
+            val action = parseBoolean(data["action"]) ?: (alarmType == "MEETING_REQUEST")
 
             return NotificationItem(
                 notificationId = notificationId,
@@ -76,10 +77,18 @@ data class NotificationItem(
                 messageBody = messageBody,
                 createdAt = createdAt,
                 isRead = false,
-                action = true,
+                action = action,
                 actionDone = false,
                 processedAt = null
             )
+        }
+
+        private fun parseBoolean(value: String?): Boolean? {
+            return when (value?.trim()?.lowercase(Locale.US)) {
+                "true", "1", "y", "yes" -> true
+                "false", "0", "n", "no" -> false
+                else -> null
+            }
         }
     }
 }

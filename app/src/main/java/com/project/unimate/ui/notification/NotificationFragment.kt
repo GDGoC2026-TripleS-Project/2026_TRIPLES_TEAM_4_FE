@@ -29,13 +29,26 @@ class NotificationFragment : Fragment() {
         adapter = NotificationAdapter(
             onCompleteClicked = { item, onResult ->
                 val api = NotificationApi()
-                api.markActionDone(requireContext(), item.notificationId) { success ->
-                    if (success && isAdded) {
-                        val updated = item.copy(actionDone = true)
+                api.markActionDone(requireContext(), item.notificationId) { actionDoneOk ->
+                    if (!actionDoneOk || !isAdded) return@markActionDone
+                    api.markRead(requireContext(), item.notificationId) { readOk ->
+                        if (!isAdded) return@markRead
+                        val updated = item.copy(actionDone = true, isRead = readOk || item.isRead)
                         requireActivity().runOnUiThread {
                             NotificationStore.upsert(requireContext(), updated)
                             onResult(updated)
                         }
+                    }
+                }
+            },
+            onCardClicked = { item, onResult ->
+                val api = NotificationApi()
+                api.markRead(requireContext(), item.notificationId) { success ->
+                    if (!success || !isAdded) return@markRead
+                    val updated = item.copy(isRead = true)
+                    requireActivity().runOnUiThread {
+                        NotificationStore.upsert(requireContext(), updated)
+                        onResult(updated)
                     }
                 }
             }

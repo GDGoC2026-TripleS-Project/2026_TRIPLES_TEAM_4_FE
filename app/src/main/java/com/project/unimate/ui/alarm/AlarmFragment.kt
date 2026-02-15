@@ -30,6 +30,9 @@ class AlarmFragment : Fragment() {
         adapter = NotificationAdapter(
             onCompleteClicked = { _, _ ->
                 // 찌르기 탭에서는 알림 액션을 제공하지 않음
+            },
+            onCardClicked = { _, _ ->
+                // 찌르기 탭에서는 카드 읽음 처리를 제공하지 않음
             }
         )
         recyclerView.adapter = adapter
