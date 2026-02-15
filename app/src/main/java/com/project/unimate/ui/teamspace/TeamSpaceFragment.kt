@@ -81,7 +81,7 @@ class TeamSpaceFragment : Fragment() {
         teamSpaceEdit.setOnClickListener {
             findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", teamId) })
         }
-        teamSpaceShare.setOnClickListener { /* 추후 연결 */ }
+        teamSpaceShare.setOnClickListener { findNavController().navigate(R.id.action_teamSpace_to_teamShare) }
         teamSpaceSelectMeetingDate.setOnClickListener {
             findNavController().navigate(R.id.createTimepickFragment, Bundle().apply { putString("teamId", teamId) })
         }
