@@ -9,7 +9,7 @@
         android:icon="@drawable/nav_calendar_selector"
         android:title="캘린더" />
     <item
-        android:id="@+id/cockFragment"
+        android:id="@+id/pokeFragment"
         android:icon="@drawable/nav_cock_selector"
         android:title="찌르기" />
     <item
