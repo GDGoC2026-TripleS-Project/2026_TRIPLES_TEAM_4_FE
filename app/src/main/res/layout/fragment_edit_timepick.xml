@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:focusable="true"
+    tools:context=".ui.timepick.EditTimepickFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_card_modal_top"
+        android:elevation="16dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp">
+            <TextView
+                android:id="@+id/editTimepickCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|start"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingVertical="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="@string/cancel"
+                android:textColor="@color/gray09"
+                android:textSize="16sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/timepick_edit_meeting_title"
+                android:textColor="@color/gray09"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/editTimepickSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|end"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingVertical="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:text="@string/save"
+                android:textColor="@color/main_green"
+                android:textSize="16sp" />
+        </FrameLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/gray_light" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="32dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:gravity="center"
+                    style="@style/body1_m_16"
+                    android:textColor="@color/main_green"
+                    android:text="@string/timepick_all_available" />
+
+                <LinearLayout
+                    android:id="@+id/editTimepickScrollWrapper"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+                    <LinearLayout
+                        android:id="@+id/editTimepickContentRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <com.project.unimate.ui.timepick.TimepickTimeLabelStrip
+                            android:id="@+id/editTimepickLabelStrip"
+                            android:layout_width="56dp"
+                            android:layout_height="wrap_content" />
+                        <HorizontalScrollView
+                            android:id="@+id/editTimepickScroll"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:scrollbars="horizontal"
+                            android:fillViewport="false">
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center">
+                                <LinearLayout
+                                    android:id="@+id/editTimepickGridWrapper"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:gravity="center_horizontal">
+                                    <com.project.unimate.ui.timepick.TimepickGridView
+                                        android:id="@+id/editTimepickGrid"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:minHeight="280dp" />
+                                </LinearLayout>
+                            </FrameLayout>
+                        </HorizontalScrollView>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/editTimepickScheduleName"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/bg_schedule_name_single"
+                    android:hint="@string/enter_schedule_name"
+                    android:textColorHint="@color/gray06"
+                    android:inputType="text"
+                    android:paddingHorizontal="12dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/gray06" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/bg_section_box_ddecb5"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:layout_width="80dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/start"
+                            android:textColor="@color/gray09"
+                            android:textSize="14sp" />
+                        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/editTimepickStartDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:textColor="@color/gray06"
+                            android:textSize="14sp"
+                            tools:text="2026. 2. 17" />
+                        <TextView
+                            android:id="@+id/editTimepickStartTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/gray06"
+                            android:textSize="14sp"
+                            tools:text="오후 12:00" />
+                    </LinearLayout>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/gray_light" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:layout_width="80dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/end"
+                            android:textColor="@color/gray09"
+                            android:textSize="14sp" />
+                        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/editTimepickEndDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:textColor="@color/gray06"
+                            android:textSize="14sp"
+                            tools:text="2026. 2. 17" />
+                        <TextView
+                            android:id="@+id/editTimepickEndTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/gray06"
+                            android:textSize="14sp"
+                            tools:text="오후 1:00" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/bg_section_box_ddecb5"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/notification"
+                        android:textColor="@color/gray09"
+                        android:textSize="14sp" />
+                    <TextView
+                        android:id="@+id/editTimepickNotificationBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_gravity="end"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="12dp"
+                        android:background="@drawable/bg_btn_white_borderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:text="@string/none"
+                        android:textColor="@color/gray06"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- 알림 옵션 드롭다운: 참고사진처럼 알림행 밑에 인라인, 페이지 길이 연장 -->
+                <LinearLayout
+                    android:id="@+id/editTimepickNotificationDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="40dp"
+                    android:visibility="gone"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_dropdown_list_shadow"
+                    android:elevation="8dp"
+                    android:paddingVertical="8dp">
+                    <TextView
+                        android:id="@+id/editTimepickNotificationItem0"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="10dp"
+                        android:text="@string/none"
+                        android:textSize="14sp"
+                        android:textColor="@color/gray09"
+                        android:background="?attr/selectableItemBackground" />
+                    <TextView
+                        android:id="@+id/editTimepickNotificationItem1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="10dp"
+                        android:text="5분 전"
+                        android:textSize="14sp"
+                        android:textColor="@color/gray09"
+                        android:background="?attr/selectableItemBackground" />
+                    <TextView
+                        android:id="@+id/editTimepickNotificationItem2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="10dp"
+                        android:text="15분 전"
+                        android:textSize="14sp"
+                        android:textColor="@color/gray09"
+                        android:background="?attr/selectableItemBackground" />
+                    <TextView
+                        android:id="@+id/editTimepickNotificationItem3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="10dp"
+                        android:text="30분 전"
+                        android:textSize="14sp"
+                        android:textColor="@color/gray09"
+                        android:background="?attr/selectableItemBackground" />
+                    <TextView
+                        android:id="@+id/editTimepickNotificationItem4"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="10dp"
+                        android:text="1시간 전"
+                        android:textSize="14sp"
+                        android:textColor="@color/gray09"
+                        android:background="?attr/selectableItemBackground" />
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</FrameLayout>

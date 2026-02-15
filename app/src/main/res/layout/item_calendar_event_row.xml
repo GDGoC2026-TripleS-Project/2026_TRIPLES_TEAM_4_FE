@@ -12,7 +12,7 @@
         android:layout_width="5dp"
         android:layout_height="5dp"
         android:background="@drawable/bg_circle"
-        tools:background="@color/team_cherish" />
+        tools:background="@color/team_magenta" />
 
     <TextView
         android:id="@+id/eventTitle"

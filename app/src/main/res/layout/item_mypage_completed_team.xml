@@ -20,13 +20,25 @@
         app:strokeWidth="1dp"
         app:strokeColor="@color/completed_team_border">
 
-        <ImageView
-            android:id="@+id/completedTeamImage"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:contentDescription="팀 아이콘"
-            tools:src="@drawable/cherish_image" />
+            android:layout_height="match_parent">
+            <ImageView
+                android:id="@+id/completedTeamImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="팀 아이콘"
+                tools:src="@drawable/cherish_image" />
+            <TextView
+                android:id="@+id/completedTeamLetter"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                android:visibility="gone" />
+        </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <TextView

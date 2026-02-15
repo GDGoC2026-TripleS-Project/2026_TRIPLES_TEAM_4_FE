@@ -42,7 +42,11 @@
         android:id="@+id/homeFragment"
         android:name="com.project.unimate.ui.home.HomeFragment"
         android:label="Home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_home_to_teamAdd"
+            app:destination="@id/team_nav" />
+    </fragment>
 
     <fragment
         android:id="@+id/calendarFragment"
@@ -70,7 +74,17 @@
         android:id="@+id/myPageFragment"
         android:name="com.project.unimate.ui.mypage.MyPageFragment"
         android:label="MyPage"
-        tools:layout="@layout/fragment_my_page" />
+        tools:layout="@layout/fragment_my_page">
+        <action
+            android:id="@+id/action_myPage_to_editProfile"
+            app:destination="@id/editProfileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.project.unimate.ui.mypage.EditProfileFragment"
+        android:label="프로필 수정"
+        tools:layout="@layout/fragment_edit_profile" />
 
     <fragment
         android:id="@+id/notificationFragment"
@@ -86,7 +100,16 @@
         <argument
             android:name="teamId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_teamSpace_to_teamShare"
+            app:destination="@id/teamShareFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/teamShareFragment"
+        android:name="com.project.unimate.ui.teamspace.TeamShareFragment"
+        android:label="팀 공유"
+        tools:layout="@layout/fragment_team_share" />
 
     <fragment
         android:id="@+id/editTeamSpaceFragment"
@@ -139,6 +162,42 @@
         <argument
             android:name="taskId"
             app:argType="string" />
+    </fragment>
+
+    <!-- 타임픽 플로우 -->
+    <fragment
+        android:id="@+id/createTimepickFragment"
+        android:name="com.project.unimate.ui.timepick.CreateTimepickFragment"
+        android:label="가능한 날짜 선택"
+        tools:layout="@layout/fragment_create_timepick">
+        <argument
+            android:name="teamId"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/selectTimeFragment"
+        android:name="com.project.unimate.ui.timepick.SelectTimeFragment"
+        android:label="가능한 시간 선택"
+        tools:layout="@layout/fragment_select_time" />
+    <fragment
+        android:id="@+id/timepickStatusFragment"
+        android:name="com.project.unimate.ui.timepick.TimepickStatusFragment"
+        android:label="모임 전체 시간표"
+        tools:layout="@layout/fragment_timepick_status" />
+    <fragment
+        android:id="@+id/timepickResultFragment"
+        android:name="com.project.unimate.ui.timepick.TimepickResultFragment"
+        android:label="모임 전체 시간표"
+        tools:layout="@layout/fragment_timepick_result" />
+    <fragment
+        android:id="@+id/editTimepickFragment"
+        android:name="com.project.unimate.ui.timepick.EditTimepickFragment"
+        android:label="모이기 일정 편집"
+        tools:layout="@layout/fragment_edit_timepick">
+        <argument
+            android:name="taskId"
+            app:argType="string"
+            app:nullable="true" />
     </fragment>
 
 </navigation>

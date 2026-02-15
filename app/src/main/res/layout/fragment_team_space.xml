@@ -234,7 +234,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="center"
+                        android:gravity="center|start"
                         style="@style/body2_m_14"
                         tools:text="2026년 2월" />
 

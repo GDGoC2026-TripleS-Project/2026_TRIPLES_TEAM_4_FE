@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -39,7 +40,7 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:text="@string/cancel"
-                    android:textColor="@color/gray09"
+                    android:textColor="@color/gray06"
                     android:textSize="16sp" />
                 <TextView
                     android:id="@+id/addTeamTitle"
@@ -135,36 +136,51 @@
                 android:text="@string/team_space"
                 android:textColor="@color/gray09"
                 android:textSize="14sp" />
-            <TextView
-                android:id="@+id/addTeamTeamSpaceBtn"
+            <LinearLayout
+                android:id="@+id/addTeamTeamSpaceBtnWrap"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_gravity="end"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="12dp"
                 android:background="@drawable/bg_btn_white_borderless"
-                android:text="@string/select"
-                android:textColor="@color/gray06"
-                android:textSize="14sp" />
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:id="@+id/addTeamTeamSpaceBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="21dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="20dp"
+                    android:src="@drawable/ic_arrow_down"
+                    android:contentDescription="@null"
+                    app:tint="@color/gray07" />
+            </LinearLayout>
         </LinearLayout>
         <!-- 팀 스페이스 목록  -->
-        <ScrollView
+        <LinearLayout
             android:id="@+id/addTeamTeamSpaceListScroll"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="4dp"
             android:visibility="gone"
+            android:orientation="vertical"
             android:background="@drawable/bg_dropdown_list_shadow"
             android:elevation="8dp"
-            android:fillViewport="true">
+            android:paddingVertical="8dp">
             <LinearLayout
                 android:id="@+id/addTeamTeamSpaceList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp" />
-        </ScrollView>
+                android:orientation="vertical" />
+        </LinearLayout>
 
         <!-- 하루종일 + 시작 + 종료 같은 컨테이너  -->
         <LinearLayout
@@ -313,46 +329,52 @@
                 android:text="@string/notification"
                 android:textColor="@color/gray09"
                 android:textSize="14sp" />
-            <TextView
-                android:id="@+id/addTeamNotificationBtn"
+            <LinearLayout
+                android:id="@+id/addTeamNotificationBtnWrap"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:layout_gravity="end"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="12dp"
                 android:background="@drawable/bg_btn_white_borderless"
-                android:text="@string/none"
-                android:textColor="@color/gray06"
-                android:textSize="14sp" />
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:id="@+id/addTeamNotificationBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/none"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="21dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="20dp"
+                    android:src="@drawable/ic_arrow_down"
+                    android:contentDescription="@null"
+                    app:tint="@color/gray07" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- 알림 드롭다운 (EditTimepickFragment와 동일 UI) -->
         <LinearLayout
+            android:id="@+id/addTeamNotificationDropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="28dp">
-            <TextView
-                android:id="@+id/addTeamPublicBtn"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:gravity="center"
-                android:background="@drawable/bg_schedule_toggle_unselected"
-                android:text="@string/public_visibility"
-                android:textColor="@color/gray07"
-                android:textSize="14sp" />
-            <TextView
-                android:id="@+id/addTeamPrivateBtn"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:background="@drawable/bg_schedule_toggle_selected"
-                android:text="@string/private_visibility"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"
+            android:orientation="vertical"
+            android:background="@drawable/bg_dropdown_list_shadow"
+            android:elevation="8dp"
+            android:paddingVertical="8dp">
+            <TextView android:id="@+id/addTeamNotificationItem0" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="@string/none" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addTeamNotificationItem1" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="5분 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addTeamNotificationItem2" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="15분 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addTeamNotificationItem3" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="30분 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
+            <TextView android:id="@+id/addTeamNotificationItem4" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="44dp" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingVertical="10dp" android:text="1시간 전" android:textSize="14sp" android:textColor="@color/gray09" android:background="?attr/selectableItemBackground" />
         </LinearLayout>
     </LinearLayout>
     </ScrollView>

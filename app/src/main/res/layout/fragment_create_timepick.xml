@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <!-- 고정: 뒤로가기 + 구분선 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp">
+        <ImageButton
+            android:id="@+id/createTimepickBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="뒤로가기"
+            android:src="@drawable/ic_backward" />
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray_light" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="32dp">
+
+            <!-- 가능한 날짜 선택 (복수선택) - 중앙 정렬 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="8dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/timepick_select_dates"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray10" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/timepick_multiple"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/gray05"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 캘린더: 년월 + 화살표 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+                <TextView
+                    android:id="@+id/createTimepickYearMonth"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textColor="@color/gray09"
+                    tools:text="2026년 2월" />
+                <ImageButton
+                    android:id="@+id/createTimepickPrevMonth"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/prev_month"
+                    android:src="@drawable/ic_calender_left" />
+                <ImageButton
+                    android:id="@+id/createTimepickNextMonth"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/next_month"
+                    android:src="@drawable/ic_calender_right" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="일" android:textColor="@color/sunday_red" style="@style/body2_r_14" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="월" style="@style/body2_r_14" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="화" style="@style/body2_r_14" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="수" style="@style/body2_r_14" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="목" style="@style/body2_r_14" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="금" style="@style/body2_r_14" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="토" style="@style/body2_r_14" />
+            </LinearLayout>
+
+            <GridLayout
+                android:id="@+id/createTimepickMonthGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="7"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="16dp" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingHorizontal="16dp"
+                android:paddingBottom="16dp">
+                <LinearLayout
+                    android:id="@+id/createTimepickSelectedDateChips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+            </HorizontalScrollView>
+
+            <!-- 가능한 시간 선택 - 중앙 정렬, 위아래 마진 확대 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:text="@string/timepick_select_times"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/gray10" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="12dp"
+                style="@style/body1_m_16"
+                android:textColor="@color/gray06"
+                android:text="@string/timepick_selected_dates" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp">
+                <LinearLayout
+                    android:id="@+id/createTimepickDateTabs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="20dp"
+                style="@style/body1_m_16"
+                android:textColor="@color/gray06"
+                android:text="시작시간" />
+            <LinearLayout
+                android:id="@+id/createTimepickStartTimeWrap"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_timepick_time_field"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:id="@+id/createTimepickStartTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp"
+                    android:text="@string/timepick_select_start_time" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                style="@style/body1_m_16"
+                android:textColor="@color/gray06"
+                android:text="종료시간" />
+            <LinearLayout
+                android:id="@+id/createTimepickEndTimeWrap"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_timepick_time_field"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:id="@+id/createTimepickEndTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/gray06"
+                    android:textSize="14sp"
+                    android:text="@string/timepick_select_end_time" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/createTimepickSelectedTimeCardWrap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:visibility="gone">
+                <TextView
+                    android:id="@+id/createTimepickSelectedTimeCard"
+                    android:layout_width="161dp"
+                    android:layout_height="28dp"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="8dp"
+                    style="@style/body1_m_16"
+                    android:textColor="@color/gray10"
+                    android:background="@drawable/bg_date_time_btn"
+                    tools:text="오전 9시 30분 - 오후 1시" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/createTimepickNext"
+                android:layout_width="380dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="35dp"
+                android:layout_marginBottom="15dp"
+                app:cornerRadius="8dp"
+                android:backgroundTint="@color/gray03"
+                android:text="@string/timepick_next"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/gray09" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

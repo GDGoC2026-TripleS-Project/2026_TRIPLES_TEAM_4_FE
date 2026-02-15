@@ -2,7 +2,9 @@ package com.project.unimate.ui.calendar
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.graphics.Color
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,7 +30,6 @@ class EditPersonalTaskFragment : Fragment() {
     private val startCal = Calendar.getInstance()
     private val endCal = Calendar.getInstance()
     private var allDay = false
-    private var notificationOn = false
     private var isPrivate = true
     private var category: String? = null
 
@@ -71,7 +72,10 @@ class EditPersonalTaskFragment : Fragment() {
         val endDateBtn = view.findViewById<Button>(R.id.addPersonalEndDate)
         val endTimeBtn = view.findViewById<Button>(R.id.addPersonalEndTime)
         val notificationBtn = view.findViewById<TextView>(R.id.addPersonalNotificationBtn)
+        val notificationBtnWrap = view.findViewById<View>(R.id.addPersonalNotificationBtnWrap)
+        val notificationDropdown = view.findViewById<LinearLayout>(R.id.addPersonalNotificationDropdown)
         val categoryBtn = view.findViewById<TextView>(R.id.addPersonalCategoryBtn)
+        val categoryBtnWrap = view.findViewById<View>(R.id.addPersonalCategoryBtnWrap)
         val categoryEt = view.findViewById<EditText>(R.id.addPersonalCategoryEt)
         val categoryListScroll = view.findViewById<ScrollView>(R.id.addPersonalCategoryListScroll)
         val categoryList = view.findViewById<LinearLayout>(R.id.addPersonalCategoryList)
@@ -85,11 +89,23 @@ class EditPersonalTaskFragment : Fragment() {
             timeInMillis = item.startTimeMillis
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
         }.timeInMillis)
-        notificationOn = item.notificationCategory == "있음"
         isPrivate = item.isLocked
         category = item.scheduleCategory.takeIf { it != "없음" }
         categoryBtn.text = category ?: getString(R.string.select)
-        notificationBtn.text = if (notificationOn) getString(R.string.yes_notification) else getString(R.string.none)
+        notificationBtn.text = item.notificationCategory.takeIf { it.isNotEmpty() } ?: getString(R.string.none)
+        val standardCategories = listOf(
+            getString(R.string.category_part_time),
+            getString(R.string.category_other_team),
+            getString(R.string.category_meeting),
+            getString(R.string.category_exam),
+            getString(R.string.category_health),
+            getString(R.string.category_etc)
+        )
+        if (category == getString(R.string.category_etc) || (category != null && category !in standardCategories)) {
+            categoryEt.visibility = View.VISIBLE
+            categoryBtn.visibility = View.GONE
+            categoryEt.setText(item.scheduleCategory)
+        }
         alldayIcon.setImageResource(if (allDay) R.drawable.ic_allday_selected else R.drawable.ic_allday_unselected)
 
         fun formatDate(cal: Calendar) = "${cal.get(Calendar.YEAR)}. ${cal.get(Calendar.MONTH) + 1}. ${cal.get(Calendar.DAY_OF_MONTH)}"
@@ -117,6 +133,12 @@ class EditPersonalTaskFragment : Fragment() {
             btn.setTextColor(gray06Color)
         }
 
+        fun updateTimeButtonsEnabled() {
+            startTimeBtn.isEnabled = !allDay
+            startTimeBtn.isClickable = !allDay
+            endTimeBtn.isEnabled = !allDay
+            endTimeBtn.isClickable = !allDay
+        }
         alldayRow.setOnClickListener {
             allDay = !allDay
             alldayIcon.setImageResource(if (allDay) R.drawable.ic_allday_selected else R.drawable.ic_allday_unselected)
@@ -125,14 +147,23 @@ class EditPersonalTaskFragment : Fragment() {
                 endCal.set(Calendar.HOUR_OF_DAY, 23); endCal.set(Calendar.MINUTE, 59)
             }
             refreshDateTime()
+            updateTimeButtonsEnabled()
         }
+        updateTimeButtonsEnabled()
         startDateBtn.setOnClickListener {
-            val dlg = DatePickerDialog(requireContext(), { _, y, m, d ->
-                startCal.set(y, m, d); if (allDay) endCal.set(y, m, d)
+            val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = DatePickerDialog(ctx, { _, y, m, d ->
+                startCal.set(y, m, d)
+                if (allDay) endCal.set(y, m, d)
+                if (startCal.after(endCal)) {
+                    endCal.set(Calendar.YEAR, startCal.get(Calendar.YEAR))
+                    endCal.set(Calendar.MONTH, startCal.get(Calendar.MONTH))
+                    endCal.set(Calendar.DAY_OF_MONTH, startCal.get(Calendar.DAY_OF_MONTH))
+                }
                 refreshDateTime()
             }, startCal.get(Calendar.YEAR), startCal.get(Calendar.MONTH), startCal.get(Calendar.DAY_OF_MONTH))
+            styleDatePicker(dlg)
             dlg.show()
-            dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(resources.getColor(android.R.color.black, null))
         }
         fun showTimeOptionPicker(cal: Calendar, onConfirm: () -> Unit) {
             val v = layoutInflater.inflate(R.layout.dialog_time_option, null)
@@ -160,16 +191,42 @@ class EditPersonalTaskFragment : Fragment() {
         }
         startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { refreshDateTime() } }
         endDateBtn.setOnClickListener {
-            val dlg = DatePickerDialog(requireContext(), { _, y, m, d ->
-                endCal.set(y, m, d); refreshDateTime()
+            val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = DatePickerDialog(ctx, { _, y, m, d ->
+                endCal.set(y, m, d)
+                if (endCal.before(startCal)) {
+                    startCal.set(Calendar.YEAR, endCal.get(Calendar.YEAR))
+                    startCal.set(Calendar.MONTH, endCal.get(Calendar.MONTH))
+                    startCal.set(Calendar.DAY_OF_MONTH, endCal.get(Calendar.DAY_OF_MONTH))
+                }
+                refreshDateTime()
             }, endCal.get(Calendar.YEAR), endCal.get(Calendar.MONTH), endCal.get(Calendar.DAY_OF_MONTH))
+            styleDatePicker(dlg)
             dlg.show()
-            dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(resources.getColor(android.R.color.black, null))
         }
-        endTimeBtn.setOnClickListener { showTimeOptionPicker(endCal) { refreshDateTime() } }
-        notificationBtn.setOnClickListener {
-            notificationOn = !notificationOn
-            notificationBtn.text = if (notificationOn) getString(R.string.yes_notification) else getString(R.string.none)
+        endTimeBtn.setOnClickListener {
+            showTimeOptionPicker(endCal) {
+                refreshDateTime()
+                if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && endCal.timeInMillis < startCal.timeInMillis) {
+                    startCal.timeInMillis = endCal.timeInMillis
+                    refreshDateTime()
+                }
+            }
+        }
+        notificationBtnWrap.setOnClickListener {
+            notificationDropdown.visibility = if (notificationDropdown.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+        listOf(
+            R.id.addPersonalNotificationItem0 to getString(R.string.none),
+            R.id.addPersonalNotificationItem1 to "5분 전",
+            R.id.addPersonalNotificationItem2 to "15분 전",
+            R.id.addPersonalNotificationItem3 to "30분 전",
+            R.id.addPersonalNotificationItem4 to "1시간 전"
+        ).forEach { (id, label) ->
+            view.findViewById<TextView>(id).setOnClickListener {
+                notificationBtn.text = label
+                notificationDropdown.visibility = View.GONE
+            }
         }
 
         val categories = listOf(
@@ -187,7 +244,14 @@ class EditPersonalTaskFragment : Fragment() {
                 row.setBackgroundResource(if (isSelected) R.drawable.bg_option_selected else android.R.color.transparent)
             }
         }
-        categoryBtn.setOnClickListener {
+        categoryBtnWrap.setOnClickListener {
+            if (categoryEt.visibility == View.VISIBLE) {
+                categoryEt.visibility = View.GONE
+                categoryBtn.visibility = View.VISIBLE
+                categoryBtn.text = categoryEt.text.toString().trim().takeIf { it.isNotEmpty() } ?: getString(R.string.category_etc)
+                categoryListScroll.visibility = View.GONE
+                return@setOnClickListener
+            }
             categoryListScroll.visibility = if (categoryListScroll.visibility == View.VISIBLE) View.GONE else View.VISIBLE
             if (categoryListScroll.visibility == View.VISIBLE && categoryList.childCount == 0) {
                 categories.forEachIndexed { index, label ->
@@ -202,6 +266,7 @@ class EditPersonalTaskFragment : Fragment() {
                                 categoryEt.visibility = View.VISIBLE
                                 categoryEt.hint = getString(R.string.category_etc)
                                 category = label
+                                categoryListScroll.visibility = View.GONE
                             } else {
                                 category = label
                                 categoryBtn.text = label
@@ -214,6 +279,14 @@ class EditPersonalTaskFragment : Fragment() {
                 }
             } else if (categoryListScroll.visibility == View.VISIBLE) {
                 updateCategoryRowBackgrounds(category ?: categories.firstOrNull())
+            }
+        }
+        categoryEt.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                categoryBtn.text = categoryEt.text.toString().trim().takeIf { it.isNotEmpty() } ?: getString(R.string.category_etc)
+                categoryBtn.visibility = View.VISIBLE
+                categoryEt.visibility = View.GONE
+                categoryListScroll.visibility = View.GONE
             }
         }
 
@@ -235,16 +308,32 @@ class EditPersonalTaskFragment : Fragment() {
         val catEt = view?.findViewById<EditText>(R.id.addPersonalCategoryEt)
         val cat = if (catEt?.visibility == View.VISIBLE) (catEt.text?.toString()?.trim()?.takeIf { it.isNotEmpty() } ?: getString(R.string.category_etc)) else (category ?: "없음")
         val date = (startCal.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+        val notiLabel = view?.findViewById<TextView>(R.id.addPersonalNotificationBtn)?.text?.toString() ?: getString(R.string.none)
         val updated = original.copy(
             title = name,
             date = date,
             startTimeMillis = startCal.timeInMillis,
             endTimeMillis = endCal.timeInMillis,
             isLocked = isPrivate,
-            notificationCategory = if (notificationOn) "있음" else "없음",
+            notificationCategory = notiLabel,
             scheduleCategory = cat
         )
         DummyRepository.updatePersonalSchedule(updated)
         findNavController().popBackStack()
+    }
+
+    private fun styleDatePicker(dialog: DatePickerDialog) {
+        dialog.setButton(DatePickerDialog.BUTTON_POSITIVE, "확인", dialog)
+        dialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "취소", dialog)
+        dialog.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
+    }
+
+    private fun applyBlackText(view: View) {
+        if (view is ViewGroup) for (i in 0 until view.childCount) applyBlackText(view.getChildAt(i))
+        if (view is TextView) view.setTextColor(Color.BLACK)
     }
 }

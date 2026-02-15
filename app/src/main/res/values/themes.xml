@@ -56,8 +56,21 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
+
+    <style name="caption1_r_12" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
     <style name="caption2_m_12" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="caption2_r_12" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_regular</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/black</item>
     </style>
@@ -115,17 +128,30 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
-<!--그...거 뭐지 그거 그...뭐지 그... 날짜 선택하는 달력 색상임 -->
+<!-- 날짜 선택 팝업 통일. 상단 날짜 카드(배경 main_green) 문구색 black -->
     <style name="MyDatePickerDialogTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
         <item name="colorPrimary">@color/main_green</item>
-        <item name="colorOnPrimary">@color/white</item> <!-- 선택된 날짜 및 헤더 글자색을 흰색으로 변경 -->
+        <item name="colorOnPrimary">@android:color/black</item>
         <item name="colorAccent">@color/main_green</item>
         <item name="android:windowBackground">@color/white</item>
-        <item name="android:textColorPrimary">#151515</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:textColorPrimaryInverse">@android:color/black</item>
+    </style>
+    <style name="DatePickerDialogThemeGray" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="colorPrimary">@color/gray04</item>
+        <item name="colorOnPrimary">@android:color/black</item>
+        <item name="colorAccent">@color/gray04</item>
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
     </style>
 
 
     <style name="DatePickerButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
         <item name="android:textColor">@color/main_green</item>
+    </style>
+
+    <!-- 팀 스페이스 종료 팝업 (가로는 코드에서 setLayout으로 지정) -->
+    <style name="TeamEndDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 </resources>

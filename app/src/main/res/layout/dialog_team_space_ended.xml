@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_marginHorizontal="40dp"
+    android:paddingHorizontal="50dp"
+    android:layout_height="190dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/bg_dialog_team_space_ended"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingVertical="10dp">
+
+    <TextView
+        android:id="@+id/dialogTeamEndMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="45dp"
+        android:text="팀 스페이스가 종료되었습니다!"
+        android:textColor="@color/gray08"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/dialogTeamEndConfirm"
+        android:layout_width="185dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="38dp"
+        app:cornerRadius="8dp"
+        android:backgroundTint="@color/gray06"
+        android:text="확인"
+        android:textColor="@color/white"
+       style="@style/body2_r_16" />
+</LinearLayout>

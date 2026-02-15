@@ -26,20 +26,94 @@ object DummyRepository {
         "ai_intro" to "인공지능 입문 팀 스페이스. 실습 과제와 팀 프로젝트 일정을 공유합니다."
     )
 
-    /** 팀 7개. 수정/추가 시 _allTeams 갱신. */
+    /** 종료 팀플의 종료일: 2026년 2월 20일 이전으로 통일 */
+    private val completedTeamEndMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, 19, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+
+    /** 진행중 팀플 기본 시작일/종료일 (수정 페이지·마감 D-N 표시용) */
+    private val defaultOngoingStartMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+    /** 모든 팀플 종료일 2026년 2월 20일 전 */
+    private val defaultOngoingEndMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, 19, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+    /** 종료 팀플 기본 시작일 */
+    private val defaultCompletedStartMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.JANUARY, 10, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+
+    /** 팀 7개. 체리시·메가커피 진행중, 캡스톤·마모사리·모마미 종료. 사진은 cherish/megacoffe/momami만. 종료일 전부 2026-02-20 전. */
     private val _allTeams: MutableList<Team> = listOf(
-        Team("capstone", "캡스톤", "#E8E0A0", "megacoffe_image", false, 4, 10, teamIntroMap["capstone"] ?: ""),
-        Team("cherish", "체리시", "#F495E0", "cherish_image", true, 4, 2, teamIntroMap["cherish"] ?: ""),
-        Team("mamosari", "마모사리", "#C8E6C8", "cherish_image", false, 6, 8, teamIntroMap["mamosari"] ?: ""),
-        Team("megacoffe", "메가커피릿", "#FFACAC", "megacoffe_image", true, 4, 1, teamIntroMap["megacoffe"] ?: ""),
-        Team("momami", "모마미", "#98ADFF", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: ""),
-        Team("psychology", "행복의 심리학", "#EDF3D7", "megacoffe_image", false, 4, 3, teamIntroMap["psychology"] ?: ""),
-        Team("ai_intro", "인공지능 입문", "#EDF3D7", "cherish_image", false, 6, 7, teamIntroMap["ai_intro"] ?: "")
+        Team("capstone", "캡스톤", "#FFE970", "", true, 4, 10, teamIntroMap["capstone"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
+        Team("cherish", "체리시", "#F488D4", "cherish_image", false, 4, 2, teamIntroMap["cherish"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
+        Team("mamosari", "마모사리", "#D9F592", "", true, 6, 8, teamIntroMap["mamosari"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
+        Team("megacoffe", "메가커피릿", "#FBB0A9", "megacoffe_image", false, 4, 1, teamIntroMap["megacoffe"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
+        Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
+        Team("psychology", "행복의 심리학", "#FFF8D3", "", false, 4, 3, teamIntroMap["psychology"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
+        Team("ai_intro", "인공지능 입문", "#FF7A6E", "", false, 6, 7, teamIntroMap["ai_intro"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null)
     ).toMutableList()
 
     val allTeams: List<Team> get() = _allTeams
 
-    /** 팀 정보 수정 (팀 스페이스 수정 페이지 완료 시 호출) */
+    /** 현재 사용자 이름 (마이페이지·프로필 수정). 앱 실행 중에만 반영. */
+    private var currentUserName: String = "이주연"
+    fun getCurrentUserName(): String = currentUserName
+
+    /** 현재 사용자 프로필 사진 (마이페이지·프로필 수정). "file:파일명" 또는 drawable 리소스명 또는 "". 앱 실행 중에만 반영. */
+    private var currentUserProfileImageResName: String = ""
+    fun getCurrentUserProfileImageResName(): String = currentUserProfileImageResName
+    fun setCurrentUserProfileImageResName(value: String) { currentUserProfileImageResName = value }
+
+    fun setCurrentUserName(name: String) {
+        if (name.isBlank()) return
+        val oldName = currentUserName
+        currentUserName = name
+        updateAllUserNameReferences(oldName, name)
+    }
+    private fun updateAllUserNameReferences(oldName: String, newName: String) {
+        for (i in _allTaskItems.indices) {
+            if (_allTaskItems[i].creatorName == oldName) {
+                _allTaskItems[i] = _allTaskItems[i].copy(creatorName = newName)
+            }
+        }
+        _teamMembersMap.values.forEach { list ->
+            for (i in list.indices) {
+                if (list[i].name == oldName) list[i] = list[i].copy(name = newName)
+            }
+        }
+        extraTeamMembers.keys.toList().forEach { teamId ->
+            extraTeamMembers[teamId] = (extraTeamMembers[teamId] ?: emptyList()).map { member ->
+                if (member.name == oldName) member.copy(name = newName) else member
+            }
+        }
+    }
+
+    /** 팀 삭제 (앱 실행 중에만 반영, 재시작 시 데이터 복구). 팀·해당 팀 일정·추가 팀원 데이터 제거. */
+    fun deleteTeam(teamId: String) {
+        _allTeams.removeAll { it.id == teamId }
+        extraTeamMembers.remove(teamId)
+        _allTaskItems.removeAll { it.teamId == teamId }
+    }
+
+    /** 팀 정보 수정. 종료 체크 해제 후 저장 시 진행중으로 전환. imageResName이 null이면 기존 유지. */
     fun updateTeam(
         teamId: String,
         name: String,
@@ -47,35 +121,70 @@ object DummyRepository {
         workStartMillis: Long?,
         workEndMillis: Long?,
         setCompleted: Boolean,
-        completedAtMillis: Long?
+        completedAtMillis: Long?,
+        imageResName: String? = null
     ) {
         val idx = _allTeams.indexOfFirst { it.id == teamId }
         if (idx < 0) return
         val t = _allTeams[idx]
+        val now = System.currentTimeMillis()
+        val completedAt = if (setCompleted) (completedAtMillis ?: now) else null
         _allTeams[idx] = t.copy(
             name = name,
             intro = intro,
+            imageResName = imageResName ?: t.imageResName,
             workStartMillis = workStartMillis,
             workEndMillis = workEndMillis,
-            isCompleted = t.isCompleted || setCompleted,
-            completedAtMillis = if (setCompleted) (completedAtMillis ?: System.currentTimeMillis()) else t.completedAtMillis
+            isCompleted = setCompleted,
+            completedAtMillis = completedAt
         )
     }
 
-    /** 새 팀 추가 (초대코드 참여 완료 시 호출) */
+    /** 새 팀 추가 시 사용하는 팀원 더미 (기존 7개 팀은 teamMembersMap, 이후 추가 팀은 여기) */
+    private val extraTeamMembers = mutableMapOf<String, List<TeamMember>>()
+
+    /** 새 팀 추가 (초대코드 참여/팀 생성/일정에서 팀 선택 시 호출). 팀원 4명·일정 더미 함께 생성. 시작/종료일 null이면 기본값 설정. */
     fun addTeam(team: Team) {
         if (_allTeams.any { it.id == team.id }) return
-        _allTeams.add(team)
+        val toAdd = if (team.workStartMillis == null || team.workEndMillis == null) {
+            team.copy(workStartMillis = team.workStartMillis ?: defaultOngoingStartMillis, workEndMillis = team.workEndMillis ?: defaultOngoingEndMillis)
+        } else team
+        _allTeams.add(toAdd)
+        val count = _teamMembersMap[toAdd.id]?.size ?: 4
+        val names = koreanNamesPool.drop(toAdd.id.hashCode().and(0x7FFFFFFF) % (koreanNamesPool.size - count).coerceAtLeast(0)).take(count)
+            .let { if (it.size >= count) it.take(count) else it + koreanNamesPool.take(count - it.size) }
+        extraTeamMembers[toAdd.id] = names.mapIndexed { i, name -> TeamMember("m-${toAdd.id}-$i", name, "ic_user") }
+        addDefaultTasksForTeam(toAdd.id, toAdd.name)
     }
 
-    /** 나의 팀 스페이스 (홈 하단): 참여중인 팀플 */
-    fun getMyTeamSpaceTeams(): List<Team> = allTeams.filter { !it.isCompleted }
+    /** 새 팀에 대해 기존 더미와 동일한 규칙으로 일정 다수 생성 (2026-01~02, 주당 3일 등) */
+    private fun addDefaultTasksForTeam(teamId: String, teamName: String) {
+        val weekDays = listOf(
+            listOf(1, 2, 3), listOf(4, 5, 6), listOf(11, 12, 13), listOf(18, 19, 20),
+            listOf(25, 26, 27), listOf(1, 2, 3), listOf(8, 9, 10)
+        )
+        val monthForWeek = listOf(1, 1, 1, 1, 1, 2, 2)
+        val members = getTeamMembers(teamId).map { it.name }
+        weekDays.forEachIndexed { wi, days ->
+            val month = monthForWeek[wi]
+            val year = 2026
+            days.forEachIndexed { di, day ->
+                val creator = members.getOrNull(di % members.size)
+                _allTaskItems.add(task(teamId, "$teamName 일정", year, month, day, false, creator))
+            }
+        }
+    }
 
-    /** 참여중인 팀플 (마이페이지) */
-    fun getParticipatingTeamProjects(): List<Team> = allTeams.filter { !it.isCompleted }
+    private fun isTeamPastDeadline(team: Team): Boolean = team.workEndMillis != null && team.workEndMillis < System.currentTimeMillis()
 
-    /** 완료된 팀플 (마이페이지) */
-    fun getCompletedTeamProjects(): List<Team> = allTeams.filter { it.isCompleted }
+    /** 나의 팀 스페이스 (홈 하단): 진행중인 팀플 (종료 체크 안 했고 마감일 미지남) */
+    fun getMyTeamSpaceTeams(): List<Team> = allTeams.filter { !it.isCompleted && !isTeamPastDeadline(it) }
+
+    /** 참여중인 팀플 (마이페이지). 마감일 지나면 완료로 내려감 */
+    fun getParticipatingTeamProjects(): List<Team> = allTeams.filter { !it.isCompleted && !isTeamPastDeadline(it) }
+
+    /** 완료된 팀플 (마이페이지). 종료 체크했거나 마감일 지남 */
+    fun getCompletedTeamProjects(): List<Team> = allTeams.filter { it.isCompleted || isTeamPastDeadline(it) }
 
     /** 캘린더 필터용 팀 목록 (전체 7개) */
     fun getCalendarFilterTeams(): List<Team> = allTeams
@@ -86,17 +195,17 @@ object DummyRepository {
         "강현석", "송동현", "김수연", "박민아", "이준호", "최민국", "김태진", "김지민", "이수민", "박서진"
     )
 
-    private val teamMembersMap: Map<String, List<TeamMember>> = run {
-        val teamIds = allTeams.map { it.id }
+    private val _teamMembersMap: MutableMap<String, MutableList<TeamMember>> = run {
+        val teamIds = _allTeams.map { it.id }
         teamIds.mapIndexed { index, teamId ->
             val count = if (index % 3 == 0) 5 else 4
             val names = koreanNamesPool.drop(index * 2).take(5).let { if (it.size >= count) it.take(count) else it + koreanNamesPool.take(count - it.size) }
-            teamId to names.mapIndexed { i, name -> TeamMember("m-$teamId-$i", name, "ic_user") }
-        }.toMap()
+            teamId to names.mapIndexed { i, name -> TeamMember("m-$teamId-$i", name, "ic_user") }.toMutableList()
+        }.toMap().toMutableMap()
     }
 
-    /** 팀 스페이스용: 해당 팀의 팀원 목록 */
-    fun getTeamMembers(teamId: String): List<TeamMember> = teamMembersMap[teamId] ?: emptyList()
+    /** 팀 스페이스용: 해당 팀의 팀원 목록 (기존 팀 = _teamMembersMap, 추가 팀 = extraTeamMembers) */
+    fun getTeamMembers(teamId: String): List<TeamMember> = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
 
     fun getTeamIntro(teamId: String): String = getTeamById(teamId)?.intro ?: teamIntroMap[teamId] ?: ""
 
@@ -171,7 +280,7 @@ object DummyRepository {
 
     /** 팀 스페이스 캘린더용: 해당 팀의 특정 날짜 일정 개수 */
     fun getDayEventCountForTeam(teamId: String, date: Calendar): Int =
-        allTaskItems.count { it.teamId == teamId && it.isSameDay(date) }
+        allTaskItems.count { it.teamId == teamId && it.isOnDate(date) }
 
     // ---- 일정 없는 팀원 (2026-01 ~ 2026-02, 팀별 날짜당 1~3명 랜덤) ----
     private val noScheduleMembersCache = mutableMapOf<Long, Map<String, List<TeamMember>>>()
@@ -211,15 +320,15 @@ object DummyRepository {
     private fun effectivePersonalLocked(item: PersonalScheduleItem): Boolean = personalLockedOverrides[item.id] ?: item.isLocked
     private fun effectivePersonalChecked(item: PersonalScheduleItem): Boolean = personalCheckedOverrides[item.id] ?: item.isChecked
 
-    /** 특정 날짜의 팀 할일 (팀 ID 필터 적용). 체크 상태는 오버라이드 반영 */
+    /** 특정 날짜의 팀 할일 (팀 ID 필터 적용). 체크 상태는 오버라이드 반영. 시작일~종료일 구간에 포함되는 날 모두 표시 */
     fun getTasksForDate(date: Calendar, teamIds: List<String>): List<TaskItem> =
-        allTaskItems.filter { it.isSameDay(date) && it.teamId in teamIds }.map { t ->
+        allTaskItems.filter { it.isOnDate(date) && it.teamId in teamIds }.map { t ->
             t.copy(isChecked = effectiveTaskChecked(t))
         }
 
-    /** 오늘 날짜의 팀 할일 (팀별 그룹용). 체크 상태 오버라이드 반영 */
+    /** 오늘 날짜의 팀 할일 (팀별 그룹용). 체크 상태 오버라이드 반영. 시작일~종료일 구간에 오늘이 포함되면 표시 */
     fun getTodayTasksByTeam(today: Calendar): Map<String, List<TaskItem>> {
-        val list = allTaskItems.filter { it.isSameDay(today) }.map { t ->
+        val list = allTaskItems.filter { it.isOnDate(today) }.map { t ->
             t.copy(isChecked = effectiveTaskChecked(t))
         }
         return list.groupBy { it.teamId }
@@ -263,17 +372,18 @@ object DummyRepository {
         if (idx >= 0) _allPersonalItems[idx] = item
     }
 
+    /** 특정 날짜의 개인일정. 시작일~종료일 구간에 포함되는 날 모두 표시 */
     fun getPersonalForDate(date: Calendar): List<PersonalScheduleItem> =
-        allPersonalItems.filter { it.isSameDay(date) }.map { p ->
+        allPersonalItems.filter { it.isOnDate(date) }.map { p ->
             p.copy(isLocked = effectivePersonalLocked(p), isChecked = effectivePersonalChecked(p))
         }
 
     fun getPersonalForToday(today: Calendar): List<PersonalScheduleItem> = getPersonalForDate(today)
 
-    /** 그날 일정 개수 (팀 할일 + 개인일정, 팀 구분 없이). 캘린더 날짜칸 표시용 */
+    /** 그날 일정 개수 (팀 할일 + 개인일정, 팀 구분 없이). 캘린더 날짜칸 표시용. 시작일~종료일 구간 포함 */
     fun getDayEventCount(date: Calendar, teamIds: List<String>): Int {
-        val taskCount = allTaskItems.count { it.isSameDay(date) && it.teamId in teamIds }
-        val personalCount = allPersonalItems.count { it.isSameDay(date) }
+        val taskCount = allTaskItems.count { it.isOnDate(date) && it.teamId in teamIds }
+        val personalCount = allPersonalItems.count { it.isOnDate(date) }
         return taskCount + personalCount
     }
 
