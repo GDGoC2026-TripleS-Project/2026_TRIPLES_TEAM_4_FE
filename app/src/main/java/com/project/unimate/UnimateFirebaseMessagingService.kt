@@ -1,10 +1,13 @@
 package com.project.unimate
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
@@ -71,6 +74,8 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(Notification.DEFAULT_ALL)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .build()
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -106,7 +111,7 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val contentView = RemoteViews(packageName, R.layout.notification_poke_custom).apply {
-            setTextViewText(R.id.notif_section, "찌르기 $alarmType")
+            setTextViewText(R.id.notif_section, alarmType)
             setTextViewText(R.id.notif_team, teamName)
             setTextViewText(R.id.notif_title, messageTitle)
             setTextViewText(R.id.notif_body, messageBody)
@@ -125,6 +130,8 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
             .setCustomContentView(contentView)
             .setCustomBigContentView(contentView)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(Notification.DEFAULT_ALL)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .build()
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -137,14 +144,26 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (nm.getNotificationChannel(CHANNEL_ID) != null) return
 
+        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val audioAttrs = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Unimate", NotificationManager.IMPORTANCE_HIGH)
+            NotificationChannel(CHANNEL_ID, "Unimate Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Unimate push alerts"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 200, 250)
+                setSound(soundUri, audioAttrs)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
         )
     }
 
     companion object {
         private const val TAG = "UnimateFCM"
-        private const val CHANNEL_ID = "unimate_default"
+        private const val CHANNEL_ID = "unimate_alert_v2"
 
         const val EXTRA_PUSH_SCREEN = "push_screen"
         const val EXTRA_PUSH_ALARM_ID = "push_alarm_id"
