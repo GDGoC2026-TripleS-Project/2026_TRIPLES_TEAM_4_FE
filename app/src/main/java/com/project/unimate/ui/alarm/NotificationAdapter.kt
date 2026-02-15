@@ -13,7 +13,8 @@ import com.project.unimate.notification.NotificationItem
 import com.project.unimate.notification.NotificationUiMapper
 
 class NotificationAdapter(
-    private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
+    private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit,
+    private val onCardClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val sourceItems = mutableListOf<NotificationItem>()
@@ -59,7 +60,7 @@ class NotificationAdapter(
             SectionHolder(v)
         } else {
             val v = inflater.inflate(R.layout.item_notification_card, parent, false)
-            CardHolder(v, onCompleteClicked)
+            CardHolder(v, onCompleteClicked, onCardClicked)
         }
     }
 
@@ -81,7 +82,8 @@ class NotificationAdapter(
 
     inner class CardHolder(
         itemView: View,
-        private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
+        private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit,
+        private val onCardClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
         private val dot: View = itemView.findViewById(R.id.team_dot)
         private val teamName: TextView = itemView.findViewById(R.id.team_name)
@@ -128,6 +130,17 @@ class NotificationAdapter(
                     onCompleteClicked(n) { updated ->
                         updateItem(updated)
                     }
+                }
+            }
+
+            itemView.setOnClickListener {
+                if (n.action) {
+                    if (!n.actionDone || n.isRead) return@setOnClickListener
+                } else {
+                    if (n.isRead) return@setOnClickListener
+                }
+                onCardClicked(n) { updated ->
+                    updateItem(updated)
                 }
             }
         }
