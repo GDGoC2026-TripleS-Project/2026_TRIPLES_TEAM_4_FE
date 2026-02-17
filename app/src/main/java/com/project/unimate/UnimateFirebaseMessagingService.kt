@@ -1,13 +1,10 @@
 package com.project.unimate
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
@@ -141,29 +138,12 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
 
     private fun ensureChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (nm.getNotificationChannel(CHANNEL_ID) != null) return
-
-        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        val audioAttrs = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
-        nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Unimate Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Unimate push alerts"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 250, 200, 250)
-                setSound(soundUri, audioAttrs)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-        )
+        NotificationChannels.ensureAlertChannel(this)
     }
 
     companion object {
         private const val TAG = "UnimateFCM"
-        private const val CHANNEL_ID = "unimate_alert_v2"
+        private const val CHANNEL_ID = NotificationChannels.ALERT_CHANNEL_ID
 
         const val EXTRA_PUSH_SCREEN = "push_screen"
         const val EXTRA_PUSH_ALARM_ID = "push_alarm_id"
