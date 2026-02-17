@@ -21,11 +21,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.registerForActivityResult
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.FragmentTeamCreateBinding
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamCreateRequest
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -62,6 +67,20 @@ class TeamCreateFragment : Fragment() {
         R.id.btnColorCoralLight to "#FBB0A9",
         R.id.btnColorMint to "#3FE9C0",
         R.id.btnColorAqua to "#C2FFF0"
+    )
+
+    /** API용 색상 코드 (버튼 id → 서버 color enum) */
+    private val colorButtonToCode: Map<Int, String> = mapOf(
+        R.id.btnColorYellow to "C01",
+        R.id.btnColorBeige to "C02",
+        R.id.btnColorPeriwinkle to "C03",
+        R.id.btnColorLavender to "C04",
+        R.id.btnColorMagenta to "C05",
+        R.id.btnColorPinkLight to "C06",
+        R.id.btnColorCoral to "C07",
+        R.id.btnColorCoralLight to "C08",
+        R.id.btnColorMint to "C09",
+        R.id.btnColorAqua to "C10"
     )
 
 
@@ -261,15 +280,19 @@ class TeamCreateFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // DB에 팀 추가 (다른 팀플과 동일하게 더미 팀원 등 생성됨)
+            // 로컬 더미 + API 동시 처리
             val tempInviteCode = generateRandomCode()
-            val teamId = "created_${System.currentTimeMillis()}"
-            val colorHex = colorButtons.find { it.tag == "SELECTED" }?.id?.let { colorButtonToHex[it] } ?: "#90A3ED"
+            val localTeamId = "created_${System.currentTimeMillis()}"
+            val selectedBtnId = colorButtons.find { it.tag == "SELECTED" }?.id
+            val colorHex = selectedBtnId?.let { colorButtonToHex[it] } ?: "#90A3ED"
+            val colorCode = selectedBtnId?.let { colorButtonToCode[it] } ?: "C03"
             val (workStart, workEnd) = parseWorkDateTimes(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString(), binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
-            val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, teamId) } ?: ""
+            val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, localTeamId) } ?: ""
             val intro = binding.etTeamDesc.text?.toString()?.trim() ?: ""
+
+            // 더미 데이터에도 추가 (fallback)
             val newTeam = Team(
-                id = teamId,
+                id = localTeamId,
                 name = teamName,
                 colorHex = colorHex,
                 imageResName = imageResName,
@@ -282,6 +305,24 @@ class TeamCreateFragment : Fragment() {
                 completedAtMillis = null
             )
             DummyRepository.addTeam(newTeam)
+
+            // API 호출
+            val startAtIso = workStart?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis())
+            val endAtIso = workEnd?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis() + 7 * 24 * 3600 * 1000L)
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<TeamService>(requireContext())
+                    service.createTeam(TeamCreateRequest(
+                        name = teamName,
+                        description = intro.ifBlank { null },
+                        color = colorCode,
+                        startAt = startAtIso,
+                        endAt = endAtIso
+                    ))
+                } catch (_: Exception) {
+                    // API 실패해도 로컬 더미에는 이미 추가됨
+                }
+            }
 
             val bundle = Bundle().apply {
                 putString("inviteCode", tempInviteCode)
@@ -399,6 +440,11 @@ class TeamCreateFragment : Fragment() {
                 dialog.dismiss()
             }
             .show()
+    }
+
+    private fun formatToIso(millis: Long): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        return sdf.format(Date(millis))
     }
 
     private fun generateRandomCode(): String {

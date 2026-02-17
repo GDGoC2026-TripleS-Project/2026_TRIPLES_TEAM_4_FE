@@ -11,10 +11,16 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.PokeRequest
+import com.project.unimate.network.dto.PokeTarget
+import com.project.unimate.network.service.PokeService
+import kotlinx.coroutines.launch
 
 class PokeDetailFragment : Fragment() {
 
@@ -57,14 +63,16 @@ class PokeDetailFragment : Fragment() {
             rvSelectedUsers.adapter = SelectedUserAdapter(members)
         }
 
-        // 3. 메시지 리스트 데이터
-        val messages = listOf(
+        // 3. 메시지 리스트 데이터 (더미, API 성공 시 교체)
+        val messages = mutableListOf(
             "자료를 기다리고 있는 팀원의 간절한 눈빛이 느껴져요 👀",
             "혹시 바쁜 일정에 마감일을 잊으신 건 아니죠? ⏰",
             "팀원이 전한 메시지가 답변을 기다리고 있어요 💌",
             "지금 바로 회의 가능한 시간을 콕 찍어주실래요? 👉",
             "놓치면 안 될 중요한 팀 공지가 도착해 있어요 📢"
         )
+        // 메시지 ID 맵 (API용)
+        val messageIdMap = mutableMapOf<String, Long>()
 
         // 4. 메시지 선택 시 동작 (여기서 버튼 색상이 바뀝니다!)
         val messageAdapter = MessageAdapter(messages) { selectedMsg ->
@@ -103,22 +111,59 @@ class PokeDetailFragment : Fragment() {
             findNavController().popBackStack()
         }
 
-        // 7. 찌르기 버튼 클릭 (토스트 메시지)
+        // API에서 찌르기 문구 로드
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<PokeService>(requireContext())
+                val response = service.getMessages()
+                if (response.isSuccessful) {
+                    val apiMessages = response.body()
+                    if (!apiMessages.isNullOrEmpty()) {
+                        messages.clear()
+                        messageIdMap.clear()
+                        apiMessages.forEach { msg ->
+                            val content = msg.content ?: return@forEach
+                            messages.add(content)
+                            msg.messageId?.let { messageIdMap[content] = it }
+                        }
+                        rvMessageList.adapter = MessageAdapter(messages) { selectedMsg ->
+                            tvSelectedMessage.text = selectedMsg
+                            tvSelectedMessage.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+                            rvMessageList.visibility = View.GONE
+                            ivDropdownArrow.animate().rotation(0f).start()
+                            btnSendPoke.isEnabled = true
+                        }
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+
+        // 7. 찌르기 버튼 클릭 (API 호출 + 토스트)
         btnSendPoke.setOnClickListener {
             if (!selectedMembers.isNullOrEmpty()) {
                 val firstUser = selectedMembers!![0].name
                 val extraCount = selectedMembers!!.size - 1
-
                 val toastMsg = if (extraCount > 0) {
                     "${firstUser}님 외 ${extraCount}명에게 찌르기를 보냈어요 👋"
                 } else {
                     "${firstUser}님에게 찌르기를 보냈어요 👋"
                 }
 
-                Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
-
-                // 완료 후 뒤로가기
-                findNavController().popBackStack()
+                // API 호출
+                val selectedMsg = tvSelectedMessage.text.toString()
+                val msgId = messageIdMap[selectedMsg] ?: 1L
+                btnSendPoke.isEnabled = false
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val service = RetrofitClient.create<PokeService>(requireContext())
+                        service.sendPokes(PokeRequest(
+                            messageId = msgId,
+                            targets = selectedMembers!!.map { PokeTarget(teamId = 0, userId = it.id.toLong()) }
+                        ))
+                    } catch (_: Exception) { }
+                    Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
+                }
             }
         }
 

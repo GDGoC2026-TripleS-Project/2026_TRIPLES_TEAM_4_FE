@@ -9,19 +9,17 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
-import com.project.unimate.auth.AuthApi
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.data.repository.DummyRepository
-import com.project.unimate.network.ApiClient
-import com.project.unimate.network.Env
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.Response
-import java.io.IOException
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.AuthService
+import com.project.unimate.network.service.MyPageService
+import kotlinx.coroutines.launch
 
 class MyPageFragment : Fragment() {
 
@@ -54,7 +52,30 @@ class MyPageFragment : Fragment() {
         logoutButton.setOnClickListener { logout() }
 
         bindTeamLists(layoutInflater, mypageParticipatingContainer, mypageCompletedContainer)
+
+        // API에서 마이페이지 정보 로드
+        loadMyPageFromApi(mypageUserName, mypageUserEmail)
+
         return root
+    }
+
+    private fun loadMyPageFromApi(nameView: TextView, emailView: TextView) {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<MyPageService>(ctx)
+                val response = service.getSummary()
+                if (response.isSuccessful) {
+                    val summary = response.body() ?: return@launch
+                    summary.profile?.let { profile ->
+                        profile.nickname?.let { nameView.text = it }
+                        profile.email?.let { emailView.text = it }
+                    }
+                }
+            } catch (_: Exception) {
+                // API 실패 시 DummyRepository 데이터 유지
+            }
+        }
     }
 
     override fun onResume() {
@@ -193,19 +214,13 @@ class MyPageFragment : Fragment() {
             return
         }
 
-        val req = AuthApi(Env.BASE_URL).logoutRequest(jwt)
-        ApiClient.http.newCall(req).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                if (!isAdded) return
-                requireActivity().runOnUiThread { finishLogoutLocally() }
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                response.close()
-                if (!isAdded) return
-                requireActivity().runOnUiThread { finishLogoutLocally() }
-            }
-        })
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<AuthService>(requireContext())
+                service.logout()
+            } catch (_: Exception) { }
+            finishLogoutLocally()
+        }
     }
 
     private fun finishLogoutLocally() {

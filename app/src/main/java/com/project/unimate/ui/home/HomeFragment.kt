@@ -13,9 +13,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.HomeSummaryResponse
+import com.project.unimate.network.service.HomeService
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class HomeFragment : Fragment() {
@@ -24,6 +29,7 @@ class HomeFragment : Fragment() {
     private var selectedDay: Calendar = Calendar.getInstance().apply { timeInMillis = weekAnchor.timeInMillis }
     private var isChecklistExpanded = false
     private val maxCollapsedPersonalItems = 3
+    private var homeSummary: HomeSummaryResponse? = null
 
 
     override fun onCreateView(
@@ -296,7 +302,25 @@ class HomeFragment : Fragment() {
         homeTeamSpaceIcons.addView(plusBtn)
         (plusBtn.layoutParams as? LinearLayout.LayoutParams)?.gravity = android.view.Gravity.CENTER_VERTICAL
 
+        // API 호출 (성공 시 homeSummary에 저장, UI는 더미 데이터 기반 유지)
+        loadHomeSummary()
+
         return root
+    }
+
+    private fun loadHomeSummary() {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<HomeService>(ctx)
+                val response = service.getHomeSummary()
+                if (response.isSuccessful) {
+                    homeSummary = response.body()
+                }
+            } catch (_: Exception) {
+                // API 실패 시 더미 데이터 유지
+            }
+        }
     }
 
 }

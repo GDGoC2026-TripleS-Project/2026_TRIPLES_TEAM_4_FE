@@ -12,11 +12,19 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.SchedulePollCreateRequest
+import com.project.unimate.network.service.SchedulePollService
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class EditTimepickFragment : Fragment() {
 
@@ -243,6 +251,27 @@ class EditTimepickFragment : Fragment() {
                     creatorName = null
                 )
                 DummyRepository.addTask(task)
+
+                // API 호출 (시간 조율 투표 생성)
+                val numericTeamId = teamId.toLongOrNull()
+                if (numericTeamId != null) {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        try {
+                            val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val timeFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
+                            val dates = TimepickStateHolder.displayDates.map { dateFmt.format(Date(it)) }
+                            val service = RetrofitClient.create<SchedulePollService>(requireContext())
+                            service.create(SchedulePollCreateRequest(
+                                teamId = numericTeamId,
+                                dates = dates,
+                                startTime = timeFmt.format(Date(editStartCalendar.timeInMillis)),
+                                endTime = timeFmt.format(Date(editEndCalendar.timeInMillis)),
+                                title = title,
+                                slotMinutes = 30
+                            ))
+                        } catch (_: Exception) { }
+                    }
+                }
             }
             findNavController().popBackStack(R.id.createTimepickFragment, true)
         }

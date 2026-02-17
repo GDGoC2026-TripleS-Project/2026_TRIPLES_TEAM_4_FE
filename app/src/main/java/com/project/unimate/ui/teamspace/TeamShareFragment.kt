@@ -10,8 +10,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 
 class TeamShareFragment : Fragment() {
 
@@ -25,6 +29,26 @@ class TeamShareFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val inviteCodeView = view.findViewById<TextView>(R.id.tvShareInviteCode)
+        val teamId = arguments?.getString("teamId")
+
+        // API에서 초대코드 발급
+        val numericTeamId = teamId?.toLongOrNull()
+        if (numericTeamId != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<TeamService>(requireContext())
+                    val response = service.issueInviteCode(numericTeamId)
+                    if (response.isSuccessful) {
+                        val code = response.body()?.inviteCode
+                        if (!code.isNullOrBlank()) {
+                            inviteCodeView.text = code
+                        }
+                    }
+                } catch (_: Exception) {
+                    // API 실패 시 기존 값 유지
+                }
+            }
+        }
 
         fun copyInviteCode() {
             val code = inviteCodeView.text?.toString()?.trim().orEmpty()

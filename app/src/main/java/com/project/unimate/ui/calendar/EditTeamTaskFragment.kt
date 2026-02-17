@@ -17,12 +17,20 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamScheduleUpdateRequest
+import com.project.unimate.network.service.TeamScheduleService
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class EditTeamTaskFragment : Fragment() {
 
@@ -283,6 +291,24 @@ class EditTeamTaskFragment : Fragment() {
             endTimeMillis = endCal.timeInMillis
         )
         DummyRepository.updateTask(updated)
+
+        // API 호출 (팀 일정 수정)
+        val numericTeamId = teamId.toLongOrNull()
+        val scheduleId = original.id.removePrefix("t-").split("-").firstOrNull()?.toLongOrNull()
+        if (numericTeamId != null && scheduleId != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val service = RetrofitClient.create<TeamScheduleService>(requireContext())
+                    service.update(numericTeamId, scheduleId, TeamScheduleUpdateRequest(
+                        title = name,
+                        startAt = isoFmt.format(Date(startCal.timeInMillis)),
+                        endAt = isoFmt.format(Date(endCal.timeInMillis))
+                    ))
+                } catch (_: Exception) { }
+            }
+        }
+
         findNavController().popBackStack()
     }
 
