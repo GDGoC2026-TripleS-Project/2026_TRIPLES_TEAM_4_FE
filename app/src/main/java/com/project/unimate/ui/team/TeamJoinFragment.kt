@@ -30,16 +30,19 @@ class TeamJoinFragment : Fragment(R.layout.fragment_team_join) {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val input = s.toString().trim()
-                val isNotEmpty = input.isNotEmpty()
-                binding.btnJoinConfirm.isEnabled = isNotEmpty
-                binding.etJoinCode.isSelected = isNotEmpty
+                val isValid = input.length == 6
+                binding.btnJoinConfirm.isEnabled = isValid
+                binding.etJoinCode.isSelected = input.isNotEmpty()
             }
             override fun afterTextChanged(s: Editable?) {}
         })
 
         binding.btnJoinConfirm.setOnClickListener {
             val code = binding.etJoinCode.text.toString().trim()
-            if (code.isEmpty()) return@setOnClickListener
+            if (code.length != 6) {
+                Toast.makeText(requireContext(), "초대코드는 숫자 6자리입니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             binding.btnJoinConfirm.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
@@ -54,13 +57,22 @@ class TeamJoinFragment : Fragment(R.layout.fragment_team_join) {
                         }
                         findNavController().navigate(R.id.action_teamJoin_to_teamJoinedSuccess, bundle)
                     } else {
-                        Toast.makeText(requireContext(), "유효하지 않은 초대코드입니다.", Toast.LENGTH_SHORT).show()
+                        val errorCode = try {
+                            val errorBody = response.errorBody()?.string() ?: ""
+                            org.json.JSONObject(errorBody).optString("code", "")
+                        } catch (_: Exception) { "" }
+                        val message = when (errorCode) {
+                            "INVITE_CODE_INVALID" -> "유효하지 않은 초대코드입니다."
+                            "INVITE_CODE_EXPIRED" -> "초대코드가 만료되었습니다."
+                            "ALREADY_TEAM_MEMBER" -> "이미 해당 팀의 멤버입니다."
+                            else -> "초대코드 확인에 실패했습니다. (${response.code()})"
+                        }
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                         binding.btnJoinConfirm.isEnabled = true
                     }
                 } catch (e: Exception) {
-                    // API 실패 시 기존 동작 (바로 이동)
-                    val bundle = Bundle().apply { putString("inviteCode", code) }
-                    findNavController().navigate(R.id.action_teamJoin_to_teamJoinedSuccess, bundle)
+                    Toast.makeText(requireContext(), "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                    binding.btnJoinConfirm.isEnabled = true
                 }
             }
         }

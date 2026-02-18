@@ -362,8 +362,7 @@ class TeamCreateFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // 로컬 더미 + API 처리
-            val tempInviteCode = generateRandomCode()
+            // 로컬 더미 + API 처리 (초대코드는 서버에서 발급 — 클라이언트 생성 금지)
             val localTeamId = "created_${System.currentTimeMillis()}"
             val (workStart, workEnd) = parseWorkDateTimes(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString(), binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
             val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, localTeamId) } ?: ""
@@ -408,7 +407,23 @@ class TeamCreateFragment : Fragment() {
                         Toast.makeText(requireContext(), "이미 사용 중인 팀 색상입니다. 다른 색상을 선택해주세요.", Toast.LENGTH_SHORT).show()
                         return@launch
                     }
-                    if (apiResp.isSuccessful) {
+                    if (!apiResp.isSuccessful) {
+                        Log.w("TeamCreate", "팀 생성 실패: ${apiResp.code()}")
+                        binding.btnCompleteCreate.isEnabled = true
+                        Toast.makeText(requireContext(), "팀 생성에 실패했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                    // 팀 생성 성공 → teamId 추출
+                    val createdTeamId = apiResp.body()?.id
+                    Log.d("TeamCreate", "팀 생성 성공, teamId=$createdTeamId")
+                    if (createdTeamId == null) {
+                        Log.w("TeamCreate", "팀 ID가 null — 네비게이션 불가")
+                        binding.btnCompleteCreate.isEnabled = true
+                        Toast.makeText(requireContext(), "팀 생성 응답 오류입니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                    // 서버 팀 목록 갱신 (백그라운드 동기화)
+                    try {
                         val myTeamsResp = service.getMyTeams()
                         if (myTeamsResp.isSuccessful) {
                             val list = myTeamsResp.body() ?: emptyList()
@@ -435,17 +450,34 @@ class TeamCreateFragment : Fragment() {
                                 DummyRepository.replaceTeamsWithServerData(merged)
                             }
                         }
+                    } catch (e: Exception) {
+                        Log.e("TeamCreate", "팀 목록 갱신 실패: ${e.message}")
                     }
-                    Log.d("TeamCreate", "팀 생성 API 응답: ${apiResp.code()}")
+                    // 서버에서 초대코드 발급 (POST /api/teams/{teamId}/invite-code)
+                    val inviteResp = try {
+                        service.issueInviteCode(createdTeamId)
+                    } catch (e: Exception) {
+                        Log.e("TeamCreate", "초대코드 발급 예외: ${e.message}")
+                        null
+                    }
+                    val serverInviteCode = inviteResp?.body()?.inviteCode.orEmpty()
+                    val serverExpiresAt = inviteResp?.body()?.expiresAt.orEmpty()
+                    Log.d("TeamCreate", "초대코드 발급: code=$serverInviteCode, expires=$serverExpiresAt")
+                    if (isAdded) {
+                        val bundle = Bundle().apply {
+                            putString("inviteCode", serverInviteCode)
+                            putString("teamName", teamName)
+                            putLong("teamId", createdTeamId)
+                            putString("expiresAt", serverExpiresAt)
+                        }
+                        findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
+                    }
                 } catch (e: Exception) {
-                    Log.e("TeamCreate", "팀 생성 API 실패: ${e.message}")
-                }
-                if (isAdded) {
-                    val bundle = Bundle().apply {
-                        putString("inviteCode", tempInviteCode)
-                        putString("teamName", teamName)
+                    Log.e("TeamCreate", "팀 생성 예외: ${e.message}")
+                    if (isAdded) {
+                        binding.btnCompleteCreate.isEnabled = true
+                        Toast.makeText(requireContext(), "오류가 발생했습니다. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
                     }
-                    findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
                 }
             }
         }
@@ -572,11 +604,6 @@ class TeamCreateFragment : Fragment() {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(iso)?.time
                 ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)?.time
         } catch (_: Exception) { null }
-    }
-
-    private fun generateRandomCode(): String {
-        val charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return (1..6).map { charset.random() }.joinToString("")
     }
 
     override fun onDestroyView() {

@@ -31,17 +31,23 @@ class TeamShareFragment : Fragment() {
         val inviteCodeView = view.findViewById<TextView>(R.id.tvShareInviteCode)
         val teamId = arguments?.getString("teamId")
 
-        // API에서 초대코드 발급
+        // 기존 초대코드 조회 (GET), 없거나 만료 시 재발급 (POST)
         val numericTeamId = teamId?.toLongOrNull()
         if (numericTeamId != null) {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     val service = RetrofitClient.create<TeamService>(requireContext())
-                    val response = service.issueInviteCode(numericTeamId)
-                    if (response.isSuccessful) {
-                        val code = response.body()?.inviteCode
-                        if (!code.isNullOrBlank()) {
-                            inviteCodeView.text = code
+                    val getResp = service.getInviteCode(numericTeamId)
+                    if (getResp.isSuccessful && !getResp.body()?.inviteCode.isNullOrBlank()) {
+                        inviteCodeView.text = getResp.body()?.inviteCode
+                    } else {
+                        // 기존 코드 없거나 만료 → 재발급
+                        val issueResp = service.issueInviteCode(numericTeamId)
+                        if (issueResp.isSuccessful) {
+                            val code = issueResp.body()?.inviteCode
+                            if (!code.isNullOrBlank()) {
+                                inviteCodeView.text = code
+                            }
                         }
                     }
                 } catch (_: Exception) {
