@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.registerForActivityResult
@@ -84,6 +85,9 @@ class TeamCreateFragment : Fragment() {
     )
 
 
+    /** 현재 사용 중인 색상 코드 집합 (C01~C10). 화면 진입 시 API로 갱신됨 */
+    private var usedColorCodes: Set<String> = emptySet()
+
     // 갤러리 이미지 선택 런처
     private var selectedImageUri: Uri? = null
 
@@ -123,6 +127,9 @@ class TeamCreateFragment : Fragment() {
         setInitialDateAndTimeToNow()
         setupColorListeners()
         setupCompleteButton()
+
+        // 화면 진입 시 사용 중인 색상 로드 → 팔레트 비활성화 처리
+        loadAvailableColors()
     }
 
     // --- 1. 이미지 선택 로직 ---
@@ -232,11 +239,75 @@ class TeamCreateFragment : Fragment() {
     }
 
     private fun onColorSelected(selectedButton: ImageButton) {
-        colorButtons.forEach { it.setImageResource(0) }
-        colorButtons.forEach { it.tag = null }
-
+        if (selectedButton.tag == "USED") {
+            Toast.makeText(requireContext(), "이미 사용 중인 팀 색상입니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        colorButtons.forEach { btn ->
+            if (btn.tag != "USED") {
+                btn.tag = null
+                btn.setImageResource(0)
+            }
+        }
         selectedButton.setImageResource(R.drawable.ic_check_white)
         selectedButton.tag = "SELECTED"
+    }
+
+    // --- 3-1. 사용 중인 색상 로드 (GET /api/teams/colors/available 우선, 실패 시 GET /api/teams 폴백) ---
+    private fun loadAvailableColors() {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<TeamService>(ctx)
+                val resp = service.getAvailableColors()
+                if (resp.isSuccessful) {
+                    val available = resp.body() ?: emptyList()
+                    val availableCodes = available.mapNotNull { it.name?.uppercase() }.toSet()
+                    val allCodes = colorButtonToCode.values.toSet()
+                    usedColorCodes = allCodes - availableCodes
+                    Log.d("TeamCreate", "사용 가능 색상: $availableCodes | 사용 중: $usedColorCodes")
+                    updateColorButtonStates()
+                } else {
+                    Log.w("TeamCreate", "getAvailableColors 실패(${resp.code()}), 팀 목록 폴백")
+                    loadUsedColorsFromTeams()
+                }
+            } catch (e: Exception) {
+                Log.w("TeamCreate", "getAvailableColors 예외: ${e.message}, 팀 목록 폴백")
+                loadUsedColorsFromTeams()
+            }
+        }
+    }
+
+    private fun loadUsedColorsFromTeams() {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<TeamService>(ctx)
+                val resp = service.getMyTeams()
+                if (resp.isSuccessful) {
+                    val teams = resp.body() ?: emptyList()
+                    usedColorCodes = teams.mapNotNull { it.color?.uppercase() }.toSet()
+                    Log.d("TeamCreate", "팀 목록으로 사용 중 색상 확인: $usedColorCodes")
+                    updateColorButtonStates()
+                }
+            } catch (e: Exception) {
+                Log.e("TeamCreate", "팀 목록 조회 실패: ${e.message}")
+            }
+        }
+    }
+
+    private fun updateColorButtonStates() {
+        colorButtons.forEach { button ->
+            val code = colorButtonToCode[button.id] ?: return@forEach
+            if (code.uppercase() in usedColorCodes) {
+                button.alpha = 0.35f
+                button.tag = "USED"
+                button.setImageResource(0)
+            } else {
+                button.alpha = 1.0f
+                if (button.tag == "USED") button.tag = null
+            }
+        }
     }
 
     // --- 4. 완료 버튼 및 유효성 검사 (팝업 포함) ---
@@ -274,18 +345,24 @@ class TeamCreateFragment : Fragment() {
             }
 
             // 3. 컬러 선택 유효성 검사 (필수)
-            val isColorSelected = colorButtons.any { it.tag == "SELECTED" }
-            if (!isColorSelected) {
+            val selectedBtn = colorButtons.find { it.tag == "SELECTED" }
+            if (selectedBtn == null) {
                 Toast.makeText(requireContext(), "팀 컬러를 선택해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 로컬 더미 + API 동시 처리
+            val colorCode = colorButtonToCode[selectedBtn.id] ?: "C03"
+            val colorHex = colorButtonToHex[selectedBtn.id] ?: "#90A3ED"
+
+            // 4. 최종 중복 색상 검증 (우회 방지)
+            if (colorCode.uppercase() in usedColorCodes) {
+                Toast.makeText(requireContext(), "이미 사용 중인 팀 색상입니다. 다른 색상을 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 로컬 더미 + API 처리
             val tempInviteCode = generateRandomCode()
             val localTeamId = "created_${System.currentTimeMillis()}"
-            val selectedBtnId = colorButtons.find { it.tag == "SELECTED" }?.id
-            val colorHex = selectedBtnId?.let { colorButtonToHex[it] } ?: "#90A3ED"
-            val colorCode = selectedBtnId?.let { colorButtonToCode[it] } ?: "C03"
             val (workStart, workEnd) = parseWorkDateTimes(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString(), binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
             val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, localTeamId) } ?: ""
             val intro = binding.etTeamDesc.text?.toString()?.trim() ?: ""
@@ -306,29 +383,42 @@ class TeamCreateFragment : Fragment() {
             )
             DummyRepository.addTeam(newTeam)
 
-            // API 호출
+            // API 호출 — 결과에 따라 네비게이션 또는 에러 처리
             val startAtIso = workStart?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis())
             val endAtIso = workEnd?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis() + 7 * 24 * 3600 * 1000L)
+            binding.btnCompleteCreate.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     val service = RetrofitClient.create<TeamService>(requireContext())
-                    service.createTeam(TeamCreateRequest(
+                    val apiResp = service.createTeam(TeamCreateRequest(
                         name = teamName,
                         description = intro.ifBlank { null },
                         color = colorCode,
                         startAt = startAtIso,
                         endAt = endAtIso
                     ))
-                } catch (_: Exception) {
-                    // API 실패해도 로컬 더미에는 이미 추가됨
+                    if (apiResp.code() == 409) {
+                        // 서버에서 색상 중복 감지
+                        Log.w("TeamCreate", "409: 색상 중복 - $colorCode")
+                        usedColorCodes = usedColorCodes + colorCode.uppercase()
+                        updateColorButtonStates()
+                        binding.btnCompleteCreate.isEnabled = true
+                        Toast.makeText(requireContext(), "이미 사용 중인 팀 색상입니다. 다른 색상을 선택해주세요.", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                    Log.d("TeamCreate", "팀 생성 API 응답: ${apiResp.code()}")
+                } catch (e: Exception) {
+                    Log.e("TeamCreate", "팀 생성 API 실패: ${e.message}")
+                    // 네트워크 실패 시 로컬 더미로만 진행
+                }
+                if (isAdded) {
+                    val bundle = Bundle().apply {
+                        putString("inviteCode", tempInviteCode)
+                        putString("teamName", teamName)
+                    }
+                    findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
                 }
             }
-
-            val bundle = Bundle().apply {
-                putString("inviteCode", tempInviteCode)
-                putString("teamName", teamName)
-            }
-            findNavController().navigate(R.id.action_teamCreate_to_teamComplete, bundle)
         }
     }
 

@@ -4,7 +4,9 @@
       "WebFetch(domain:unimate-alb-274308250.ap-northeast-2.elb.amazonaws.com)",
       "Bash(curl:*)",
       "Bash(./gradlew assembleDebug:*)",
-      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew:*)"
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git checkout:*)"
     ]
   }
 }
