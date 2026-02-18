@@ -15,11 +15,18 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
 import com.project.unimate.auth.JwtStore
+import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamSummaryResponse
 import com.project.unimate.network.service.AuthService
 import com.project.unimate.network.service.MyPageService
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MyPageFragment : Fragment() {
 
@@ -81,18 +88,63 @@ class MyPageFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         view?.let { v ->
-            v.findViewById<TextView>(R.id.mypageUserName)?.text = DummyRepository.getCurrentUserName()
-            v.findViewById<ImageView>(R.id.mypageUserIcon)?.let { iv ->
-                applyUserProfileImage(iv, DummyRepository.getCurrentUserProfileImageResName())
-            }
-            val participating = v.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
-            val completed = v.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
-            if (participating != null && completed != null) {
-                participating.removeAllViews()
-                completed.removeAllViews()
-                bindTeamLists(layoutInflater, participating, completed)
+            lifecycleScope.launch {
+                syncTeamsFromServerIfNeeded()
+                withContext(Dispatchers.Main) {
+                    v.findViewById<TextView>(R.id.mypageUserName)?.text = DummyRepository.getCurrentUserName()
+                    v.findViewById<ImageView>(R.id.mypageUserIcon)?.let { iv ->
+                        applyUserProfileImage(iv, DummyRepository.getCurrentUserProfileImageResName())
+                    }
+                    val participating = v.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
+                    val completed = v.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
+                    if (participating != null && completed != null) {
+                        participating.removeAllViews()
+                        completed.removeAllViews()
+                        bindTeamLists(layoutInflater, participating, completed)
+                    }
+                }
             }
         }
+    }
+
+    private suspend fun syncTeamsFromServerIfNeeded() {
+        if (JwtStore.load(requireContext()).isNullOrBlank()) return
+        try {
+            val service = RetrofitClient.create<TeamService>(requireContext())
+            val resp = service.getMyTeams()
+            if (resp.isSuccessful) {
+                val serverTeams = resp.body()?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
+                val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                withContext(Dispatchers.Main) { DummyRepository.replaceTeamsWithServerData(merged) }
+            }
+        } catch (_: Exception) { }
+    }
+
+    private fun teamSummaryToTeam(r: TeamSummaryResponse): Team? {
+        val id = r.id ?: return null
+        val completed = r.completed == true || r.isCompleted == true
+        val endMillis = parseIsoToMillis(r.endAt)
+        return Team(
+            id = id.toString(),
+            name = r.name ?: "",
+            colorHex = r.colorHex ?: "#cccccc",
+            imageResName = "",
+            isCompleted = completed,
+            memberCount = (r.memberCount ?: 0).toInt(),
+            deadlineDays = null,
+            intro = r.description ?: "",
+            workStartMillis = parseIsoToMillis(r.startAt),
+            workEndMillis = endMillis,
+            completedAtMillis = if (completed) endMillis else null
+        )
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(iso)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)?.time
+        } catch (_: Exception) { null }
     }
 
     private fun bindTeamLists(
