@@ -23,8 +23,11 @@ import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.ProfileUpsertRequest
 import com.project.unimate.network.service.UserService
-import java.io.File
 import kotlinx.coroutines.Dispatchers
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
@@ -96,13 +99,30 @@ class EditProfileFragment : Fragment() {
                     }
                     val me = meResp.body() ?: return@launch
                     val universityId = me.universityId ?: 0L
-                    val profileImageUrl = me.profileImageUrl
+                    var profileImageUrlToSend = me.profileImageUrl
+                    // 로컬에서 새로 고른 프로필 이미지가 있으면 서버에 업로드 후 URL 사용
+                    val resName = DummyRepository.getCurrentUserProfileImageResName()
+                    if (resName.startsWith("file:")) {
+                        val f = File(requireContext().filesDir, resName.removePrefix("file:"))
+                        if (f.exists()) {
+                            val part = MultipartBody.Part.createFormData(
+                                "file",
+                                f.name,
+                                f.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                            )
+                            val uploadResp = service.uploadProfileImage(part)
+                            if (uploadResp.isSuccessful) {
+                                profileImageUrlToSend = uploadResp.body()?.get("imageUrl")
+                            }
+                        }
+                    }
                     val upsertResp = service.upsertProfile(
-                        ProfileUpsertRequest(nickname = name, universityId = universityId, profileImageUrl = profileImageUrl)
+                        ProfileUpsertRequest(nickname = name, universityId = universityId, profileImageUrl = profileImageUrlToSend)
                     )
                     withContext(Dispatchers.Main) {
                         if (upsertResp.isSuccessful) {
                             DummyRepository.setCurrentUserName(name)
+                            com.project.unimate.data.repository.NicknameStore.save(requireContext(), name)
                             ProfileImageStore.save(requireContext(), DummyRepository.getCurrentUserProfileImageResName())
                             closeFragment()
                         } else {

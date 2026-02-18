@@ -30,6 +30,7 @@ import com.project.unimate.auth.JwtStore
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.data.repository.PendingCompletionPopupStore
+import com.project.unimate.data.repository.NicknameStore
 import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.data.repository.ServerSync
 import com.project.unimate.databinding.ActivityMainBinding
@@ -86,21 +87,26 @@ class MainActivity : AppCompatActivity() {
         DummyRepository.applyPersistedTeamNames(this)
 
         if (!jwt.isNullOrBlank()) {
-            // 로그인 상태: 로컬 일정은 안 씀. 서버에서 유저/팀/일정 전부 불러와 반영
-            lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
+            // 이미 로그인된 상태: 닉네임 + 로컬 캐시 복원. 서버 sync는 Splash(또는 로그인 직후)에서만 1회 수행
+            NicknameStore.get(this).takeIf { it.isNotBlank() }?.let {
+                DummyRepository.setCurrentUserName(it)
+            }
+            DummyRepository.loadSchedulesFrom(this)
         } else {
-            // 비로그인: 로컬 저장된 팀/개인 일정만 복원
             DummyRepository.loadSchedulesFrom(this)
         }
     }
 
+    /** 스플래시를 한 번이라도 떠났으면 true (onResume에서 서버 sync 할지 판단용) */
+    private var hasLeftSplashScreen = false
+
     override fun onResume() {
         super.onResume()
         checkAndShowTeamEndPopups()
-        // 앱 복귀 시에도 서버에서 최신 데이터 반영 (JWT 있을 때만)
-        if (!JwtStore.load(this).isNullOrBlank()) {
-            lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
-        }
+        // 앱 백그라운드 복귀 시에만 서버 동기화. cold start 시에는 Splash에서만 sync 하므로 여기서는 스킵
+        if (JwtStore.load(this).isNullOrBlank()) return
+        if (!hasLeftSplashScreen) return
+        lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
     }
 
     private val teamEndPopupPrefs: SharedPreferences
@@ -177,8 +183,9 @@ class MainActivity : AppCompatActivity() {
         // 네비게이션바 내부 간격 조정 호출
         applyBottomNavGap(navView, gapDp = 6)
 
-        // 목적지 변경 리스너
+        // 목적지 변경 리스너 (스플래시 이탈 여부 기록 → onResume에서 sync 1회만 하기 위함)
         navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id != R.id.splashFragment) hasLeftSplashScreen = true
             when (destination.id) {
                 // 숨김 목록
                 R.id.splashFragment, R.id.loginFragment, R.id.profileCreateFragment,

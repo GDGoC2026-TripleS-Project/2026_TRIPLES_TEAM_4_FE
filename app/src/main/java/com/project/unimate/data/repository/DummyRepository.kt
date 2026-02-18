@@ -356,8 +356,13 @@ object DummyRepository {
 
     val allTaskItems: List<TaskItem> get() = _allTaskItems
 
-    /** 저장된 팀/개인 일정 복원. 앱 시작 시 MainActivity에서 호출. */
+    /** 저장된 팀 목록·팀/개인 일정 복원. 앱 시작 시 MainActivity에서 호출. */
     fun loadSchedulesFrom(context: Context) {
+        TeamStore.loadTeams(context)?.takeIf { it.isNotEmpty() }?.let { loaded ->
+            replaceTeamsWithServerData(loaded)
+            applyPersistedTeamImages(context)
+            applyPersistedTeamNames(context)
+        }
         ScheduleStore.loadTaskItems(context)?.takeIf { it.isNotEmpty() }?.let {
             _allTaskItems.clear()
             _allTaskItems.addAll(it)
@@ -368,8 +373,9 @@ object DummyRepository {
         }
     }
 
-    /** 팀/개인 일정 전체 저장. 추가·수정 후 UI에서 호출. */
+    /** 팀 목록·팀/개인 일정 전체 저장. sync 후·추가·수정 후 UI에서 호출. */
     fun saveSchedulesTo(context: Context) {
+        TeamStore.saveTeams(context, _allTeams)
         ScheduleStore.saveTaskItems(context, _allTaskItems)
         ScheduleStore.savePersonalItems(context, _allPersonalItems)
     }

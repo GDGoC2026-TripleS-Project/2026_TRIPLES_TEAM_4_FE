@@ -291,7 +291,7 @@ class TeamCreateFragment : Fragment() {
                 val service = RetrofitClient.create<TeamService>(ctx)
                 val resp = service.getMyTeams()
                 if (resp.isSuccessful) {
-                    val teams = resp.body() ?: emptyList()
+                    val teams = resp.body()?.listOrEmpty() ?: emptyList()
                     usedColorCodes = teams.mapNotNull { it.color?.uppercase() }.toSet()
                     Log.d("TeamCreate", "팀 목록으로 사용 중 색상 확인: $usedColorCodes")
                     updateColorButtonStates()
@@ -427,7 +427,7 @@ class TeamCreateFragment : Fragment() {
                         val myTeamsResp = service.getMyTeams()
                         if (myTeamsResp.isSuccessful) {
                             val deletedUserIds = DeletedUserTeamStore.getDeletedIds(requireContext())
-                            val list = myTeamsResp.body()?.filter { r -> r.id?.toString() !in deletedUserIds } ?: emptyList()
+                            val list = myTeamsResp.body()?.listOrEmpty()?.filter { r -> r.id?.toString() !in deletedUserIds } ?: emptyList()
                             val newIdStr = newTeamId?.toString()
                             val serverTeams = list.mapNotNull { r ->
                                 val id = r.id ?: return@mapNotNull null

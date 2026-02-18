@@ -122,7 +122,7 @@ class MyPageFragment : Fragment() {
             val resp = service.getMyTeams()
             if (resp.isSuccessful) {
                 val deletedUserIds = DeletedUserTeamStore.getDeletedIds(requireContext())
-                val serverTeams = resp.body()
+                val serverTeams = resp.body()?.listOrEmpty()
                     ?.filter { r -> r.id?.toString() !in deletedUserIds }
                     ?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
                 val deletedNames = DeletedSeedTeamStore.getDeletedNames(requireContext())

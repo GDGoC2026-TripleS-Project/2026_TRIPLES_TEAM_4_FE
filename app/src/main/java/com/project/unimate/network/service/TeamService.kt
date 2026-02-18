@@ -7,7 +7,7 @@ import retrofit2.http.*
 interface TeamService {
 
     @GET("api/teams")
-    suspend fun getMyTeams(): Response<List<TeamSummaryResponse>>
+    suspend fun getMyTeams(): Response<TeamsListResponse>
 
     @POST("api/teams")
     suspend fun createTeam(@Body request: TeamCreateRequest): Response<TeamResponse>

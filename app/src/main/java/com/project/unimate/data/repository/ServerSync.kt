@@ -7,11 +7,14 @@ import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.Team
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamSummaryResponse
+import com.project.unimate.network.dto.TeamsListResponse
 import com.project.unimate.network.service.MyScheduleService
 import com.project.unimate.network.service.TeamScheduleService
 import com.project.unimate.network.service.TeamService
 import com.project.unimate.network.service.UserService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URL
@@ -26,11 +29,18 @@ import java.util.Locale
 object ServerSync {
 
     private const val TAG = "ServerSync"
+    private val syncMutex = Mutex()
 
     suspend fun syncFromServer(context: Context) {
+        syncMutex.withLock {
+            syncFromServerInternal(context)
+        }
+    }
+
+    private suspend fun syncFromServerInternal(context: Context) {
+        val ctx = context.applicationContext
         try {
             Log.d(TAG, "syncFromServer start")
-            val ctx = context.applicationContext
             // 1) 유저 정보 (이름, 프로필 이미지)
             val userService = RetrofitClient.create<UserService>(ctx)
             val userResp = withContext(Dispatchers.IO) { userService.getMyInfo() }
@@ -40,7 +50,10 @@ object ServerSync {
             if (userResp.isSuccessful) {
                 val me = userResp.body()
                 me?.nickname?.takeIf { it.isNotBlank() }?.let { nick ->
-                    withContext(Dispatchers.Main) { DummyRepository.setCurrentUserName(nick) }
+                    withContext(Dispatchers.Main) {
+                        DummyRepository.setCurrentUserName(nick)
+                        NicknameStore.save(ctx, nick)
+                    }
                 }
                 me?.profileImageUrl?.takeIf { it.isNotBlank() }?.let { url ->
                     withContext(Dispatchers.IO) {
@@ -58,30 +71,35 @@ object ServerSync {
                 }
             }
 
-            // 2) 팀 목록
+            // 2) 팀 목록 (배열 [] 또는 { "content"/"data"/"teams": [] } 둘 다 파싱)
             val teamService = RetrofitClient.create<TeamService>(ctx)
             val teamResp = withContext(Dispatchers.IO) { teamService.getMyTeams() }
             if (!teamResp.isSuccessful) {
                 Log.w(TAG, "getMyTeams failed: ${teamResp.code()} ${teamResp.message()}")
-                return
             }
-            val deletedUserIds = DeletedUserTeamStore.getDeletedIds(ctx)
-            val serverTeams = teamResp.body()
-                ?.filter { r -> r.id?.toString() !in deletedUserIds }
-                ?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
-            val deletedNames = DeletedSeedTeamStore.getDeletedNames(ctx)
-            val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
-            val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
-            val withOverrides = SeedTeamOverridesStore.applyOverrides(ctx, merged, seedIds)
-            withContext(Dispatchers.Main) {
-                DummyRepository.replaceTeamsWithServerData(withOverrides)
-                DummyRepository.applyPersistedTeamImages(ctx)
-                DummyRepository.applyPersistedTeamNames(ctx)
+            if (teamResp.isSuccessful) {
+                val rawList = teamResp.body()?.listOrEmpty() ?: emptyList()
+                val deletedUserIds = DeletedUserTeamStore.getDeletedIds(ctx)
+                val serverTeams = rawList
+                    .filter { r -> r.id?.toString() !in deletedUserIds }
+                    .mapNotNull { teamSummaryToTeam(it) }
+                val deletedNames = DeletedSeedTeamStore.getDeletedNames(ctx)
+                val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
+                val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
+                val withOverrides = SeedTeamOverridesStore.applyOverrides(ctx, merged, seedIds)
+                withContext(Dispatchers.Main) {
+                    DummyRepository.replaceTeamsWithServerData(withOverrides)
+                    DummyRepository.applyPersistedTeamImages(ctx)
+                    DummyRepository.applyPersistedTeamNames(ctx)
+                }
+                Log.d(TAG, "getMyTeams applied: ${serverTeams.size} server teams, merged=${merged.size}")
             }
+            // 동시 sync 시 ConcurrentModificationException 방지: 팀 목록 스냅샷으로 순회
+            val teamsSnapshot = withContext(Dispatchers.Main) { DummyRepository.allTeams.toList() }
 
             // 3) 팀 일정
             val scheduleService = RetrofitClient.create<TeamScheduleService>(ctx)
-            for (team in DummyRepository.allTeams) {
+            for (team in teamsSnapshot) {
                 val numericTeamId = team.id.toLongOrNull() ?: continue
                 val listResp = withContext(Dispatchers.IO) {
                     scheduleService.getByRange(numericTeamId, "2025-01-01", "2026-12-31")
@@ -113,7 +131,7 @@ object ServerSync {
             // 4) 개인 일정
             val myScheduleService = RetrofitClient.create<MyScheduleService>(ctx)
             val allPersonalFromServer = mutableListOf<PersonalScheduleItem>()
-            for (team in DummyRepository.allTeams) {
+            for (team in teamsSnapshot) {
                 val numericTeamId = team.id.toLongOrNull() ?: continue
                 val markedResp = withContext(Dispatchers.IO) {
                     myScheduleService.getMarkedDates(numericTeamId, "2025-01-01", "2026-12-31")
@@ -138,7 +156,7 @@ object ServerSync {
                                 date = cal,
                                 startTimeMillis = startMs,
                                 endTimeMillis = endMs,
-                                isLocked = s.private == true,
+                                isLocked = s.isPrivate == true,
                                 isChecked = false,
                                 notificationCategory = "없음",
                                 scheduleCategory = "없음"
@@ -152,12 +170,13 @@ object ServerSync {
                     DummyRepository.replacePersonalSchedulesFromServer(allPersonalFromServer)
                 }
             }
-            withContext(Dispatchers.Main) {
-                DummyRepository.saveSchedulesTo(ctx)
-            }
             Log.d(TAG, "syncFromServer done")
         } catch (e: Exception) {
             Log.e(TAG, "syncFromServer failed", e)
+        } finally {
+            withContext(Dispatchers.Main) {
+                DummyRepository.saveSchedulesTo(ctx)
+            }
         }
     }
 

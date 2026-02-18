@@ -20,6 +20,7 @@ class PokeAdapter(
     companion object {
         const val TYPE_HEADER = 0
         const val TYPE_MEMBER = 1
+        const val TYPE_NO_MEMBERS = 2
     }
 
     fun submitList(newItems: List<PokeData>) {
@@ -31,6 +32,7 @@ class PokeAdapter(
         return when (items[position]) {
             is PokeData.Header -> TYPE_HEADER
             is PokeData.Member -> TYPE_MEMBER
+            is PokeData.NoMembersMessage -> TYPE_NO_MEMBERS
         }
     }
 
@@ -38,7 +40,8 @@ class PokeAdapter(
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             TYPE_HEADER -> HeaderViewHolder(inflater.inflate(R.layout.item_poke_header, parent, false))
-            else -> MemberViewHolder(inflater.inflate(R.layout.item_poke_member, parent, false))
+            TYPE_MEMBER -> MemberViewHolder(inflater.inflate(R.layout.item_poke_member, parent, false))
+            else -> NoMembersMessageViewHolder(inflater.inflate(R.layout.item_poke_no_members, parent, false))
         }
     }
 
@@ -46,6 +49,7 @@ class PokeAdapter(
         when (val item = items[position]) {
             is PokeData.Header -> (holder as HeaderViewHolder).bind(item)
             is PokeData.Member -> (holder as MemberViewHolder).bind(item)
+            is PokeData.NoMembersMessage -> (holder as NoMembersMessageViewHolder).bind(item)
         }
     }
 
@@ -85,17 +89,13 @@ class PokeAdapter(
             // 전체 선택 텍스트 상태
             updateSelectAllText(header.isAllSelected)
 
-            // 전체 선택 클릭 로직
+            // 전체 선택 클릭 로직 (해당 팀에 멤버가 있을 때만)
             btnSelectAllArea.setOnClickListener {
+                val teamMembers = items.filter { it is PokeData.Member && it.teamName == header.title }
+                if (teamMembers.isEmpty()) return@setOnClickListener
                 header.isAllSelected = !header.isAllSelected
-                updateSelectAllText(header.isAllSelected) // 즉시 텍스트 변경
-
-                // 리스트 돌면서 멤버들 상태 변경
-                items.forEach { item ->
-                    if (item is PokeData.Member && item.teamName == header.title) {
-                        item.isSelected = header.isAllSelected
-                    }
-                }
+                updateSelectAllText(header.isAllSelected)
+                teamMembers.forEach { (it as PokeData.Member).isSelected = header.isAllSelected }
                 notifyDataSetChanged()
                 onSelectionChanged()
             }
@@ -199,6 +199,17 @@ class PokeAdapter(
                     notifyItemChanged(headerIndex)
                 }
             }
+        }
+    }
+
+    // ===================================================================================
+    // [3] 팀원 없음 메시지 뷰홀더 (나 혼자인 팀플: "찌르기 가능한 팀원이 없습니다.")
+    // ===================================================================================
+    inner class NoMembersMessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvNoMembers: TextView = itemView.findViewById(R.id.tvNoMembers)
+
+        fun bind(item: PokeData.NoMembersMessage) {
+            tvNoMembers.text = "찌르기 가능한 팀원이 없습니다."
         }
     }
 }

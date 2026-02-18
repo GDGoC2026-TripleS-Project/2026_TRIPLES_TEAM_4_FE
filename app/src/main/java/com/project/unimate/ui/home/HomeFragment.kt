@@ -19,24 +19,13 @@ import com.project.unimate.R
 import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.Team
-import com.project.unimate.data.repository.DeletedSeedTeamStore
-import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
-import com.project.unimate.data.repository.SeedTeamOverridesStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.HomeSummaryResponse
-import com.project.unimate.network.dto.TeamSummaryResponse
 import com.project.unimate.network.service.HomeService
-import com.project.unimate.network.service.MyScheduleService
-import com.project.unimate.network.service.TeamScheduleService
-import com.project.unimate.network.service.TeamService
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 
 class HomeFragment : Fragment() {
 
@@ -262,7 +251,6 @@ class HomeFragment : Fragment() {
 
         refreshTeamIcons(root)
         loadHomeSummary()
-        syncTeamsFromServerAndRefresh(root)
 
         return root
     }
@@ -270,119 +258,11 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         view?.let { root ->
+            // 서버 sync는 ServerSync(스플래시/로그인/MainActivity onResume)에서만 수행. 여기서는 저장된 팀 사진/이름만 반영해 UI 갱신.
+            DummyRepository.applyPersistedTeamImages(requireContext())
+            DummyRepository.applyPersistedTeamNames(requireContext())
             refreshTeamIcons(root)
-            syncTeamsFromServerAndRefresh(root)
         }
-    }
-
-    private fun syncTeamsFromServerAndRefresh(root: View) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val service = RetrofitClient.create<TeamService>(requireContext())
-                val resp = service.getMyTeams()
-                if (resp.isSuccessful) {
-                    val deletedUserIds = DeletedUserTeamStore.getDeletedIds(requireContext())
-                    val serverTeams = resp.body()
-                        ?.filter { r -> r.id?.toString() !in deletedUserIds }
-                        ?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
-                    val deletedNames = DeletedSeedTeamStore.getDeletedNames(requireContext())
-                    val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
-                    val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
-                    val withOverrides = SeedTeamOverridesStore.applyOverrides(requireContext(), merged, seedIds)
-                    withContext(Dispatchers.Main) {
-                        DummyRepository.replaceTeamsWithServerData(withOverrides)
-                        DummyRepository.applyPersistedTeamImages(requireContext())
-                        DummyRepository.applyPersistedTeamNames(requireContext())
-                        refreshTeamIcons(root)
-                    }
-                    // 재설치 후 복구: 서버에서 팀별 일정 로드해 repo에 반영
-                    val scheduleService = RetrofitClient.create<TeamScheduleService>(requireContext())
-                    val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                    val isoFmtMs = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault())
-                    for (team in DummyRepository.allTeams) {
-                        val numericTeamId = team.id.toLongOrNull() ?: continue
-                        val listResp = withContext(Dispatchers.IO) {
-                            scheduleService.getByRange(numericTeamId, "2025-01-01", "2026-12-31")
-                        }
-                        if (!listResp.isSuccessful) continue
-                        val serverList = listResp.body() ?: continue
-                        val taskItems = serverList.mapNotNull { s ->
-                            val sid = s.id ?: return@mapNotNull null
-                            val startMs = parseIsoToMillis(s.startAt, isoFmt, isoFmtMs)
-                            val endMs = parseIsoToMillis(s.endAt, isoFmt, isoFmtMs)
-                            if (startMs == null || endMs == null) return@mapNotNull null
-                            val cal = Calendar.getInstance().apply { timeInMillis = startMs }
-                            TaskItem(
-                                id = "t-${team.id}-$sid",
-                                teamId = team.id,
-                                title = s.title ?: "",
-                                date = cal,
-                                startTimeMillis = startMs,
-                                endTimeMillis = endMs,
-                                isChecked = false,
-                                creatorName = null
-                            )
-                        }
-                        withContext(Dispatchers.Main) {
-                            DummyRepository.replaceTasksForTeam(team.id, taskItems)
-                        }
-                    }
-                    // 재설치 후 복구: 서버에서 개인 일정 로드해 repo에 반영 (팀별 markedDates → day 목록으로 수집)
-                    val myScheduleService = RetrofitClient.create<MyScheduleService>(requireContext())
-                    val allPersonalFromServer = mutableListOf<PersonalScheduleItem>()
-                    for (team in DummyRepository.allTeams) {
-                        val numericTeamId = team.id.toLongOrNull() ?: continue
-                        val markedResp = withContext(Dispatchers.IO) {
-                            myScheduleService.getMarkedDates(numericTeamId, "2025-01-01", "2026-12-31")
-                        }
-                        if (!markedResp.isSuccessful) continue
-                        val dates = markedResp.body()?.markedDates?.take(60) ?: continue
-                        for (dateStr in dates) {
-                            val dayResp = withContext(Dispatchers.IO) {
-                                myScheduleService.getDaySchedules(numericTeamId, dateStr)
-                            }
-                            val dayList = dayResp.body() ?: continue
-                            for (s in dayList) {
-                                val sid = s.id ?: continue
-                                val startMs = parseIsoToMillis(s.startAt, isoFmt, isoFmtMs)
-                                val endMs = parseIsoToMillis(s.endAt, isoFmt, isoFmtMs)
-                                if (startMs == null || endMs == null) continue
-                                val cal = Calendar.getInstance().apply { timeInMillis = startMs }
-                                allPersonalFromServer.add(
-                                    PersonalScheduleItem(
-                                        id = "p-server-$sid",
-                                        title = s.title ?: "",
-                                        date = cal,
-                                        startTimeMillis = startMs,
-                                        endTimeMillis = endMs,
-                                        isLocked = s.private == true,
-                                        isChecked = false,
-                                        notificationCategory = "없음",
-                                        scheduleCategory = "없음"
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    if (allPersonalFromServer.isNotEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            DummyRepository.replacePersonalSchedulesFromServer(allPersonalFromServer)
-                        }
-                    }
-                    withContext(Dispatchers.Main) {
-                        DummyRepository.saveSchedulesTo(requireContext())
-                    }
-                }
-            } catch (_: Exception) { }
-        }
-    }
-
-    private fun parseIsoToMillis(iso: String?, fmt: SimpleDateFormat, fmtMs: SimpleDateFormat): Long? {
-        if (iso.isNullOrBlank()) return null
-        val s = iso.replace("Z", "").trim()
-        return try {
-            (fmt.parse(s) ?: fmtMs.parse(s))?.time
-        } catch (_: Exception) { null }
     }
 
     private fun refreshTeamIcons(root: View) {
@@ -448,33 +328,6 @@ class HomeFragment : Fragment() {
         plusBtn.findViewById<ImageButton>(R.id.teamPlusButton).setOnClickListener { findNavController().navigate(R.id.action_home_to_teamAdd) }
         homeTeamSpaceIcons.addView(plusBtn)
         (plusBtn.layoutParams as? LinearLayout.LayoutParams)?.gravity = android.view.Gravity.CENTER_VERTICAL
-    }
-
-    private fun teamSummaryToTeam(r: TeamSummaryResponse): Team? {
-        val id = r.id ?: return null
-        val completed = r.completed == true || r.isCompleted == true
-        val endMillis = parseIsoToMillis(r.endAt)
-        return Team(
-            id = id.toString(),
-            name = r.name ?: "",
-            colorHex = r.colorHex ?: "#cccccc",
-            imageResName = "",
-            isCompleted = completed,
-            memberCount = (r.memberCount ?: 0).toInt(),
-            deadlineDays = null,
-            intro = r.description ?: "",
-            workStartMillis = parseIsoToMillis(r.startAt),
-            workEndMillis = endMillis,
-            completedAtMillis = if (completed) endMillis else null
-        )
-    }
-
-    private fun parseIsoToMillis(iso: String?): Long? {
-        if (iso.isNullOrBlank()) return null
-        return try {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(iso)?.time
-                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)?.time
-        } catch (_: Exception) { null }
     }
 
     private fun loadHomeSummary() {

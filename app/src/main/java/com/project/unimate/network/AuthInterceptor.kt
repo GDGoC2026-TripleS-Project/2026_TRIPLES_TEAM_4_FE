@@ -15,7 +15,9 @@ class AuthInterceptor(
         val jwt = JwtStore.load(appContext)
 
         val reqBuilder = original.newBuilder()
-            .header("Content-Type", "application/json")
+        if (original.header("Content-Type") == null) {
+            reqBuilder.header("Content-Type", "application/json")
+        }
 
         if (!jwt.isNullOrBlank()) {
             reqBuilder.header("Authorization", "Bearer $jwt")

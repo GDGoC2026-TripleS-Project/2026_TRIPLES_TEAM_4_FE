@@ -74,7 +74,7 @@ data class MyScheduleResponse(
     val alarmMinutes: Int?,
     val createdAt: String?,
     val updatedAt: String?,
-    val private: Boolean?
+    @com.google.gson.annotations.SerializedName("private") val isPrivate: Boolean?
 )
 
 data class MyScheduleMarkingResponse(

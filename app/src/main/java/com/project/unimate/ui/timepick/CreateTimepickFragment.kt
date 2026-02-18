@@ -1,6 +1,8 @@
 package com.project.unimate.ui.timepick
 
+import android.app.TimePickerDialog
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,7 +10,6 @@ import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -241,36 +242,58 @@ class CreateTimepickFragment : Fragment() {
 
     private fun showStartTimePicker() {
         val day = selectedDateForTime ?: return
-        val endHour = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
-        val options = (0..24).filter { it < endHour }.map { timeLabels[it] }.toTypedArray()
-        if (options.isEmpty()) return
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.timepick_select_start_time))
-            .setItems(options) { _, which ->
-                val start = which
-                var end = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
-                if (end <= start) end = (start + 1).coerceAtMost(24)
-                TimepickStateHolder.dateTimeRanges[day] = start to end
+        var endHour = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
+        val startHour = TimepickStateHolder.dateTimeRanges[day]?.first ?: 9
+        val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+        val dlg = TimePickerDialog(
+            contextWrapper,
+            { _, h, _ ->
+                var start = h
+                if (endHour <= start) endHour = (start + 1).coerceAtMost(24)
+                TimepickStateHolder.dateTimeRanges[day] = start to endHour
                 refreshTimeForSelectedDate()
                 refreshDateTabs()
-            }
-            .show()
+            },
+            startHour,
+            0,
+            false
+        )
+        dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+        dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+        dlg.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
+        dlg.show()
     }
 
     private fun showEndTimePicker() {
         val day = selectedDateForTime ?: return
         val startHour = TimepickStateHolder.dateTimeRanges[day]?.first ?: 9
-        val options = (0..24).filter { it > startHour }.map { timeLabels[it] }.toTypedArray()
-        if (options.isEmpty()) return
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.timepick_select_end_time))
-            .setItems(options) { _, which ->
-                val end = (startHour + 1 + which).coerceAtMost(24)
+        var endHour = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
+        val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+        val dlg = TimePickerDialog(
+            contextWrapper,
+            { _, h, _ ->
+                var end = h
+                if (end <= startHour) end = (startHour + 1).coerceAtMost(24)
                 TimepickStateHolder.dateTimeRanges[day] = startHour to end
                 refreshTimeForSelectedDate()
                 refreshDateTabs()
-            }
-            .show()
+            },
+            endHour,
+            0,
+            false
+        )
+        dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+        dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+        dlg.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
+        dlg.show()
     }
 
     private fun hourToLabel(hour: Int): String {

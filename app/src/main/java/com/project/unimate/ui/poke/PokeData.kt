@@ -19,4 +19,11 @@ sealed class PokeData : Parcelable { // 부모에도 Parcelable 추가
         val teamColor: String,
         var isSelected: Boolean = false
     ) : PokeData()
+
+    /** 팀원이 나 혼자인 팀에서 팀원 목록 자리에 표시하는 문구용 (선택 불가) */
+    @Parcelize
+    data class NoMembersMessage(
+        val teamName: String,
+        val teamColor: String
+    ) : PokeData()
 }

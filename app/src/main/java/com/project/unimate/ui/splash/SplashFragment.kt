@@ -28,9 +28,11 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
 
         val jwt = JwtStore.load(requireContext())
         if (!jwt.isNullOrBlank()) {
-            // 이미 로그인됨 → 서버에서 유저/팀/일정 전부 불러온 뒤 홈으로
+            // 이미 로그인됨 → 서버 sync 1회 후 홈으로 (실패해도 홈으로 이동해 스플래시에 갇히지 않음)
             viewLifecycleOwner.lifecycleScope.launch {
-                ServerSync.syncFromServer(requireContext().applicationContext)
+                try {
+                    ServerSync.syncFromServer(requireContext().applicationContext)
+                } catch (_: Exception) { /* 실패해도 로컬 캐시로 홈 표시 */ }
                 if (isAdded) {
                     findNavController().navigate(R.id.action_splash_to_home)
                 }

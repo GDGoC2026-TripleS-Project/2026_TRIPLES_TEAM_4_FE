@@ -1,11 +1,12 @@
 package com.project.unimate.ui.teamspace
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -13,6 +14,8 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -23,6 +26,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -198,30 +202,27 @@ class EditTeamSpaceFragment : Fragment() {
             dlg.show()
         }
 
-        fun showTimeOptionPicker(cal: Calendar, onSet: (hour: Int, minute: Int) -> Unit) {
-            val view = layoutInflater.inflate(R.layout.dialog_time_option, null)
-            val amPmSpinner = view.findViewById<Spinner>(R.id.dialogTimeAmPm)
-            val hourSpinner = view.findViewById<Spinner>(R.id.dialogTimeHour)
-            val confirmBtn = view.findViewById<Button>(R.id.dialogTimeConfirm)
-            amPmSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, listOf("오전", "오후"))
-            hourSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, (1..12).map { "$it" })
-            val hourOfDay = cal.get(Calendar.HOUR_OF_DAY)
-            val isPm = hourOfDay >= 12
-            val hour12 = if (hourOfDay == 0) 12 else if (hourOfDay > 12) hourOfDay - 12 else hourOfDay
-            amPmSpinner.setSelection(if (isPm) 1 else 0)
-            hourSpinner.setSelection(hour12 - 1)
-            val dialog = AlertDialog.Builder(requireContext()).setView(view).create()
-            confirmBtn.setOnClickListener {
-                val pm = amPmSpinner.selectedItemPosition == 1
-                val h12 = hourSpinner.selectedItemPosition + 1
-                val h = if (pm) if (h12 == 12) 12 else h12 + 12 else if (h12 == 12) 0 else h12
-                cal.set(Calendar.HOUR_OF_DAY, h)
-                cal.set(Calendar.MINUTE, 0)
-                refreshDateTimeButtons()
-                dialog.dismiss()
+        fun showTimePicker(cal: Calendar, onSet: (hour: Int, minute: Int) -> Unit) {
+            val contextWrapper = android.view.ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = TimePickerDialog(
+                contextWrapper,
+                { _, h, m ->
+                    cal.set(Calendar.HOUR_OF_DAY, h)
+                    cal.set(Calendar.MINUTE, m)
+                    onSet(h, m)
+                },
+                cal.get(Calendar.HOUR_OF_DAY),
+                cal.get(Calendar.MINUTE),
+                false
+            )
+            dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+            dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+            dlg.setOnShowListener {
+                val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+                dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+                dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
             }
-            dialog.show()
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(resources.getColor(android.R.color.black, null))
+            dlg.show()
         }
 
         startDateBtn.setOnClickListener {
@@ -237,7 +238,7 @@ class EditTeamSpaceFragment : Fragment() {
                 refreshDateTimeButtons()
             }
         }
-        startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { _, _ -> refreshDateTimeButtons() } }
+        startTimeBtn.setOnClickListener { showTimePicker(startCal) { _, _ -> refreshDateTimeButtons() } }
         endDateBtn.setOnClickListener {
             showDatePicker(endCal) { y, m, d ->
                 endCal.set(Calendar.YEAR, y)
@@ -251,7 +252,7 @@ class EditTeamSpaceFragment : Fragment() {
                 refreshDateTimeButtons()
             }
         }
-        endTimeBtn.setOnClickListener { showTimeOptionPicker(endCal) { _, _ -> refreshDateTimeButtons() } }
+        endTimeBtn.setOnClickListener { showTimePicker(endCal) { _, _ -> refreshDateTimeButtons() } }
 
         setEndedLayout.setOnClickListener {
             setEndedTeam = !setEndedTeam
@@ -390,9 +391,10 @@ class EditTeamSpaceFragment : Fragment() {
         val dm = resources.displayMetrics
         val wPx = (dm.widthPixels * 0.9f).toInt()
         val hPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 260f, dm).toInt()
-        dialog.window?.let { window ->
-            window.setBackgroundDrawableResource(android.R.color.transparent)
-            window.attributes?.let { params ->
+        dialog.window?.let { window: Window ->
+            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            val params: WindowManager.LayoutParams? = window.attributes
+            if (params != null) {
                 params.width = wPx
                 params.height = hPx
                 window.attributes = params
@@ -400,7 +402,7 @@ class EditTeamSpaceFragment : Fragment() {
             window.setDimAmount(0.6f)
         }
         dialog.show()
-        dialog.window?.let { window ->
+        dialog.window?.let { window: Window ->
             window.setLayout(wPx, hPx)
             view.post { window.setLayout(wPx, hPx) }
         }

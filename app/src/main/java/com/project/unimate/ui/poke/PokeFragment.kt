@@ -124,8 +124,12 @@ class PokeFragment : Fragment() {
                     .map { it.name }
             }
             dataList.add(PokeData.Header(teamName, teamColor))
-            memberNames.forEach { name ->
-                dataList.add(PokeData.Member(id = memberId++, name = name, teamName = teamName, teamColor = teamColor))
+            if (memberNames.isEmpty()) {
+                dataList.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
+            } else {
+                memberNames.forEach { name ->
+                    dataList.add(PokeData.Member(id = memberId++, name = name, teamName = teamName, teamColor = teamColor))
+                }
             }
             apiSection?.teamId?.toString()?.let { apiTeamIdsAdded.add(it) }
         }
@@ -138,10 +142,13 @@ class PokeFragment : Fragment() {
             val teamColor = teamSection.teamId?.let { DummyRepository.getTeamById(it.toString())?.colorHex }?.takeIf { it.isNotBlank() }
                 ?: "#90A3ED"
             dataList.add(PokeData.Header(teamName, teamColor))
-            teamSection.members?.forEach { member ->
-                val name = member.nickname ?: ""
-                if (name == currentUserName) return@forEach
-                dataList.add(PokeData.Member(id = memberId++, name = name, teamName = teamName, teamColor = teamColor))
+            val others = teamSection.members?.mapNotNull { m -> m.nickname?.takeIf { it != currentUserName } }?.distinct() ?: emptyList()
+            if (others.isEmpty()) {
+                dataList.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
+            } else {
+                others.forEach { name ->
+                    dataList.add(PokeData.Member(id = memberId++, name = name, teamName = teamName, teamColor = teamColor))
+                }
             }
         }
     }
