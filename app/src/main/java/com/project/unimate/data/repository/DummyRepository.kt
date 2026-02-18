@@ -381,6 +381,12 @@ object DummyRepository {
         if (idx >= 0) _allTaskItems[idx] = item
     }
 
+    /** 서버에서 팀 일정을 불러온 뒤 해당 팀의 일정만 교체할 때 사용. (재설치 후 복구용) */
+    fun replaceTasksForTeam(teamId: String, newTasks: List<TaskItem>) {
+        _allTaskItems.removeAll { it.teamId == teamId }
+        _allTaskItems.addAll(newTasks)
+    }
+
     /** 팀 스페이스용: 해당 팀의 총 일정 개수 */
     fun getTeamScheduleCount(teamId: String): Int = allTaskItems.count { it.teamId == teamId }
 
@@ -516,6 +522,12 @@ object DummyRepository {
     fun updatePersonalSchedule(item: PersonalScheduleItem) {
         val idx = _allPersonalItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allPersonalItems[idx] = item
+    }
+
+    /** 서버에서 개인 일정을 불러온 뒤, 서버 출처 항목만 제거하고 새 목록으로 채움. (재설치 후 복구용) */
+    fun replacePersonalSchedulesFromServer(serverItems: List<PersonalScheduleItem>) {
+        _allPersonalItems.removeAll { it.id.startsWith("p-server-") }
+        _allPersonalItems.addAll(serverItems)
     }
 
     /** 특정 날짜의 개인일정. 시작일~종료일 구간에 포함되는 날 모두 표시 */

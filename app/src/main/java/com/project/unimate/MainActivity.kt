@@ -19,7 +19,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
+import kotlinx.coroutines.launch
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
@@ -29,6 +31,7 @@ import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.data.repository.PendingCompletionPopupStore
 import com.project.unimate.data.repository.ProfileImageStore
+import com.project.unimate.data.repository.ServerSync
 import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
 
@@ -74,20 +77,30 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()} len=${jwt?.length ?: 0}")
         FcmRegistrar.registerIfPossible(this, BASE_URL)
 
-        // 저장된 유저 프로필 이미지 경로 복원 (앱 재시작 후 마이페이지 사진 유지)
+        // 저장된 유저 프로필 이미지 경로 복원 (서버 sync에서 덮어쓸 수 있음)
         ProfileImageStore.get(this).takeIf { it.isNotBlank() }?.let {
             DummyRepository.setCurrentUserProfileImageResName(it)
         }
-        // 저장된 팀 사진·팀플명 복원 (재시작 후에도 유지)
+        // 저장된 팀 사진·팀플명 복원
         DummyRepository.applyPersistedTeamImages(this)
         DummyRepository.applyPersistedTeamNames(this)
-        // 저장된 팀/개인 일정 복원 (재시작 후에도 유지)
-        DummyRepository.loadSchedulesFrom(this)
+
+        if (!jwt.isNullOrBlank()) {
+            // 로그인 상태: 로컬 일정은 안 씀. 서버에서 유저/팀/일정 전부 불러와 반영
+            lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
+        } else {
+            // 비로그인: 로컬 저장된 팀/개인 일정만 복원
+            DummyRepository.loadSchedulesFrom(this)
+        }
     }
 
     override fun onResume() {
         super.onResume()
         checkAndShowTeamEndPopups()
+        // 앱 복귀 시에도 서버에서 최신 데이터 반영 (JWT 있을 때만)
+        if (!JwtStore.load(this).isNullOrBlank()) {
+            lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
+        }
     }
 
     private val teamEndPopupPrefs: SharedPreferences

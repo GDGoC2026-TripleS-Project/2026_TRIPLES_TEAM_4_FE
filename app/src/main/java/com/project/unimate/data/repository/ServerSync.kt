@@ -1,0 +1,193 @@
+package com.project.unimate.data.repository
+
+import android.content.Context
+import android.util.Log
+import com.project.unimate.data.entity.PersonalScheduleItem
+import com.project.unimate.data.entity.TaskItem
+import com.project.unimate.data.entity.Team
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamSummaryResponse
+import com.project.unimate.network.service.MyScheduleService
+import com.project.unimate.network.service.TeamScheduleService
+import com.project.unimate.network.service.TeamService
+import com.project.unimate.network.service.UserService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+
+/**
+ * 재설치/로그인 직후 서버에서 내 사용자 DB(유저정보, 팀, 팀일정, 개인일정) 전부 불러와
+ * DummyRepository·로컬 저장소에 반영. 로그인 성공 시·MainActivity onCreate/onResume에서 호출.
+ */
+object ServerSync {
+
+    private const val TAG = "ServerSync"
+
+    suspend fun syncFromServer(context: Context) {
+        try {
+            Log.d(TAG, "syncFromServer start")
+            val ctx = context.applicationContext
+            // 1) 유저 정보 (이름, 프로필 이미지)
+            val userService = RetrofitClient.create<UserService>(ctx)
+            val userResp = withContext(Dispatchers.IO) { userService.getMyInfo() }
+            if (!userResp.isSuccessful) {
+                Log.w(TAG, "getMyInfo failed: ${userResp.code()} ${userResp.message()}")
+            }
+            if (userResp.isSuccessful) {
+                val me = userResp.body()
+                me?.nickname?.takeIf { it.isNotBlank() }?.let { nick ->
+                    withContext(Dispatchers.Main) { DummyRepository.setCurrentUserName(nick) }
+                }
+                me?.profileImageUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val bytes = URL(url).openStream().readBytes()
+                            val file = File(ctx.filesDir, "profile_server.jpg")
+                            file.writeBytes(bytes)
+                            val resName = "file:${file.name}"
+                            withContext(Dispatchers.Main) {
+                                ProfileImageStore.save(ctx, resName)
+                                DummyRepository.setCurrentUserProfileImageResName(resName)
+                            }
+                        } catch (_: Exception) { }
+                    }
+                }
+            }
+
+            // 2) 팀 목록
+            val teamService = RetrofitClient.create<TeamService>(ctx)
+            val teamResp = withContext(Dispatchers.IO) { teamService.getMyTeams() }
+            if (!teamResp.isSuccessful) {
+                Log.w(TAG, "getMyTeams failed: ${teamResp.code()} ${teamResp.message()}")
+                return
+            }
+            val deletedUserIds = DeletedUserTeamStore.getDeletedIds(ctx)
+            val serverTeams = teamResp.body()
+                ?.filter { r -> r.id?.toString() !in deletedUserIds }
+                ?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
+            val deletedNames = DeletedSeedTeamStore.getDeletedNames(ctx)
+            val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
+            val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
+            val withOverrides = SeedTeamOverridesStore.applyOverrides(ctx, merged, seedIds)
+            withContext(Dispatchers.Main) {
+                DummyRepository.replaceTeamsWithServerData(withOverrides)
+                DummyRepository.applyPersistedTeamImages(ctx)
+                DummyRepository.applyPersistedTeamNames(ctx)
+            }
+
+            // 3) 팀 일정
+            val scheduleService = RetrofitClient.create<TeamScheduleService>(ctx)
+            for (team in DummyRepository.allTeams) {
+                val numericTeamId = team.id.toLongOrNull() ?: continue
+                val listResp = withContext(Dispatchers.IO) {
+                    scheduleService.getByRange(numericTeamId, "2025-01-01", "2026-12-31")
+                }
+                if (!listResp.isSuccessful) continue
+                val serverList = listResp.body() ?: continue
+                val taskItems = serverList.mapNotNull { s ->
+                    val sid = s.id ?: return@mapNotNull null
+                    val startMs = parseIsoToMillis(s.startAt)
+                    val endMs = parseIsoToMillis(s.endAt)
+                    if (startMs == null || endMs == null) return@mapNotNull null
+                    val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+                    TaskItem(
+                        id = "t-${team.id}-$sid",
+                        teamId = team.id,
+                        title = s.title ?: "",
+                        date = cal,
+                        startTimeMillis = startMs,
+                        endTimeMillis = endMs,
+                        isChecked = false,
+                        creatorName = null
+                    )
+                }
+                withContext(Dispatchers.Main) {
+                    DummyRepository.replaceTasksForTeam(team.id, taskItems)
+                }
+            }
+
+            // 4) 개인 일정
+            val myScheduleService = RetrofitClient.create<MyScheduleService>(ctx)
+            val allPersonalFromServer = mutableListOf<PersonalScheduleItem>()
+            for (team in DummyRepository.allTeams) {
+                val numericTeamId = team.id.toLongOrNull() ?: continue
+                val markedResp = withContext(Dispatchers.IO) {
+                    myScheduleService.getMarkedDates(numericTeamId, "2025-01-01", "2026-12-31")
+                }
+                if (!markedResp.isSuccessful) continue
+                val dates = markedResp.body()?.markedDates?.take(60) ?: continue
+                for (dateStr in dates) {
+                    val dayResp = withContext(Dispatchers.IO) {
+                        myScheduleService.getDaySchedules(numericTeamId, dateStr)
+                    }
+                    val dayList = dayResp.body() ?: continue
+                    for (s in dayList) {
+                        val sid = s.id ?: continue
+                        val startMs = parseIsoToMillis(s.startAt)
+                        val endMs = parseIsoToMillis(s.endAt)
+                        if (startMs == null || endMs == null) continue
+                        val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+                        allPersonalFromServer.add(
+                            PersonalScheduleItem(
+                                id = "p-server-$sid",
+                                title = s.title ?: "",
+                                date = cal,
+                                startTimeMillis = startMs,
+                                endTimeMillis = endMs,
+                                isLocked = s.private == true,
+                                isChecked = false,
+                                notificationCategory = "없음",
+                                scheduleCategory = "없음"
+                            )
+                        )
+                    }
+                }
+            }
+            if (allPersonalFromServer.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    DummyRepository.replacePersonalSchedulesFromServer(allPersonalFromServer)
+                }
+            }
+            withContext(Dispatchers.Main) {
+                DummyRepository.saveSchedulesTo(ctx)
+            }
+            Log.d(TAG, "syncFromServer done")
+        } catch (e: Exception) {
+            Log.e(TAG, "syncFromServer failed", e)
+        }
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        val s = iso.replace("Z", "").trim()
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).parse(s)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(s)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(s)?.time
+        } catch (_: Exception) { null }
+    }
+
+    private fun teamSummaryToTeam(r: TeamSummaryResponse): Team? {
+        val id = r.id ?: return null
+        val completed = r.completed == true || r.isCompleted == true
+        val endMillis = parseIsoToMillis(r.endAt)
+        val startMillis = parseIsoToMillis(r.startAt)
+        return Team(
+            id = id.toString(),
+            name = r.name ?: "",
+            colorHex = r.colorHex ?: r.color ?: "#cccccc",
+            imageResName = "",
+            isCompleted = completed,
+            memberCount = (r.memberCount ?: 0).toInt(),
+            deadlineDays = null,
+            intro = r.description ?: "",
+            workStartMillis = startMillis,
+            workEndMillis = endMillis,
+            completedAtMillis = if (completed) endMillis else null
+        )
+    }
+}
