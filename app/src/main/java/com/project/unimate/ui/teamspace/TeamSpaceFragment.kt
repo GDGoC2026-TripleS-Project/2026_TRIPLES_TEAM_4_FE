@@ -40,6 +40,7 @@ class TeamSpaceFragment : Fragment() {
     private var selectedDay: Calendar = Calendar.getInstance()
     private var isIntroExpanded = false
     private var isCalendarTeamMode = true // true = 팀, false = 개인
+    private var myRole: String? = null // 서버에서 로드한 내 역할 (LEADER / MEMBER 등)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,7 +86,13 @@ class TeamSpaceFragment : Fragment() {
         teamSpaceEdit.setOnClickListener {
             findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", teamId) })
         }
-        teamSpaceShare.setOnClickListener { findNavController().navigate(R.id.action_teamSpace_to_teamShare) }
+        teamSpaceShare.setOnClickListener {
+            val bundle = Bundle().apply {
+                putString("teamId", teamId)
+                putString("myRole", myRole)
+            }
+            findNavController().navigate(R.id.action_teamSpace_to_teamShare, bundle)
+        }
         teamSpaceSelectMeetingDate.setOnClickListener {
             findNavController().navigate(R.id.createTimepickFragment, Bundle().apply { putString("teamId", teamId) })
         }
@@ -383,9 +390,9 @@ class TeamSpaceFragment : Fragment() {
                 val service = RetrofitClient.create<TeamService>(ctx)
                 val response = service.getTeamDetail(numericTeamId)
                 if (response.isSuccessful) {
-                    // API 데이터 로드 성공 (향후 UI 갱신에 활용 가능)
                     val detail = response.body()
-                    android.util.Log.d("TeamSpaceFragment", "API 팀 상세 로드 성공: ${detail?.team?.name}")
+                    myRole = detail?.myRole
+                    android.util.Log.d("TeamSpaceFragment", "API 팀 상세 로드 성공: ${detail?.team?.name}, myRole=$myRole")
                 }
             } catch (_: Exception) {
                 // API 실패 시 더미 데이터 유지
