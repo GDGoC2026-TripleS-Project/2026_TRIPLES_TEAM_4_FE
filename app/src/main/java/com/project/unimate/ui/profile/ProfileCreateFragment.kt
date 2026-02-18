@@ -161,6 +161,7 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
                     withContext(Dispatchers.Main) {
                         DummyRepository.replaceTeamsWithServerData(withOverrides)
                         DummyRepository.applyPersistedTeamImages(ctx)
+                        DummyRepository.applyPersistedTeamNames(ctx)
                     }
                 }
             } catch (e: Exception) {

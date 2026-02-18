@@ -16,7 +16,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
+import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.PokeTeamSection
 import com.project.unimate.network.service.PokeService
 import kotlinx.coroutines.launch
 
@@ -31,42 +33,30 @@ class PokeFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_poke, container, false)
 
-        // 더미 데이터로 초기화 (API 성공 시 교체)
-        setupDummyData()
+        buildListFromRepository()
 
         val rvPokeList = view.findViewById<RecyclerView>(R.id.rvPokeList)
         val btnPokeAction = view.findViewById<Button>(R.id.btnSendPoke)
 
-        // 초기 버튼 상태 설정 (비활성화)
         updateButtonState(btnPokeAction)
 
-        // 2. 어댑터 연결
         pokeAdapter = PokeAdapter(dataList) {
-            // 리스트에서 체크박스를 누를 때마다 버튼 상태 업데이트
             updateButtonState(btnPokeAction)
         }
 
         rvPokeList.layoutManager = LinearLayoutManager(context)
         rvPokeList.adapter = pokeAdapter
 
-        // 3. [핵심] 찌르기 버튼 클릭 시 -> 데이터 전달 및 화면 이동
         btnPokeAction.setOnClickListener {
-            // (1) 전체 데이터 중 'Member' 타입이면서 'isSelected'가 true인 것만 골라냄
             val selectedMembers = dataList
                 .filterIsInstance<PokeData.Member>()
                 .filter { it.isSelected }
 
             if (selectedMembers.isNotEmpty()) {
-                // (2) ArrayList로 변환 (Bundle에 넣기 위함)
                 val arrayList = ArrayList(selectedMembers)
-
-                // (3) Bundle 생성 및 데이터 담기
-                // "selected_members"라는 키값은 받는 쪽(DetailFragment)과 똑같아야 합니다!
                 val bundle = Bundle().apply {
                     putParcelableArrayList("selected_members", arrayList)
                 }
-
-                // (4) 다음 화면으로 이동 (네비게이션 액션 ID 확인 필수)
                 try {
                     findNavController().navigate(R.id.action_pokeFragment_to_pokeDetailFragment, bundle)
                 } catch (e: Exception) {
@@ -76,71 +66,89 @@ class PokeFragment : Fragment() {
             }
         }
 
-        // API에서 찌르기 대상 로드
         loadPokeTargetsFromApi()
 
         return view
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadPokeTargetsFromApi()
+    }
+
+    /** 로컬 팀 정보(이름·색) + API 팀원 정보를 합쳐서 표시. 연동된 팀에는 API에서 받은 다른 사용자가 뜨도록. */
     private fun loadPokeTargetsFromApi() {
         val ctx = context ?: return
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val service = RetrofitClient.create<PokeService>(ctx)
                 val response = service.getTargets()
-                if (response.isSuccessful) {
-                    val targets = response.body()?.teams ?: return@launch
-                    dataList.clear()
-                    var memberId = 1
-                    targets.forEach { teamSection ->
-                        val teamName = teamSection.teamName ?: return@forEach
-                        val teamColor = "#90A3ED" // 기본 색상
-                        dataList.add(PokeData.Header(teamName, teamColor))
-                        teamSection.members?.forEach { member ->
-                            dataList.add(PokeData.Member(
-                                id = memberId++,
-                                name = member.nickname ?: "",
-                                teamName = teamName,
-                                teamColor = teamColor
-                            ))
-                        }
-                    }
-                    if (dataList.isNotEmpty() && ::pokeAdapter.isInitialized) {
-                        pokeAdapter.notifyDataSetChanged()
-                    }
+                val apiTeams = if (response.isSuccessful) response.body()?.teams ?: emptyList() else emptyList()
+                buildListMerged(apiTeams)
+                if (::pokeAdapter.isInitialized) {
+                    pokeAdapter.notifyDataSetChanged()
                 }
+                view?.findViewById<Button>(R.id.btnSendPoke)?.let { updateButtonState(it) }
             } catch (_: Exception) {
-                // API 실패 시 더미 데이터 유지
+                buildListMerged(emptyList())
+                if (::pokeAdapter.isInitialized) pokeAdapter.notifyDataSetChanged()
+                view?.findViewById<Button>(R.id.btnSendPoke)?.let { updateButtonState(it) }
             }
         }
     }
 
-    private fun setupDummyData() {
-        dataList.clear() // 중복 방지 초기화
+    /**
+     * 로컬 팀 목록 + API 팀/팀원 정보를 합침.
+     * - 팀 이름·색: 로컬(DummyRepository) 우선, 없으면 API 값 사용.
+     * - 팀원: 해당 팀이 API에 있으면 API 팀원(다른 사용자) 사용, 없으면 로컬 팀원. 나(현재 사용자)는 항상 제외.
+     */
+    private fun buildListMerged(apiTeams: List<PokeTeamSection>) {
+        dataList.clear()
+        val currentUserName = DummyRepository.getCurrentUserName()
+        val apiByTeamId: Map<String, PokeTeamSection> = apiTeams.associate { team -> Pair(team.teamId?.toString() ?: "", team) }
+        val apiByTeamName: Map<String, PokeTeamSection> = apiTeams.associateBy { it.teamName ?: "" }
+        var memberId = 1
+        val localTeamIds = DummyRepository.allTeams.map { it.id }.toSet()
+        val apiTeamIdsAdded = mutableSetOf<String>()
 
-        // 색상 정의 (colors.xml의 색상과 유사하게 설정)
-        val cherryColor = "#3FE9C0" // 체리시 (분홍)
-        val megaColor = "#F488D4"   // 메가커피 (노랑)
-        val monimoColor = "#FFF8D3" // 모니모 (파랑)
+        DummyRepository.allTeams.forEach { team ->
+            val teamIdStr = team.id
+            val teamName = team.name
+            val teamColor = team.colorHex.ifBlank { "#90A3ED" }
+            val apiSection = apiByTeamId[teamIdStr] ?: apiByTeamName[teamName]
+            val memberNames = if (apiSection != null) {
+                apiSection.members?.mapNotNull { m -> m.nickname?.takeIf { it != currentUserName } }?.distinct() ?: emptyList()
+            } else {
+                DummyRepository.getTeamMembers(team.id)
+                    .filter { it.id != "me" && it.name != currentUserName }
+                    .map { it.name }
+            }
+            dataList.add(PokeData.Header(teamName, teamColor))
+            memberNames.forEach { name ->
+                dataList.add(PokeData.Member(id = memberId++, name = name, teamName = teamName, teamColor = teamColor))
+            }
+            apiSection?.teamId?.toString()?.let { apiTeamIdsAdded.add(it) }
+        }
 
-        // --- Team 1: 체리시 ---
-        dataList.add(PokeData.Header("체리시", cherryColor))
-        dataList.add(PokeData.Member(1, "김철수", "체리시", cherryColor))
-        dataList.add(PokeData.Member(2, "이영희", "체리시", cherryColor))
-        dataList.add(PokeData.Member(3, "박민수", "체리시", cherryColor))
-        dataList.add(PokeData.Member(4, "최지우", "체리시", cherryColor))
+        apiTeams.forEach { teamSection ->
+            val teamIdStr = teamSection.teamId?.toString() ?: return@forEach
+            if (teamIdStr in localTeamIds || teamIdStr in apiTeamIdsAdded) return@forEach
+            apiTeamIdsAdded.add(teamIdStr)
+            val teamName = teamSection.teamName ?: return@forEach
+            val teamColor = teamSection.teamId?.let { DummyRepository.getTeamById(it.toString())?.colorHex }?.takeIf { it.isNotBlank() }
+                ?: "#90A3ED"
+            dataList.add(PokeData.Header(teamName, teamColor))
+            teamSection.members?.forEach { member ->
+                val name = member.nickname ?: ""
+                if (name == currentUserName) return@forEach
+                dataList.add(PokeData.Member(id = memberId++, name = name, teamName = teamName, teamColor = teamColor))
+            }
+        }
+    }
 
-        // --- Team 2: 메가커피릿 ---
-        dataList.add(PokeData.Header("메가커피릿", megaColor))
-        dataList.add(PokeData.Member(5, "정수빈", "메가커피릿", megaColor))
-        dataList.add(PokeData.Member(6, "한소희", "메가커피릿", megaColor))
-        dataList.add(PokeData.Member(7, "강동원", "메가커피릿", megaColor))
-
-        // --- Team 3: 모니모 ---
-        dataList.add(PokeData.Header("모니모", monimoColor))
-        dataList.add(PokeData.Member(8, "아이유", "모니모", monimoColor))
-        dataList.add(PokeData.Member(9, "카리나", "모니모", monimoColor))
-        dataList.add(PokeData.Member(10, "윈터", "모니모", monimoColor))
+    /** API 호출 없이 로컬만으로 목록 구성 (초기 표시용). 팀원에서 나(현재 사용자)는 제외. */
+    private fun buildListFromRepository() {
+        buildListMerged(emptyList())
     }
 
     private fun updateButtonState(button: Button) {

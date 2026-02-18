@@ -78,8 +78,9 @@ class MainActivity : AppCompatActivity() {
         ProfileImageStore.get(this).takeIf { it.isNotBlank() }?.let {
             DummyRepository.setCurrentUserProfileImageResName(it)
         }
-        // 저장된 팀 사진 복원 (재시작 후에도 유지)
+        // 저장된 팀 사진·팀플명 복원 (재시작 후에도 유지)
         DummyRepository.applyPersistedTeamImages(this)
+        DummyRepository.applyPersistedTeamNames(this)
         // 저장된 팀/개인 일정 복원 (재시작 후에도 유지)
         DummyRepository.loadSchedulesFrom(this)
     }

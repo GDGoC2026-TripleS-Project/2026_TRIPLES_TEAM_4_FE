@@ -132,6 +132,7 @@ class MyPageFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     DummyRepository.replaceTeamsWithServerData(withOverrides)
                     DummyRepository.applyPersistedTeamImages(requireContext())
+                    DummyRepository.applyPersistedTeamNames(requireContext())
                 }
             }
         } catch (_: Exception) { }

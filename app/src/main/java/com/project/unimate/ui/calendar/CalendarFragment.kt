@@ -110,6 +110,7 @@ class CalendarFragment : Fragment() {
                     }
                     checkBtn.setOnClickListener {
                         DummyRepository.setTaskChecked(task.id, !task.isChecked)
+                        DummyRepository.saveSchedulesTo(requireContext())
                         refreshDayTasks()
                     }
                     taskRow.findViewById<ImageButton>(R.id.taskLock).visibility = View.GONE
@@ -148,10 +149,12 @@ class CalendarFragment : Fragment() {
                         lockBtn.setImageResource(if (item.isLocked) R.drawable.ic_personal_lock else R.drawable.ic_personal_unlock)
                         lockBtn.setOnClickListener {
                             DummyRepository.setPersonalLocked(item.id, !item.isLocked)
+                            DummyRepository.saveSchedulesTo(requireContext())
                             refreshDayTasks()
                         }
                         checkBtn.setOnClickListener {
                             DummyRepository.setPersonalChecked(item.id, !item.isChecked)
+                            DummyRepository.saveSchedulesTo(requireContext())
                             refreshDayTasks()
                         }
                         calendarDayTasksContainer.addView(personalRow)

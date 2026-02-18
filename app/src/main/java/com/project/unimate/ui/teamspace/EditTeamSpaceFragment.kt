@@ -34,6 +34,7 @@ import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.data.repository.PendingCompletionPopupStore
 import com.project.unimate.data.repository.SeedTeamOverridesStore
 import com.project.unimate.data.repository.TeamImageStore
+import com.project.unimate.data.repository.TeamNameStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamUpdateRequest
 import com.project.unimate.network.service.TeamService
@@ -287,6 +288,9 @@ class EditTeamSpaceFragment : Fragment() {
             val imageResNameToSave = selectedTeamImageResName ?: team.imageResName
             if (imageResNameToSave.isNotBlank()) {
                 TeamImageStore.save(requireContext(), team.id, imageResNameToSave)
+            }
+            if (name.isNotBlank()) {
+                TeamNameStore.save(requireContext(), team.id, name)
             }
             DummyRepository.updateTeam(
                 teamId = team.id,

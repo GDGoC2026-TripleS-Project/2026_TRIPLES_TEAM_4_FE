@@ -121,6 +121,17 @@ object DummyRepository {
         }
     }
 
+    /** 저장된 팀플명(TeamNameStore)을 _allTeams에 적용. replaceTeamsWithServerData 호출 후 호출. */
+    fun applyPersistedTeamNames(context: Context) {
+        val stored = TeamNameStore.getAll(context)
+        for (i in _allTeams.indices) {
+            val t = _allTeams[i]
+            stored[t.id]?.let { name ->
+                _allTeams[i] = t.copy(name = name)
+            }
+        }
+    }
+
     /** 서버 팀 목록 + 더미(시드) 팀 병합. 삭제한 시드 팀 이름은 제외. 더미가 먼저, 서버 팀이 나중에 오도록 함. */
     fun mergeServerTeamsWithSeed(serverTeams: List<Team>, deletedSeedTeamNames: Set<String> = emptySet()): List<Team> {
         val serverNames = serverTeams.map { it.name }.toSet()
@@ -329,6 +340,15 @@ object DummyRepository {
                 val tid = teamIds[(wi + di) % teamIds.size]
                 val members = getTeamMembers(tid).map { it.name }
                 list.add(task(tid, titleByTeam[tid] ?: "팀 일정", year, month, day, false, members.getOrNull(di % members.size)))
+            }
+        }
+        // 진행중 팀플(체리시, 메가커피릿, 행복의 심리학, 인공지능 입문)만 2026년 3월 15일까지 더미 일정 추가 (요일 다양: 월·수·금·일·화·목·토)
+        val ongoingTeamIds = listOf("cherish", "megacoffe", "psychology", "ai_intro")
+        val marchDays = listOf(2, 4, 6, 8, 10, 12, 14, 15) // 3/2(월), 3/4(수), 3/6(금), 3/8(일), 3/10(화), 3/12(목), 3/14(토), 3/15(일)
+        marchDays.forEachIndexed { wi, day ->
+            ongoingTeamIds.forEachIndexed { ti, tid ->
+                val members = getTeamMembers(tid).map { it.name }
+                list.add(task(tid, titleByTeam[tid] ?: "팀 일정", 2026, 3, day, false, members.getOrNull((wi + ti) % members.size)))
             }
         }
         list

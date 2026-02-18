@@ -131,6 +131,7 @@ class HomeFragment : Fragment() {
                     row.findViewById<ImageButton>(R.id.taskLock).visibility = View.GONE
                     checkBtn.setOnClickListener {
                         DummyRepository.setTaskChecked(task.id, !task.isChecked)
+                        DummyRepository.saveSchedulesTo(requireContext())
                         refreshTodayTasks()
                     }
                     titleTv.setOnClickListener {
@@ -164,10 +165,12 @@ class HomeFragment : Fragment() {
                     lockBtn.setImageResource(if (item.isLocked) R.drawable.ic_personal_lock else R.drawable.ic_personal_unlock)
                     lockBtn.setOnClickListener {
                         DummyRepository.setPersonalLocked(item.id, !item.isLocked)
+                        DummyRepository.saveSchedulesTo(requireContext())
                         refreshTodayTasks()
                     }
                     checkBtn.setOnClickListener {
                         DummyRepository.setPersonalChecked(item.id, !item.isChecked)
+                        DummyRepository.saveSchedulesTo(requireContext())
                         refreshTodayTasks()
                     }
                     titleTv.setOnClickListener {
@@ -261,7 +264,10 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        view?.let { syncTeamsFromServerAndRefresh(it) }
+        view?.let { root ->
+            refreshTeamIcons(root)
+            syncTeamsFromServerAndRefresh(root)
+        }
     }
 
     private fun syncTeamsFromServerAndRefresh(root: View) {
@@ -281,6 +287,7 @@ class HomeFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         DummyRepository.replaceTeamsWithServerData(withOverrides)
                         DummyRepository.applyPersistedTeamImages(requireContext())
+                        DummyRepository.applyPersistedTeamNames(requireContext())
                         refreshTeamIcons(root)
                     }
                 }

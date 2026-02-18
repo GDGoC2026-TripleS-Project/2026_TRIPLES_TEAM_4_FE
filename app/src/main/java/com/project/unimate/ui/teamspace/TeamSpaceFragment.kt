@@ -41,6 +41,17 @@ class TeamSpaceFragment : Fragment() {
     private var isIntroExpanded = false
     private var isCalendarTeamMode = true // true = 팀, false = 개인
 
+    override fun onResume() {
+        super.onResume()
+        view?.let { v ->
+            DummyRepository.getTeamById(teamId)?.let { team ->
+                v.findViewById<TextView>(R.id.teamSpaceTeamName)?.text = team.name
+                v.findViewById<TextView>(R.id.teamSpaceIntroTitle)?.text = getString(R.string.team_intro_suffix).let { "${team.name} $it" }
+                v.findViewById<TextView>(R.id.teamSpaceIntroText)?.text = DummyRepository.getTeamIntro(teamId)
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

@@ -456,6 +456,7 @@ class TeamCreateFragment : Fragment() {
                             withContext(Dispatchers.Main) {
                                 DummyRepository.replaceTeamsWithServerData(withOverrides)
                                 DummyRepository.applyPersistedTeamImages(requireContext())
+                                DummyRepository.applyPersistedTeamNames(requireContext())
                                 if (newIdStr != null && imageResName.isNotBlank() && imageResName.startsWith("file:team_")) {
                                     TeamImageStore.save(requireContext(), newIdStr, "file:team_$newTeamId.jpg")
                                 }
