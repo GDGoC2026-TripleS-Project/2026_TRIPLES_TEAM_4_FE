@@ -16,12 +16,19 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.HomeSummaryResponse
+import com.project.unimate.network.dto.TeamSummaryResponse
 import com.project.unimate.network.service.HomeService
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class HomeFragment : Fragment() {
 
@@ -242,6 +249,39 @@ class HomeFragment : Fragment() {
         refreshWeek()
         refreshTodayTasks()
 
+        refreshTeamIcons(root)
+        loadHomeSummary()
+        syncTeamsFromServerAndRefresh(root)
+
+        return root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        view?.let { syncTeamsFromServerAndRefresh(it) }
+    }
+
+    private fun syncTeamsFromServerAndRefresh(root: View) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<TeamService>(requireContext())
+                val resp = service.getMyTeams()
+                if (resp.isSuccessful) {
+                    val serverTeams = resp.body()?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
+                    val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                    withContext(Dispatchers.Main) {
+                        DummyRepository.replaceTeamsWithServerData(merged)
+                        refreshTeamIcons(root)
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
+    private fun refreshTeamIcons(root: View) {
+        val homeTeamSpaceIcons = root.findViewById<LinearLayout>(R.id.homeTeamSpaceIcons) ?: return
+        val inflater = layoutInflater
+        homeTeamSpaceIcons.removeAllViews()
         DummyRepository.getMyTeamSpaceTeams().forEach { team ->
             val item = inflater.inflate(R.layout.item_home_team_icon, homeTeamSpaceIcons, false)
             item.isClickable = true
@@ -301,11 +341,33 @@ class HomeFragment : Fragment() {
         plusBtn.findViewById<ImageButton>(R.id.teamPlusButton).setOnClickListener { findNavController().navigate(R.id.action_home_to_teamAdd) }
         homeTeamSpaceIcons.addView(plusBtn)
         (plusBtn.layoutParams as? LinearLayout.LayoutParams)?.gravity = android.view.Gravity.CENTER_VERTICAL
+    }
 
-        // API 호출 (성공 시 homeSummary에 저장, UI는 더미 데이터 기반 유지)
-        loadHomeSummary()
+    private fun teamSummaryToTeam(r: TeamSummaryResponse): Team? {
+        val id = r.id ?: return null
+        val completed = r.completed == true || r.isCompleted == true
+        val endMillis = parseIsoToMillis(r.endAt)
+        return Team(
+            id = id.toString(),
+            name = r.name ?: "",
+            colorHex = r.colorHex ?: "#cccccc",
+            imageResName = "",
+            isCompleted = completed,
+            memberCount = (r.memberCount ?: 0).toInt(),
+            deadlineDays = null,
+            intro = r.description ?: "",
+            workStartMillis = parseIsoToMillis(r.startAt),
+            workEndMillis = endMillis,
+            completedAtMillis = if (completed) endMillis else null
+        )
+    }
 
-        return root
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(iso)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)?.time
+        } catch (_: Exception) { null }
     }
 
     private fun loadHomeSummary() {

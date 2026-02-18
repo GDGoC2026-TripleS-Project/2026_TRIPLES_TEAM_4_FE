@@ -7,17 +7,31 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
 import com.project.unimate.auth.FcmRegistrar
+import com.project.unimate.data.entity.Team
+import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.FragmentProfileCreateBinding
 import com.project.unimate.network.Env
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamCreateRequest
+import com.project.unimate.network.dto.TeamSummaryResponse
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
 
@@ -96,9 +110,8 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
             ) { ok, err ->
                 requireActivity().runOnUiThread {
                     if (ok) {
-                        // 회원가입 완료 직후 FCM 토큰 등록/갱신
                         FcmRegistrar.registerIfPossible(requireContext(), Env.BASE_URL)
-                        findNavController().navigate(R.id.action_profileCreate_to_team_nav)
+                        seedDummyTeamsAndNavigate()
                     } else {
                         Toast.makeText(requireContext(), err ?: "프로필 등록 실패", Toast.LENGTH_SHORT).show()
                     }
@@ -111,6 +124,78 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
             val query = binding.etSchoolSearch.text.toString().trim()
             runSchoolSearch(query, forceToast = true)
         }
+    }
+
+    /** 프로필 등록 성공 직후: 서버에 더미 팀 7개 생성 → getMyTeams로 동기화 → 팀 설정 화면으로 이동 */
+    private fun seedDummyTeamsAndNavigate() {
+        lifecycleScope.launch {
+            val ctx = context ?: return@launch
+            try {
+                val service = RetrofitClient.create<TeamService>(ctx)
+                for (team in DummyRepository.getSeedTeams()) {
+                    val startAt = team.workStartMillis?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis())
+                    val endAt = team.workEndMillis?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis() + 7 * 24 * 3600 * 1000L)
+                    val req = TeamCreateRequest(
+                        name = team.name,
+                        description = team.intro.ifBlank { null },
+                        color = team.colorHex,
+                        startAt = startAt,
+                        endAt = endAt
+                    )
+                    val resp = service.createTeam(req)
+                    if (!resp.isSuccessful) {
+                        Log.w("ProfileCreate", "seed createTeam failed: ${team.name} code=${resp.code()}")
+                    }
+                }
+                val myTeamsResp = service.getMyTeams()
+                if (myTeamsResp.isSuccessful) {
+                    val list = myTeamsResp.body() ?: emptyList()
+                    val serverTeams = list.mapNotNull { r -> teamSummaryToTeam(r) }
+                    val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                    withContext(Dispatchers.Main) {
+                        DummyRepository.replaceTeamsWithServerData(merged)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ProfileCreate", "seed or getMyTeams failed", e)
+            }
+            withContext(Dispatchers.Main) {
+                if (isAdded) {
+                    findNavController().navigate(R.id.action_profileCreate_to_team_nav)
+                }
+            }
+        }
+    }
+
+    private fun formatToIso(millis: Long): String {
+        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date(millis))
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(iso)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)?.time
+        } catch (_: Exception) { null }
+    }
+
+    private fun teamSummaryToTeam(r: TeamSummaryResponse): Team? {
+        val id = r.id ?: return null
+        val completed = r.completed == true || r.isCompleted == true
+        val endMillis = parseIsoToMillis(r.endAt)
+        return Team(
+            id = id.toString(),
+            name = r.name ?: "",
+            colorHex = r.colorHex ?: "#cccccc",
+            imageResName = "",
+            isCompleted = completed,
+            memberCount = (r.memberCount ?: 0).toInt(),
+            deadlineDays = null,
+            intro = r.description ?: "",
+            workStartMillis = parseIsoToMillis(r.startAt),
+            workEndMillis = endMillis,
+            completedAtMillis = if (completed) endMillis else null
+        )
     }
 
     /**

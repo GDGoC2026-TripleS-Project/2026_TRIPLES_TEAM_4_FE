@@ -61,7 +61,12 @@ object DummyRepository {
     }
 
     /** 팀 7개. 체리시·메가커피 진행중, 캡스톤·마모사리·모마미 종료. 사진은 cherish/megacoffe/momami만. 종료일 전부 2026-02-20 전. */
-    private val _allTeams: MutableList<Team> = listOf(
+    private val _allTeams: MutableList<Team> = buildInitialSeedTeams().toMutableList()
+
+    /** 프로필 등록 직후 서버 시드용: 서버에 생성할 초기 7개 팀 정보 (변경되지 않는 복사본). */
+    fun getSeedTeams(): List<Team> = buildInitialSeedTeams()
+
+    private fun buildInitialSeedTeams(): List<Team> = listOf(
         Team("capstone", "캡스톤", "#FFE970", "", true, 4, 10, teamIntroMap["capstone"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
         Team("cherish", "체리시", "#F488D4", "cherish_image", false, 4, 2, teamIntroMap["cherish"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
         Team("mamosari", "마모사리", "#D9F592", "", true, 6, 8, teamIntroMap["mamosari"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
@@ -69,7 +74,21 @@ object DummyRepository {
         Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
         Team("psychology", "행복의 심리학", "#FFF8D3", "", false, 4, 3, teamIntroMap["psychology"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
         Team("ai_intro", "인공지능 입문", "#FF7A6E", "", false, 6, 7, teamIntroMap["ai_intro"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null)
-    ).toMutableList()
+    )
+
+    /** 서버에서 받은 내 팀 목록으로 로컬 팀만 교체. 더미 일정(_allTaskItems)은 유지해 시드 팀 일정이 계속 보이게 함. */
+    fun replaceTeamsWithServerData(teams: List<Team>) {
+        _allTeams.clear()
+        _allTeams.addAll(teams)
+        extraTeamMembers.clear()
+    }
+
+    /** 서버 팀 목록 + 더미(시드) 팀 병합. 더미가 먼저, 서버 팀이 나중에 오도록 함. */
+    fun mergeServerTeamsWithSeed(serverTeams: List<Team>): List<Team> {
+        val serverNames = serverTeams.map { it.name }.toSet()
+        val seedOnly = getSeedTeams().filter { it.name !in serverNames }
+        return seedOnly + serverTeams
+    }
 
     val allTeams: List<Team> get() = _allTeams
 

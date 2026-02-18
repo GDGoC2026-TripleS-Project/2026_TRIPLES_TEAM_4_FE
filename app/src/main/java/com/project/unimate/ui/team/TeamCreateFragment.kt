@@ -31,7 +31,9 @@ import com.project.unimate.databinding.FragmentTeamCreateBinding
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamCreateRequest
 import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -406,10 +408,37 @@ class TeamCreateFragment : Fragment() {
                         Toast.makeText(requireContext(), "이미 사용 중인 팀 색상입니다. 다른 색상을 선택해주세요.", Toast.LENGTH_SHORT).show()
                         return@launch
                     }
+                    if (apiResp.isSuccessful) {
+                        val myTeamsResp = service.getMyTeams()
+                        if (myTeamsResp.isSuccessful) {
+                            val list = myTeamsResp.body() ?: emptyList()
+                            val serverTeams = list.mapNotNull { r ->
+                                val id = r.id ?: return@mapNotNull null
+                                val completed = r.completed == true || r.isCompleted == true
+                                val endMillis = parseIsoToMillis(r.endAt)
+                                Team(
+                                    id = id.toString(),
+                                    name = r.name ?: "",
+                                    colorHex = r.colorHex ?: "#cccccc",
+                                    imageResName = "",
+                                    isCompleted = completed,
+                                    memberCount = (r.memberCount ?: 0).toInt(),
+                                    deadlineDays = null,
+                                    intro = r.description ?: "",
+                                    workStartMillis = parseIsoToMillis(r.startAt),
+                                    workEndMillis = endMillis,
+                                    completedAtMillis = if (completed) endMillis else null
+                                )
+                            }
+                            val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                            withContext(Dispatchers.Main) {
+                                DummyRepository.replaceTeamsWithServerData(merged)
+                            }
+                        }
+                    }
                     Log.d("TeamCreate", "팀 생성 API 응답: ${apiResp.code()}")
                 } catch (e: Exception) {
                     Log.e("TeamCreate", "팀 생성 API 실패: ${e.message}")
-                    // 네트워크 실패 시 로컬 더미로만 진행
                 }
                 if (isAdded) {
                     val bundle = Bundle().apply {
@@ -535,6 +564,14 @@ class TeamCreateFragment : Fragment() {
     private fun formatToIso(millis: Long): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         return sdf.format(Date(millis))
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(iso)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)?.time
+        } catch (_: Exception) { null }
     }
 
     private fun generateRandomCode(): String {
