@@ -26,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
+import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.FragmentTeamCreateBinding
 import com.project.unimate.network.RetrofitClient
@@ -430,7 +431,8 @@ class TeamCreateFragment : Fragment() {
                                     completedAtMillis = if (completed) endMillis else null
                                 )
                             }
-                            val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                            val deletedNames = DeletedSeedTeamStore.getDeletedNames(requireContext())
+                            val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
                             withContext(Dispatchers.Main) {
                                 DummyRepository.replaceTeamsWithServerData(merged)
                             }

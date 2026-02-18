@@ -12,12 +12,20 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.ProfileUpsertRequest
+import com.project.unimate.network.service.UserService
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 
 class EditProfileFragment : Fragment() {
@@ -71,9 +79,36 @@ class EditProfileFragment : Fragment() {
 
         profileEditConfirm.setOnClickListener {
             val name = etNameEdit.text?.toString()?.trim() ?: return@setOnClickListener
-            if (name.isNotEmpty()) {
-                DummyRepository.setCurrentUserName(name)
-                closeFragment()
+            if (name.isEmpty()) return@setOnClickListener
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<UserService>(requireContext())
+                    val meResp = service.getMyInfo()
+                    if (!meResp.isSuccessful) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "프로필을 불러올 수 없습니다", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+                    val me = meResp.body() ?: return@launch
+                    val universityId = me.universityId ?: 0L
+                    val profileImageUrl = me.profileImageUrl
+                    val upsertResp = service.upsertProfile(
+                        ProfileUpsertRequest(nickname = name, universityId = universityId, profileImageUrl = profileImageUrl)
+                    )
+                    withContext(Dispatchers.Main) {
+                        if (upsertResp.isSuccessful) {
+                            DummyRepository.setCurrentUserName(name)
+                            closeFragment()
+                        } else {
+                            Toast.makeText(requireContext(), "저장에 실패했습니다", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), e.message ?: "오류", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }

@@ -16,6 +16,7 @@ import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.data.entity.Team
+import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamSummaryResponse
@@ -75,7 +76,12 @@ class MyPageFragment : Fragment() {
                 if (response.isSuccessful) {
                     val summary = response.body() ?: return@launch
                     summary.profile?.let { profile ->
-                        profile.nickname?.let { nameView.text = it }
+                        profile.nickname?.let { nick ->
+                            withContext(Dispatchers.Main) {
+                                nameView.text = nick
+                                DummyRepository.setCurrentUserName(nick)
+                            }
+                        }
                         profile.email?.let { emailView.text = it }
                     }
                 }
@@ -114,7 +120,8 @@ class MyPageFragment : Fragment() {
             val resp = service.getMyTeams()
             if (resp.isSuccessful) {
                 val serverTeams = resp.body()?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
-                val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                val deletedNames = DeletedSeedTeamStore.getDeletedNames(requireContext())
+                val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
                 withContext(Dispatchers.Main) { DummyRepository.replaceTeamsWithServerData(merged) }
             }
         } catch (_: Exception) { }

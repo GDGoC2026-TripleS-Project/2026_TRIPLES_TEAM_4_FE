@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
 import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.data.entity.Team
+import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.databinding.FragmentProfileCreateBinding
 import com.project.unimate.network.Env
@@ -110,6 +111,7 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
             ) { ok, err ->
                 requireActivity().runOnUiThread {
                     if (ok) {
+                        DummyRepository.setCurrentUserName(name)
                         FcmRegistrar.registerIfPossible(requireContext(), Env.BASE_URL)
                         seedDummyTeamsAndNavigate()
                     } else {
@@ -151,7 +153,8 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
                 if (myTeamsResp.isSuccessful) {
                     val list = myTeamsResp.body() ?: emptyList()
                     val serverTeams = list.mapNotNull { r -> teamSummaryToTeam(r) }
-                    val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                    val deletedNames = DeletedSeedTeamStore.getDeletedNames(ctx)
+                    val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
                     withContext(Dispatchers.Main) {
                         DummyRepository.replaceTeamsWithServerData(merged)
                     }

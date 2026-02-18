@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamUpdateRequest
@@ -330,6 +331,10 @@ class EditTeamSpaceFragment : Fragment() {
             .setCancelable(true)
             .create()
         dialogView.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
+            val team = DummyRepository.getTeamById(teamId)
+            if (team != null && DummyRepository.getSeedTeams().any { it.name == team.name }) {
+                DeletedSeedTeamStore.add(requireContext(), team.name)
+            }
             DummyRepository.deleteTeam(teamId)
             // API 호출 (팀 삭제)
             val numericId = teamId.toLongOrNull()
