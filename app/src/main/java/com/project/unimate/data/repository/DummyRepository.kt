@@ -81,6 +81,7 @@ object DummyRepository {
         _allTeams.clear()
         _allTeams.addAll(teams)
         extraTeamMembers.clear()
+        serverMembersCache.clear()
     }
 
     /** 서버 팀 목록 + 더미(시드) 팀 병합. 더미가 먼저, 서버 팀이 나중에 오도록 함. */
@@ -162,6 +163,9 @@ object DummyRepository {
     /** 새 팀 추가 시 사용하는 팀원 더미 (기존 7개 팀은 teamMembersMap, 이후 추가 팀은 여기) */
     private val extraTeamMembers = mutableMapOf<String, List<TeamMember>>()
 
+    /** 서버에서 로드한 팀원 캐시 (teamId → 서버 팀원 목록). getTeamMembers()에서 더미와 merge됨 */
+    private val serverMembersCache = mutableMapOf<String, List<TeamMember>>()
+
     /** 새 팀 추가 (초대코드 참여/팀 생성/일정에서 팀 선택 시 호출). 팀원 4명·일정 더미 함께 생성. 시작/종료일 null이면 기본값 설정. */
     fun addTeam(team: Team) {
         if (_allTeams.any { it.id == team.id }) return
@@ -223,8 +227,24 @@ object DummyRepository {
         }.toMap().toMutableMap()
     }
 
-    /** 팀 스페이스용: 해당 팀의 팀원 목록 (기존 팀 = _teamMembersMap, 추가 팀 = extraTeamMembers) */
-    fun getTeamMembers(teamId: String): List<TeamMember> = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+    /** 팀 스페이스용: 해당 팀의 팀원 목록 (서버 캐시 + 더미 merge. 서버 먼저, 이름 중복 제거) */
+    fun getTeamMembers(teamId: String): List<TeamMember> {
+        val dummy = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+        val server = serverMembersCache[teamId] ?: emptyList()
+        return if (server.isEmpty()) dummy else mergeServerFirstMembers(server, dummy)
+    }
+
+    /** 서버 팀원을 캐시에 저장. noScheduleMembersCache는 자동 무효화. */
+    fun cacheServerMembers(teamId: String, members: List<TeamMember>) {
+        serverMembersCache[teamId] = members
+        noScheduleMembersCache.clear()
+    }
+
+    /** 서버 팀원을 앞에, 더미 팀원 중 이름 미중복인 것을 뒤에 붙여 반환 */
+    fun mergeServerFirstMembers(server: List<TeamMember>, dummy: List<TeamMember>): List<TeamMember> {
+        val serverNames = server.map { it.name }.toSet()
+        return server + dummy.filter { it.name !in serverNames }
+    }
 
     fun getTeamIntro(teamId: String): String = getTeamById(teamId)?.intro ?: teamIntroMap[teamId] ?: ""
 

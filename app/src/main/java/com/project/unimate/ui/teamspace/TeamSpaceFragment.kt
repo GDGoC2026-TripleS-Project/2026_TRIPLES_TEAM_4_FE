@@ -133,8 +133,11 @@ class TeamSpaceFragment : Fragment() {
         refreshIntroHeight()
 
         teamSpaceMembersTitle.text = "함께하는 팀원"
-        teamSpaceMembersCount.text = "-"
         teamSpaceMembersIcons.removeAllViews()
+        // 더미 팀원 즉시 렌더링 (서버 응답 전에도 목록이 보이도록)
+        val initialMembers = DummyRepository.getTeamMembers(teamId)
+        teamSpaceMembersCount.text = initialMembers.size.toString()
+        renderMembers(initialMembers)
 
         val scheduleCount = DummyRepository.getTeamScheduleCount(teamId)
         teamSpaceScheduleCount.text = scheduleCount.toString()
@@ -418,9 +421,17 @@ class TeamSpaceFragment : Fragment() {
                 val resp = service.getMembers(numericTeamId)
                 android.util.Log.d("TeamSpace", "getMembers 응답: ${resp.code()}, teamId=$numericTeamId")
                 if (resp.isSuccessful) {
-                    val members = resp.body() ?: emptyList()
-                    android.util.Log.d("TeamSpace", "팀원 수: ${members.size}")
-                    renderMembers(members)
+                    val raw = resp.body() ?: emptyList()
+                    android.util.Log.d("TeamSpace", "팀원 수: ${raw.size}")
+                    val serverMembers = raw.map { m ->
+                        TeamMember(
+                            id = "server-${m.userId ?: m.nickname.hashCode()}",
+                            name = m.nickname ?: "팀원",
+                            iconResName = "ic_user"
+                        )
+                    }
+                    DummyRepository.cacheServerMembers(teamId, serverMembers)
+                    renderMembers(DummyRepository.getTeamMembers(teamId))
                 } else {
                     val errorBody = resp.errorBody()?.string() ?: ""
                     android.util.Log.e("TeamSpace", "getMembers 실패: ${resp.code()} | $errorBody")
@@ -431,7 +442,7 @@ class TeamSpaceFragment : Fragment() {
         }
     }
 
-    private fun renderMembers(members: List<TeamMemberResponse>) {
+    private fun renderMembers(members: List<TeamMember>) {
         if (!isAdded) return
         val container = membersContainer ?: return
         val countView = memberCountView ?: return
@@ -453,14 +464,9 @@ class TeamSpaceFragment : Fragment() {
         members.forEach { member ->
             val item = lInflater.inflate(R.layout.item_team_space_member, container, false)
             val card = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
-            val colorHex = member.displayColorHex
-            card.strokeColor = if (!colorHex.isNullOrBlank()) {
-                try { android.graphics.Color.parseColor(colorHex) } catch (_: Exception) { storedTeamColor }
-            } else {
-                storedTeamColor
-            }
+            card.strokeColor = storedTeamColor
             item.findViewById<TextView>(R.id.teamMemberName).apply {
-                text = member.nickname ?: "팀원"
+                text = member.name
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
             }
             container.addView(item)

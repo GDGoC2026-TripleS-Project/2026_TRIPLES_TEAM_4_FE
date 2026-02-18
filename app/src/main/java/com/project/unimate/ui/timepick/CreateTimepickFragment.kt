@@ -11,9 +11,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class CreateTimepickFragment : Fragment() {
@@ -49,6 +54,27 @@ class CreateTimepickFragment : Fragment() {
             return root
         }
         TimepickStateHolder.teamId = teamId
+
+        // 서버 팀원 미리 캐시 → TimepickStatusFragment에서 merge된 팀원 표시
+        val numericTeamIdForCache = teamId.toLongOrNull()
+        if (numericTeamIdForCache != null) {
+            lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<TeamService>(requireContext())
+                    val resp = service.getMembers(numericTeamIdForCache)
+                    if (resp.isSuccessful) {
+                        val serverMembers = (resp.body() ?: emptyList()).map { m ->
+                            TeamMember(
+                                id = "server-${m.userId ?: m.nickname.hashCode()}",
+                                name = m.nickname ?: "팀원",
+                                iconResName = "ic_user"
+                            )
+                        }
+                        DummyRepository.cacheServerMembers(teamId, serverMembers)
+                    }
+                } catch (_: Exception) {}
+            }
+        }
 
         val back = root.findViewById<ImageButton>(R.id.createTimepickBack)
         yearMonth = root.findViewById(R.id.createTimepickYearMonth)
