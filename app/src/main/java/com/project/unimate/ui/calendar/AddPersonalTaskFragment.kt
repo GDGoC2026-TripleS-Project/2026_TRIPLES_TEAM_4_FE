@@ -299,6 +299,7 @@ class AddPersonalTaskFragment : Fragment() {
             scheduleCategory = cat
         )
         DummyRepository.addPersonalSchedule(item)
+        DummyRepository.saveSchedulesTo(requireContext())
 
         // API 호출 (개인 일정 생성) - 첫 번째 팀 기준
         val teams = DummyRepository.getMyTeamSpaceTeams()

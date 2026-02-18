@@ -327,6 +327,7 @@ class EditPersonalTaskFragment : Fragment() {
             scheduleCategory = cat
         )
         DummyRepository.updatePersonalSchedule(updated)
+        DummyRepository.saveSchedulesTo(requireContext())
 
         // API 호출 (개인 일정 수정)
         val scheduleId = original.id.removePrefix("p-").toLongOrNull()

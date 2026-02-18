@@ -27,6 +27,8 @@ import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.PendingCompletionPopupStore
+import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
 
@@ -71,6 +73,15 @@ class MainActivity : AppCompatActivity() {
         val jwt = JwtStore.load(this)
         Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()} len=${jwt?.length ?: 0}")
         FcmRegistrar.registerIfPossible(this, BASE_URL)
+
+        // 저장된 유저 프로필 이미지 경로 복원 (앱 재시작 후 마이페이지 사진 유지)
+        ProfileImageStore.get(this).takeIf { it.isNotBlank() }?.let {
+            DummyRepository.setCurrentUserProfileImageResName(it)
+        }
+        // 저장된 팀 사진 복원 (재시작 후에도 유지)
+        DummyRepository.applyPersistedTeamImages(this)
+        // 저장된 팀/개인 일정 복원 (재시작 후에도 유지)
+        DummyRepository.loadSchedulesFrom(this)
     }
 
     override fun onResume() {
@@ -89,12 +100,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkAndShowTeamEndPopups() {
-        val now = System.currentTimeMillis()
-        val endedTeams = DummyRepository.getCalendarFilterTeams()
-            .filter { it.workEndMillis != null && it.workEndMillis < now }
-            .filter { !hasShownTeamEndPopup(it.id) }
+        val pendingIds = PendingCompletionPopupStore.getPendingIds(this)
+        if (pendingIds.isEmpty()) return
+        val endedTeams = pendingIds.mapNotNull { id -> DummyRepository.getTeamById(id) }.toMutableList()
         if (endedTeams.isEmpty()) return
-        showNextTeamEndPopup(endedTeams.toMutableList())
+        showNextTeamEndPopup(endedTeams)
     }
 
     private fun showNextTeamEndPopup(queue: MutableList<Team>) {
@@ -107,6 +117,7 @@ class MainActivity : AppCompatActivity() {
             .create()
         view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener { dialog.dismiss() }
         dialog.setOnDismissListener {
+            PendingCompletionPopupStore.remove(this, team.id)
             markTeamEndPopupShown(team.id)
             if (queue.isNotEmpty()) showNextTeamEndPopup(queue)
         }

@@ -21,6 +21,7 @@ import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.SeedTeamOverridesStore
 import com.project.unimate.databinding.FragmentProfileCreateBinding
 import com.project.unimate.network.Env
 import com.project.unimate.network.RetrofitClient
@@ -155,8 +156,11 @@ class ProfileCreateFragment : Fragment(R.layout.fragment_profile_create) {
                     val serverTeams = list.mapNotNull { r -> teamSummaryToTeam(r) }
                     val deletedNames = DeletedSeedTeamStore.getDeletedNames(ctx)
                     val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
+                    val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
+                    val withOverrides = SeedTeamOverridesStore.applyOverrides(ctx, merged, seedIds)
                     withContext(Dispatchers.Main) {
-                        DummyRepository.replaceTeamsWithServerData(merged)
+                        DummyRepository.replaceTeamsWithServerData(withOverrides)
+                        DummyRepository.applyPersistedTeamImages(ctx)
                     }
                 }
             } catch (e: Exception) {

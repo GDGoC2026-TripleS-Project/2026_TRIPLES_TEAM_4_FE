@@ -239,6 +239,7 @@ class EditTimepickFragment : Fragment() {
                     endTimeMillis = editEndCalendar.timeInMillis
                 )
                 DummyRepository.updateTask(updated)
+                DummyRepository.saveSchedulesTo(requireContext())
             } else if (teamId.isNotEmpty()) {
                 val task = TaskItem(
                     id = "timepick-${teamId}-${System.currentTimeMillis()}",
@@ -251,6 +252,7 @@ class EditTimepickFragment : Fragment() {
                     creatorName = null
                 )
                 DummyRepository.addTask(task)
+                DummyRepository.saveSchedulesTo(requireContext())
 
                 // API 호출 (시간 조율 투표 생성)
                 val numericTeamId = teamId.toLongOrNull()

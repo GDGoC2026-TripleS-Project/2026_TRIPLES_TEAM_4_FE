@@ -256,6 +256,7 @@ class AddTeamTaskFragment : Fragment() {
             creatorName = null
         )
         DummyRepository.addTask(item)
+        DummyRepository.saveSchedulesTo(requireContext())
 
         // API 호출 (팀 일정 생성)
         val numericTeamId = teamId.toLongOrNull()

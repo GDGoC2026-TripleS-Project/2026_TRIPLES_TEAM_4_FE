@@ -291,6 +291,7 @@ class EditTeamTaskFragment : Fragment() {
             endTimeMillis = endCal.timeInMillis
         )
         DummyRepository.updateTask(updated)
+        DummyRepository.saveSchedulesTo(requireContext())
 
         // API 호출 (팀 일정 수정)
         val numericTeamId = teamId.toLongOrNull()

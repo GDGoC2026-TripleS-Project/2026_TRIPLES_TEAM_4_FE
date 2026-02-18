@@ -29,7 +29,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.repository.DeletedSeedTeamStore
+import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.PendingCompletionPopupStore
+import com.project.unimate.data.repository.SeedTeamOverridesStore
+import com.project.unimate.data.repository.TeamImageStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamUpdateRequest
 import com.project.unimate.network.service.TeamService
@@ -255,7 +259,9 @@ class EditTeamSpaceFragment : Fragment() {
             )
             endCheckIcon.colorFilter = null
         }
-        if (team.isCompleted) {
+        // 종료된 팀플(종료 체크했거나 마감일이 이미 지남)이면 항상 종료 체크 표시
+        val nowInit = System.currentTimeMillis()
+        if (team.isCompleted || (team.workEndMillis != null && team.workEndMillis < nowInit)) {
             setEndedTeam = true
             endCheckIcon.setImageResource(R.drawable.ic_end_selected)
             endCheckIcon.colorFilter = null
@@ -270,23 +276,31 @@ class EditTeamSpaceFragment : Fragment() {
             val intro = introEt.text.toString().trim()
             val workStart = startCal.timeInMillis
             val now = System.currentTimeMillis()
-            val workEnd = if (setEndedTeam && !team.isCompleted) now else endCal.timeInMillis
+            val workEnd = endCal.timeInMillis
+            // 종료 체크를 누르지 않았어도 마감일을 과거로 설정하고 저장하면 종료 처리
+            val effectivelyEnded = setEndedTeam || (workEnd < now)
             val completedAt = when {
-                setEndedTeam && !team.isCompleted -> now
-                setEndedTeam && team.isCompleted -> team.completedAtMillis
+                effectivelyEnded && !team.isCompleted -> now
+                effectivelyEnded && team.isCompleted -> (team.completedAtMillis ?: now)
                 else -> null
             }
             val imageResNameToSave = selectedTeamImageResName ?: team.imageResName
+            if (imageResNameToSave.isNotBlank()) {
+                TeamImageStore.save(requireContext(), team.id, imageResNameToSave)
+            }
             DummyRepository.updateTeam(
                 teamId = team.id,
                 name = name,
                 intro = intro,
                 workStartMillis = workStart,
                 workEndMillis = workEnd,
-                setCompleted = setEndedTeam,
+                setCompleted = effectivelyEnded,
                 completedAtMillis = completedAt,
                 imageResName = imageResNameToSave
             )
+            if (DummyRepository.getSeedTeams().any { it.id == team.id }) {
+                SeedTeamOverridesStore.save(requireContext(), team.id, effectivelyEnded, workEnd, workStart)
+            }
             // API 호출 (팀 정보 수정)
             val numericId = team.id.toLongOrNull()
             if (numericId != null) {
@@ -303,8 +317,9 @@ class EditTeamSpaceFragment : Fragment() {
                     } catch (_: Exception) { }
                 }
             }
-            if (setEndedTeam) {
-                showTeamEndDialog()
+            if (effectivelyEnded && !team.isCompleted) {
+                PendingCompletionPopupStore.add(requireContext(), team.id)
+                showTeamEndDialog(team.id)
             } else {
                 findNavController().popBackStack()
             }
@@ -332,8 +347,12 @@ class EditTeamSpaceFragment : Fragment() {
             .create()
         dialogView.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
             val team = DummyRepository.getTeamById(teamId)
-            if (team != null && DummyRepository.getSeedTeams().any { it.name == team.name }) {
-                DeletedSeedTeamStore.add(requireContext(), team.name)
+            if (team != null) {
+                if (DummyRepository.getSeedTeams().any { it.name == team.name }) {
+                    DeletedSeedTeamStore.add(requireContext(), team.name)
+                } else {
+                    DeletedUserTeamStore.add(requireContext(), teamId)
+                }
             }
             DummyRepository.deleteTeam(teamId)
             // API 호출 (팀 삭제)
@@ -354,13 +373,15 @@ class EditTeamSpaceFragment : Fragment() {
         dialog.show()
     }
 
-    private fun showTeamEndDialog() {
+    private fun showTeamEndDialog(teamId: String) {
         val view = layoutInflater.inflate(R.layout.dialog_team_space_ended, null)
         val dialog = AlertDialog.Builder(requireContext(), R.style.TeamEndDialogTheme)
             .setView(view)
             .setCancelable(false)
             .create()
-        view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener { dialog.dismiss() }
+        view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
+            PendingCompletionPopupStore.remove(requireContext(), teamId)
+            dialog.dismiss() }
         dialog.setOnDismissListener { findNavController().popBackStack() }
         val dm = resources.displayMetrics
         val wPx = (dm.widthPixels * 0.9f).toInt()

@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.ProfileUpsertRequest
 import com.project.unimate.network.service.UserService
@@ -41,7 +42,10 @@ class EditProfileFragment : Fragment() {
                 setBackgroundColor(Color.TRANSPARENT)
             }
             val saved = saveUserProfileImageToFile(imageUri)
-            if (saved.isNotEmpty()) DummyRepository.setCurrentUserProfileImageResName(saved)
+            if (saved.isNotEmpty()) {
+                DummyRepository.setCurrentUserProfileImageResName(saved)
+                ProfileImageStore.save(requireContext(), saved)
+            }
         }
     }
 
@@ -99,6 +103,7 @@ class EditProfileFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         if (upsertResp.isSuccessful) {
                             DummyRepository.setCurrentUserName(name)
+                            ProfileImageStore.save(requireContext(), DummyRepository.getCurrentUserProfileImageResName())
                             closeFragment()
                         } else {
                             Toast.makeText(requireContext(), "저장에 실패했습니다", Toast.LENGTH_SHORT).show()

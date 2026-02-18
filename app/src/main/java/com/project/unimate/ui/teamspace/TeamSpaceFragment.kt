@@ -175,6 +175,7 @@ class TeamSpaceFragment : Fragment() {
             checkBtn.setOnClickListener {
                 if (isPersonal) DummyRepository.setPersonalChecked(id, !isChecked)
                 else DummyRepository.setTaskChecked(id, !isChecked)
+                DummyRepository.saveSchedulesTo(requireContext())
                 onRefresh()
             }
             val lockBtn = taskRow.findViewById<ImageButton>(R.id.taskLock)
@@ -183,6 +184,7 @@ class TeamSpaceFragment : Fragment() {
                 lockBtn.setImageResource(if (isLocked) R.drawable.ic_personal_lock else R.drawable.ic_personal_unlock)
                 lockBtn.setOnClickListener {
                     DummyRepository.setPersonalLocked(id, !isLocked)
+                    DummyRepository.saveSchedulesTo(requireContext())
                     onRefresh()
                 }
             } else {

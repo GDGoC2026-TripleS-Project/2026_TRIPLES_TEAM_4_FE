@@ -27,7 +27,10 @@ import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DeletedSeedTeamStore
+import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.SeedTeamOverridesStore
+import com.project.unimate.data.repository.TeamImageStore
 import com.project.unimate.databinding.FragmentTeamCreateBinding
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamCreateRequest
@@ -410,18 +413,33 @@ class TeamCreateFragment : Fragment() {
                         return@launch
                     }
                     if (apiResp.isSuccessful) {
+                        val newTeamId = apiResp.body()?.id
+                        if (newTeamId != null && imageResName.isNotBlank() && imageResName.startsWith("file:team_")) {
+                            val oldFileName = imageResName.removePrefix("file:")
+                            val newFileName = "team_$newTeamId.jpg"
+                            withContext(Dispatchers.IO) {
+                                val dir = requireContext().filesDir
+                                val src = java.io.File(dir, oldFileName)
+                                val dst = java.io.File(dir, newFileName)
+                                if (src.exists()) src.copyTo(dst, overwrite = true)
+                            }
+                        }
                         val myTeamsResp = service.getMyTeams()
                         if (myTeamsResp.isSuccessful) {
-                            val list = myTeamsResp.body() ?: emptyList()
+                            val deletedUserIds = DeletedUserTeamStore.getDeletedIds(requireContext())
+                            val list = myTeamsResp.body()?.filter { r -> r.id?.toString() !in deletedUserIds } ?: emptyList()
+                            val newIdStr = newTeamId?.toString()
                             val serverTeams = list.mapNotNull { r ->
                                 val id = r.id ?: return@mapNotNull null
                                 val completed = r.completed == true || r.isCompleted == true
                                 val endMillis = parseIsoToMillis(r.endAt)
+                                val teamImageResName = if (newIdStr != null && id.toString() == newIdStr && imageResName.isNotBlank())
+                                    "file:team_$newTeamId.jpg" else ""
                                 Team(
                                     id = id.toString(),
                                     name = r.name ?: "",
                                     colorHex = r.colorHex ?: "#cccccc",
-                                    imageResName = "",
+                                    imageResName = teamImageResName,
                                     isCompleted = completed,
                                     memberCount = (r.memberCount ?: 0).toInt(),
                                     deadlineDays = null,
@@ -433,8 +451,14 @@ class TeamCreateFragment : Fragment() {
                             }
                             val deletedNames = DeletedSeedTeamStore.getDeletedNames(requireContext())
                             val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
+                            val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
+                            val withOverrides = SeedTeamOverridesStore.applyOverrides(requireContext(), merged, seedIds)
                             withContext(Dispatchers.Main) {
-                                DummyRepository.replaceTeamsWithServerData(merged)
+                                DummyRepository.replaceTeamsWithServerData(withOverrides)
+                                DummyRepository.applyPersistedTeamImages(requireContext())
+                                if (newIdStr != null && imageResName.isNotBlank() && imageResName.startsWith("file:team_")) {
+                                    TeamImageStore.save(requireContext(), newIdStr, "file:team_$newTeamId.jpg")
+                                }
                             }
                         }
                     }

@@ -18,7 +18,9 @@ import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DeletedSeedTeamStore
+import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.SeedTeamOverridesStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.HomeSummaryResponse
 import com.project.unimate.network.dto.TeamSummaryResponse
@@ -268,11 +270,17 @@ class HomeFragment : Fragment() {
                 val service = RetrofitClient.create<TeamService>(requireContext())
                 val resp = service.getMyTeams()
                 if (resp.isSuccessful) {
-                    val serverTeams = resp.body()?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
+                    val deletedUserIds = DeletedUserTeamStore.getDeletedIds(requireContext())
+                    val serverTeams = resp.body()
+                        ?.filter { r -> r.id?.toString() !in deletedUserIds }
+                        ?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
                     val deletedNames = DeletedSeedTeamStore.getDeletedNames(requireContext())
                     val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
+                    val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
+                    val withOverrides = SeedTeamOverridesStore.applyOverrides(requireContext(), merged, seedIds)
                     withContext(Dispatchers.Main) {
-                        DummyRepository.replaceTeamsWithServerData(merged)
+                        DummyRepository.replaceTeamsWithServerData(withOverrides)
+                        DummyRepository.applyPersistedTeamImages(requireContext())
                         refreshTeamIcons(root)
                     }
                 }
