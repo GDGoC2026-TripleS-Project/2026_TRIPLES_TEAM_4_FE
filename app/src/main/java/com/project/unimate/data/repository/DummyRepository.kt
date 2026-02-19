@@ -108,6 +108,7 @@ object DummyRepository {
             }
         }
         extraTeamMembers.clear()
+        serverMembersCache.clear()
     }
 
     /** 저장된 팀 사진(TeamImageStore)을 _allTeams에 적용. replaceTeamsWithServerData 호출 후 호출. */
@@ -211,6 +212,9 @@ object DummyRepository {
     /** 새 팀 추가 시 사용하는 팀원 더미 (기존 7개 팀은 teamMembersMap, 이후 추가 팀은 여기) */
     private val extraTeamMembers = mutableMapOf<String, List<TeamMember>>()
 
+    /** 서버에서 로드한 팀원 캐시 (teamId → 서버 팀원 목록). getTeamMembers()에서 더미와 merge됨 (feat/#33) */
+    private val serverMembersCache = mutableMapOf<String, List<TeamMember>>()
+
     /** 새 팀 추가 (초대코드 참여/팀 생성/일정에서 팀 선택 시 호출). 현재 사용자 포함 팀원·일정 더미 생성. */
     fun addTeam(team: Team) {
         if (_allTeams.any { it.id == team.id }) return
@@ -273,17 +277,35 @@ object DummyRepository {
         }.toMap().toMutableMap()
     }
 
-    /** 팀 스페이스용: 해당 팀의 팀원 목록. 현재 사용자는 한 명만 포함(이름 중복 제거). 'me' 멤버는 항상 currentUserName으로 표시. */
+    /** 팀 스페이스용: 해당 팀의 팀원 목록. 서버 캐시 + 더미 merge 후, 'me' 멤버는 currentUserName으로 보정·중복 제거. */
     fun getTeamMembers(teamId: String): List<TeamMember> {
-        val list = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+        val dummy = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+        val server = serverMembersCache[teamId] ?: emptyList()
+        val merged = if (server.isEmpty()) dummy else mergeServerFirstMembers(server, dummy)
+        return applyMeAndCurrentUserName(merged)
+    }
+
+    /** 서버 팀원을 캐시에 저장. noScheduleMembersCache는 자동 무효화. */
+    fun cacheServerMembers(teamId: String, members: List<TeamMember>) {
+        serverMembersCache[teamId] = members
+        noScheduleMembersCache.clear()
+    }
+
+    /** 서버 팀원을 앞에, 더미 팀원 중 이름 미중복인 것을 뒤에 붙여 반환 */
+    fun mergeServerFirstMembers(server: List<TeamMember>, dummy: List<TeamMember>): List<TeamMember> {
+        val serverNames = server.map { it.name }.toSet()
+        return server + dummy.filter { it.name !in serverNames }
+    }
+
+    /** 팀원 목록에 'me' 보정 및 currentUserName 중복 제거 적용 */
+    private fun applyMeAndCurrentUserName(list: List<TeamMember>): List<TeamMember> {
         val withoutCurrentName = list.filter { it.name != currentUserName }
-        val withMe = if (list.any { it.id == "me" }) {
+        return if (list.any { it.id == "me" }) {
             list.map { if (it.id == "me") it.copy(name = currentUserName) else it }
                 .filter { it.id == "me" || it.name != currentUserName }
         } else {
             listOf(TeamMember("me", currentUserName, "ic_user")) + withoutCurrentName
         }
-        return withMe
     }
 
     fun getTeamIntro(teamId: String): String = getTeamById(teamId)?.intro ?: teamIntroMap[teamId] ?: ""

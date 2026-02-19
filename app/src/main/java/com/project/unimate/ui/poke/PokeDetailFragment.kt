@@ -24,14 +24,13 @@ import kotlinx.coroutines.launch
 
 class PokeDetailFragment : Fragment() {
 
-    private var selectedMembers: ArrayList<PokeData.Member>? = null
+    private var selectedMembers: List<PokeData.Member> = emptyList()
+    private var selectedMessageId: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 이전 화면에서 보낸 데이터 받기
-        arguments?.let {
-            selectedMembers = it.getParcelableArrayList("selected_members")
-        }
+        selectedMembers = arguments?.getParcelableArrayList<PokeData.Member>("selected_members")
+            ?: emptyList()
     }
 
     override fun onCreateView(
@@ -40,129 +39,121 @@ class PokeDetailFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_poke_detail, container, false)
 
-        // 뷰 연결
         val rvSelectedUsers = view.findViewById<RecyclerView>(R.id.rvSelectedUsers)
         val tvSelectedCount = view.findViewById<TextView>(R.id.tvSelectedCount)
         val btnBack = view.findViewById<ImageView>(R.id.btnBack)
-
         val layoutMessageDropdown = view.findViewById<ConstraintLayout>(R.id.layoutMessageDropdown)
         val tvSelectedMessage = view.findViewById<TextView>(R.id.tvSelectedMessage)
         val ivDropdownArrow = view.findViewById<ImageView>(R.id.ivDropdownArrow)
         val rvMessageList = view.findViewById<RecyclerView>(R.id.rvMessageList)
-
-        // [중요] 버튼 연결
         val btnSendPoke = view.findViewById<Button>(R.id.btnSendPoke)
 
-        // 1. 초기 상태: 버튼 비활성화 (XML의 shape_button_join 덕분에 회색으로 시작)
+        // 초기: 버튼 비활성화
         btnSendPoke.isEnabled = false
 
-        // 2. 선택된 유저 목록 설정
-        selectedMembers?.let { members ->
-            tvSelectedCount.text = "${members.size}"
-            rvSelectedUsers.layoutManager = LinearLayoutManager(context)
-            rvSelectedUsers.adapter = SelectedUserAdapter(members)
-        }
+        // 선택된 팀원 목록
+        tvSelectedCount.text = "${selectedMembers.size}"
+        rvSelectedUsers.layoutManager = LinearLayoutManager(context)
+        rvSelectedUsers.adapter = SelectedUserAdapter(selectedMembers)
 
-        // 3. 메시지 리스트 데이터 (더미, API 성공 시 교체)
-        val messages = mutableListOf(
-            "자료를 기다리고 있는 팀원의 간절한 눈빛이 느껴져요 👀",
-            "혹시 바쁜 일정에 마감일을 잊으신 건 아니죠? ⏰",
-            "팀원이 전한 메시지가 답변을 기다리고 있어요 💌",
-            "지금 바로 회의 가능한 시간을 콕 찍어주실래요? 👉",
-            "놓치면 안 될 중요한 팀 공지가 도착해 있어요 📢"
-        )
-        // 메시지 ID 맵 (API용)
-        val messageIdMap = mutableMapOf<String, Long>()
-
-        // 4. 메시지 선택 시 동작 (여기서 버튼 색상이 바뀝니다!)
-        val messageAdapter = MessageAdapter(messages) { selectedMsg ->
-            // 드롭다운 텍스트 변경
-            tvSelectedMessage.text = selectedMsg
-            tvSelectedMessage.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-
-            // 리스트 닫기 & 화살표 원위치
-            rvMessageList.visibility = View.GONE
-            ivDropdownArrow.animate().rotation(0f).start()
-
-            // ★ [핵심 기능] 버튼 활성화
-            // 이 코드가 실행되면 isEnabled가 true가 되면서
-            // XML에 설정한 selector가 작동하여 배경이 '연두색'으로 변합니다.
-            btnSendPoke.isEnabled = true
-        }
-
+        // 드롭다운 열기/닫기
         rvMessageList.layoutManager = LinearLayoutManager(context)
-        rvMessageList.adapter = messageAdapter
-
-        // 5. 드롭다운 박스 클릭 (열기/닫기)
         layoutMessageDropdown.setOnClickListener {
             if (rvMessageList.visibility == View.VISIBLE) {
-                // 닫기
                 rvMessageList.visibility = View.GONE
                 ivDropdownArrow.animate().rotation(0f).start()
             } else {
-                // 열기
                 rvMessageList.visibility = View.VISIBLE
                 ivDropdownArrow.animate().rotation(180f).start()
             }
         }
 
-        // 6. 뒤로가기
-        btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
+        btnBack.setOnClickListener { findNavController().popBackStack() }
 
-        // API에서 찌르기 문구 로드
+        // 찌르기 문구 서버에서 로드
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val service = RetrofitClient.create<PokeService>(requireContext())
                 val response = service.getMessages()
-                if (response.isSuccessful) {
-                    val apiMessages = response.body()
-                    if (!apiMessages.isNullOrEmpty()) {
-                        messages.clear()
-                        messageIdMap.clear()
-                        apiMessages.forEach { msg ->
-                            val content = msg.content ?: return@forEach
-                            messages.add(content)
-                            msg.messageId?.let { messageIdMap[content] = it }
-                        }
-                        rvMessageList.adapter = MessageAdapter(messages) { selectedMsg ->
-                            tvSelectedMessage.text = selectedMsg
-                            tvSelectedMessage.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+                if (response.isSuccessful && isAdded) {
+                    val apiMessages = response.body() ?: emptyList()
+                    if (apiMessages.isNotEmpty()) {
+                        rvMessageList.adapter = MessageAdapter(apiMessages.mapNotNull { it.content }) { selectedContent ->
+                            selectedMessageId = apiMessages.find { it.content == selectedContent }?.messageId
+                            tvSelectedMessage.text = selectedContent
+                            tvSelectedMessage.setTextColor(
+                                ContextCompat.getColor(requireContext(), R.color.black)
+                            )
                             rvMessageList.visibility = View.GONE
                             ivDropdownArrow.animate().rotation(0f).start()
-                            btnSendPoke.isEnabled = true
+                            btnSendPoke.isEnabled = (selectedMessageId != null)
                         }
+                    } else {
+                        tvSelectedMessage.text = "문구 없음"
                     }
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "찌르기 문구를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
 
-        // 7. 찌르기 버튼 클릭 (API 호출 + 토스트)
+        // 찌르기 전송
         btnSendPoke.setOnClickListener {
-            if (!selectedMembers.isNullOrEmpty()) {
-                val firstUser = selectedMembers!![0].name
-                val extraCount = selectedMembers!!.size - 1
-                val toastMsg = if (extraCount > 0) {
-                    "${firstUser}님 외 ${extraCount}명에게 찌르기를 보냈어요 👋"
-                } else {
-                    "${firstUser}님에게 찌르기를 보냈어요 👋"
-                }
+            val msgId = selectedMessageId
+            if (msgId == null) {
+                Toast.makeText(requireContext(), "찌르기 문구를 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (selectedMembers.isEmpty()) {
+                Toast.makeText(requireContext(), "찌를 팀원을 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                // API 호출
-                val selectedMsg = tvSelectedMessage.text.toString()
-                val msgId = messageIdMap[selectedMsg] ?: 1L
-                btnSendPoke.isEnabled = false
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        val service = RetrofitClient.create<PokeService>(requireContext())
-                        service.sendPokes(PokeRequest(
-                            messageId = msgId,
-                            targets = selectedMembers!!.map { PokeTarget(teamId = 0, userId = it.id.toLong()) }
-                        ))
-                    } catch (_: Exception) { }
-                    Toast.makeText(requireContext(), toastMsg, Toast.LENGTH_SHORT).show()
-                    findNavController().popBackStack()
+            btnSendPoke.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<PokeService>(requireContext())
+                    val request = PokeRequest(
+                        messageId = msgId,
+                        targets = selectedMembers.map { PokeTarget(teamId = it.teamId, userId = it.userId) }
+                    )
+                    val response = service.sendPokes(request)
+                    if (!isAdded) return@launch
+
+                    if (response.isSuccessful) {
+                        val body = response.body()
+                        val sentCount = body?.sentCount ?: 0
+                        val excludedSelf = body?.excludedSelfCount ?: 0
+                        val invalid = body?.invalidTargets ?: emptyList()
+
+                        val msg = buildString {
+                            append("${sentCount}명에게 찌르기를 보냈습니다.")
+                            if (excludedSelf > 0) append("\n본인 제외 ${excludedSelf}명")
+                            if (invalid.isNotEmpty()) {
+                                append("\n전송 실패: ")
+                                append(invalid.joinToString(", ") { iv ->
+                                    "userId=${iv.userId}(${iv.reason ?: "알 수 없음"})"
+                                })
+                            }
+                        }
+                        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                        findNavController().popBackStack()
+                    } else {
+                        val errorMsg = when (response.code()) {
+                            400 -> "잘못된 요청입니다."
+                            403 -> "같은 팀원이 아닌 대상이 포함되어 있습니다."
+                            404 -> "찌르기 문구를 찾을 수 없습니다."
+                            else -> "찌르기 전송에 실패했습니다. (${response.code()})"
+                        }
+                        Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show()
+                        btnSendPoke.isEnabled = true
+                    }
+                } catch (e: Exception) {
+                    if (!isAdded) return@launch
+                    Toast.makeText(requireContext(), "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                    btnSendPoke.isEnabled = true
                 }
             }
         }

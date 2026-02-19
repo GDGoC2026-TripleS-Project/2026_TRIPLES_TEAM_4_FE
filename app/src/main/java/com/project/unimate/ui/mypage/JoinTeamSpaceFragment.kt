@@ -82,7 +82,10 @@ class JoinTeamSpaceFragment : Fragment() {
         joinButton.setOnClickListener {
             if (joinCompleted) return@setOnClickListener
             val code = codeInput.text.toString().trim()
-            if (code.isEmpty()) return@setOnClickListener
+            if (code.length != 6) {
+                Toast.makeText(requireContext(), "초대코드는 숫자 6자리입니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             joinButton.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
@@ -93,7 +96,6 @@ class JoinTeamSpaceFragment : Fragment() {
                         val joined = response.body()
                         val teamName = joined?.team?.name ?: "새 팀플"
                         val teamColorHex = joined?.team?.colorHex ?: "#EDF3D7"
-                        // 더미 데이터에도 추가 (로컬 UI 동기화)
                         val newTeam = Team(
                             id = joined?.team?.id?.toString() ?: "joined_${System.currentTimeMillis()}",
                             name = teamName,
@@ -107,23 +109,22 @@ class JoinTeamSpaceFragment : Fragment() {
                         DummyRepository.addTeam(newTeam)
                         onJoinSuccess(joinButton, view)
                     } else {
-                        Toast.makeText(requireContext(), "유효하지 않은 초대코드입니다.", Toast.LENGTH_SHORT).show()
+                        val errorCode = try {
+                            val errorBody = response.errorBody()?.string() ?: ""
+                            org.json.JSONObject(errorBody).optString("code", "")
+                        } catch (_: Exception) { "" }
+                        val message = when (errorCode) {
+                            "INVITE_CODE_INVALID" -> "유효하지 않은 초대코드입니다."
+                            "INVITE_CODE_EXPIRED" -> "초대코드가 만료되었습니다."
+                            "ALREADY_TEAM_MEMBER" -> "이미 해당 팀의 멤버입니다."
+                            else -> "초대코드 확인에 실패했습니다. (${response.code()})"
+                        }
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                         joinButton.isEnabled = true
                     }
                 } catch (_: Exception) {
-                    // API 실패 시 기존 더미 동작
-                    val newTeam = Team(
-                        id = "joined_${System.currentTimeMillis()}",
-                        name = "새 팀플",
-                        colorHex = "#EDF3D7",
-                        imageResName = "",
-                        isCompleted = false,
-                        memberCount = 4,
-                        deadlineDays = 7,
-                        intro = ""
-                    )
-                    DummyRepository.addTeam(newTeam)
-                    onJoinSuccess(joinButton, view)
+                    Toast.makeText(requireContext(), "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                    joinButton.isEnabled = true
                 }
             }
         }

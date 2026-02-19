@@ -1,11 +1,12 @@
 package com.project.unimate.ui.poke
 
-import android.os.Parcelable // import 필요
-import kotlinx.parcelize.Parcelize // import 필요
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
-sealed class PokeData : Parcelable { // 부모에도 Parcelable 추가
+sealed class PokeData : Parcelable {
     @Parcelize
     data class Header(
+        val teamId: Long,
         val title: String,
         val teamColor: String,
         var isAllSelected: Boolean = false
@@ -13,10 +14,11 @@ sealed class PokeData : Parcelable { // 부모에도 Parcelable 추가
 
     @Parcelize
     data class Member(
-        val id: Int,
-        val name: String,
+        val userId: Long,
+        val teamId: Long,
         val teamName: String,
         val teamColor: String,
+        val name: String,
         var isSelected: Boolean = false
     ) : PokeData()
 
