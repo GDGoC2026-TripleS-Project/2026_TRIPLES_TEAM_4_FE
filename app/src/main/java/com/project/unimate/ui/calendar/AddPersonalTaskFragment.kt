@@ -54,6 +54,18 @@ class AddPersonalTaskFragment : Fragment() {
         }
     }
 
+    private fun categoryToServerValue(label: String): String {
+        return when (label.trim()) {
+            getString(R.string.category_part_time) -> "PART_TIME"
+            getString(R.string.category_other_team) -> "OTHER_TEAM"
+            getString(R.string.category_meeting) -> "MEETING"
+            getString(R.string.category_exam) -> "EXAM"
+            getString(R.string.category_health) -> "HEALTH"
+            getString(R.string.category_etc), "없음" -> "OTHER"
+            else -> "OTHER"
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_add_personal_task, container, false)
     }
@@ -297,9 +309,9 @@ class AddPersonalTaskFragment : Fragment() {
         val cat = if (catEt?.visibility == View.VISIBLE) (catEt.text?.toString()?.trim()?.takeIf { it.isNotEmpty() } ?: getString(R.string.category_etc)) else (category ?: "없음")
         val date = (startCal.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
         val notiLabel = view?.findViewById<TextView>(R.id.addPersonalNotificationBtn)?.text?.toString() ?: getString(R.string.none)
-        val teams = DummyRepository.getMyTeamSpaceTeams()
-        val firstTeamId = teams.firstOrNull()?.id?.toLongOrNull()
+        val firstTeamId = DummyRepository.allTeams.firstNotNullOfOrNull { it.id.toLongOrNull() }
         if (firstTeamId == null) {
+            android.widget.Toast.makeText(requireContext(), "서버 팀 정보가 없어 개인일정을 서버에 저장할 수 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
             val item = PersonalScheduleItem(
                 id = "p-${System.currentTimeMillis()}",
                 title = name,
@@ -326,7 +338,7 @@ class AddPersonalTaskFragment : Fragment() {
                     startAt = isoFmt.format(Date(startCal.timeInMillis)),
                     endAt = isoFmt.format(Date(endCal.timeInMillis)),
                     isPrivate = isPrivate,
-                    category = if (cat == "없음") "OTHER" else cat,
+                    category = categoryToServerValue(cat),
                     alarmMinutes = alarmMinutesFromLabel(notiLabel)
                 ))
                 val serverId = resp.body()?.id
