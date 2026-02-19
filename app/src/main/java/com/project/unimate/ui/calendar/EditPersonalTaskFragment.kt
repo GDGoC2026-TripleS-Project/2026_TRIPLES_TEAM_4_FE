@@ -195,7 +195,15 @@ class EditPersonalTaskFragment : Fragment() {
             }
             dlg.show()
         }
-        startTimeBtn.setOnClickListener { showTimePicker(startCal) { refreshDateTime() } }
+        startTimeBtn.setOnClickListener {
+            showTimePicker(startCal) {
+                refreshDateTime()
+                if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && startCal.timeInMillis > endCal.timeInMillis) {
+                    endCal.timeInMillis = startCal.timeInMillis
+                    refreshDateTime()
+                }
+            }
+        }
         endDateBtn.setOnClickListener {
             val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
             val dlg = DatePickerDialog(ctx, { _, y, m, d ->

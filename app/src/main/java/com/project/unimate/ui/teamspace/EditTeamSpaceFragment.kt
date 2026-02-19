@@ -238,7 +238,15 @@ class EditTeamSpaceFragment : Fragment() {
                 refreshDateTimeButtons()
             }
         }
-        startTimeBtn.setOnClickListener { showTimePicker(startCal) { _, _ -> refreshDateTimeButtons() } }
+        startTimeBtn.setOnClickListener {
+            showTimePicker(startCal) { _, _ ->
+                refreshDateTimeButtons()
+                if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && startCal.timeInMillis > endCal.timeInMillis) {
+                    endCal.timeInMillis = startCal.timeInMillis
+                    refreshDateTimeButtons()
+                }
+            }
+        }
         endDateBtn.setOnClickListener {
             showDatePicker(endCal) { y, m, d ->
                 endCal.set(Calendar.YEAR, y)
@@ -252,7 +260,15 @@ class EditTeamSpaceFragment : Fragment() {
                 refreshDateTimeButtons()
             }
         }
-        endTimeBtn.setOnClickListener { showTimePicker(endCal) { _, _ -> refreshDateTimeButtons() } }
+        endTimeBtn.setOnClickListener {
+            showTimePicker(endCal) { _, _ ->
+                refreshDateTimeButtons()
+                if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && endCal.timeInMillis < startCal.timeInMillis) {
+                    startCal.timeInMillis = endCal.timeInMillis
+                    refreshDateTimeButtons()
+                }
+            }
+        }
 
         setEndedLayout.setOnClickListener {
             setEndedTeam = !setEndedTeam

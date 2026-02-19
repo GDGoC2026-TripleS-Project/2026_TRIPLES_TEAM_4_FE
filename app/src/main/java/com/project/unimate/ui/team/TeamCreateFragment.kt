@@ -154,10 +154,10 @@ class TeamCreateFragment : Fragment() {
 
     // --- 2. 날짜/시간 선택 로직 ---
     private fun setupDateAndTimeListeners() {
-        binding.tvStartDate.setOnClickListener { showDatePicker(binding.tvStartDate) }
-        binding.tvStartTime.setOnClickListener { showTimePicker(binding.tvStartTime) }
-        binding.tvEndDate.setOnClickListener { showDatePicker(binding.tvEndDate) }
-        binding.tvEndTime.setOnClickListener { showTimePicker(binding.tvEndTime) }
+        binding.tvStartDate.setOnClickListener { showStartDatePicker() }
+        binding.tvStartTime.setOnClickListener { showStartTimePicker() }
+        binding.tvEndDate.setOnClickListener { showEndDatePicker() }
+        binding.tvEndTime.setOnClickListener { showEndTimePicker() }
     }
 
     /** 페이지 첫 진입 시 시작/종료 날짜·시간을 현재 날짜·시간으로 표시 */
@@ -178,15 +178,20 @@ class TeamCreateFragment : Fragment() {
         binding.tvEndTime.text = timeStr
     }
 
-    private fun showDatePicker(textView: TextView) {
+    /** 시작 날짜 선택: 시작 > 종료면 종료 날짜 = 시작 날짜 */
+    private fun showStartDatePicker() {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
-
         val datePickerDialog = DatePickerDialog(
             contextWrapper,
             { _, year, month, day ->
-                // 포맷 통일: yyyy. M. d
-                textView.text = "${year}. ${month + 1}. ${day}"
+                binding.tvStartDate.text = "${year}. ${month + 1}. ${day}"
+                val startDateStr = binding.tvStartDate.text.toString()
+                val endDateStr = binding.tvEndDate.text.toString()
+                val (workStart, workEnd) = parseWorkDateTimes(startDateStr, "오전 12:00", endDateStr, "오전 12:00")
+                if (workStart != null && workEnd != null && workStart > workEnd) {
+                    binding.tvEndDate.text = startDateStr
+                }
             },
             cal.get(Calendar.YEAR),
             cal.get(Calendar.MONTH),
@@ -196,17 +201,76 @@ class TeamCreateFragment : Fragment() {
         datePickerDialog.show()
     }
 
-    private fun showTimePicker(textView: TextView) {
+    /** 종료 날짜 선택: 종료 < 시작이면 시작 날짜 = 종료 날짜 */
+    private fun showEndDatePicker() {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+        val datePickerDialog = DatePickerDialog(
+            contextWrapper,
+            { _, year, month, day ->
+                binding.tvEndDate.text = "${year}. ${month + 1}. ${day}"
+                val startDateStr = binding.tvStartDate.text.toString()
+                val endDateStr = binding.tvEndDate.text.toString()
+                val (workStart, workEnd) = parseWorkDateTimes(startDateStr, "오전 12:00", endDateStr, "오전 12:00")
+                if (workStart != null && workEnd != null && workEnd < workStart) {
+                    binding.tvStartDate.text = endDateStr
+                }
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        )
+        styleDatePicker(datePickerDialog)
+        datePickerDialog.show()
+    }
 
+    /** 시작 시간 선택: 같은 날이고 시작 > 종료면 종료 시간 = 시작 시간 */
+    private fun showStartTimePicker() {
+        val cal = Calendar.getInstance()
+        val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
         val timePickerDialog = TimePickerDialog(
             contextWrapper,
             { _, h, m ->
                 val amPm = if (h < 12) "오전" else "오후"
                 val hour = if (h % 12 == 0) 12 else h % 12
-                // 포맷 통일: 오전/오후 h:mm
-                textView.text = "$amPm ${hour}:${String.format("%02d", m)}"
+                val timeStr = "$amPm ${hour}:${String.format("%02d", m)}"
+                binding.tvStartTime.text = timeStr
+                val startDateStr = binding.tvStartDate.text.toString()
+                val endDateStr = binding.tvEndDate.text.toString()
+                if (startDateStr == endDateStr) {
+                    val (workStart, workEnd) = parseWorkDateTimes(startDateStr, timeStr, endDateStr, binding.tvEndTime.text.toString())
+                    if (workStart != null && workEnd != null && workStart > workEnd) {
+                        binding.tvEndTime.text = timeStr
+                    }
+                }
+            },
+            cal.get(Calendar.HOUR_OF_DAY),
+            cal.get(Calendar.MINUTE),
+            false
+        )
+        styleTimePicker(timePickerDialog)
+        timePickerDialog.show()
+    }
+
+    /** 종료 시간 선택: 같은 날이고 종료 < 시작이면 시작 시간 = 종료 시간 */
+    private fun showEndTimePicker() {
+        val cal = Calendar.getInstance()
+        val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+        val timePickerDialog = TimePickerDialog(
+            contextWrapper,
+            { _, h, m ->
+                val amPm = if (h < 12) "오전" else "오후"
+                val hour = if (h % 12 == 0) 12 else h % 12
+                val timeStr = "$amPm ${hour}:${String.format("%02d", m)}"
+                binding.tvEndTime.text = timeStr
+                val startDateStr = binding.tvStartDate.text.toString()
+                val endDateStr = binding.tvEndDate.text.toString()
+                if (startDateStr == endDateStr) {
+                    val (workStart, workEnd) = parseWorkDateTimes(startDateStr, binding.tvStartTime.text.toString(), endDateStr, timeStr)
+                    if (workStart != null && workEnd != null && workEnd < workStart) {
+                        binding.tvStartTime.text = timeStr
+                    }
+                }
             },
             cal.get(Calendar.HOUR_OF_DAY),
             cal.get(Calendar.MINUTE),
