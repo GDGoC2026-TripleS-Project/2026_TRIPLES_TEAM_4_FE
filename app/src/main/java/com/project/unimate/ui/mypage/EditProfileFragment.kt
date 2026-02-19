@@ -123,7 +123,11 @@ class EditProfileFragment : Fragment() {
                         if (upsertResp.isSuccessful) {
                             DummyRepository.setCurrentUserName(name)
                             com.project.unimate.data.repository.NicknameStore.save(requireContext(), name)
-                            ProfileImageStore.save(requireContext(), DummyRepository.getCurrentUserProfileImageResName())
+                            // 서버 URL 반환 시 서버 URL 우선 저장, 없으면 로컬 파일 경로 유지
+                            val finalRef = profileImageUrlToSend?.takeIf { it.isNotBlank() }
+                                ?: DummyRepository.getCurrentUserProfileImageResName()
+                            DummyRepository.setCurrentUserProfileImageResName(finalRef)
+                            ProfileImageStore.save(requireContext(), finalRef)
                             closeFragment()
                         } else {
                             Toast.makeText(requireContext(), "저장에 실패했습니다", Toast.LENGTH_SHORT).show()
@@ -162,7 +166,7 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun saveUserProfileImageToFile(uri: Uri): String {
-        val fileName = "user_profile.jpg"
+        val fileName = "user_profile_${System.currentTimeMillis()}.jpg"
         return try {
             requireContext().contentResolver.openInputStream(uri)?.use { input ->
                 val file = File(requireContext().filesDir, fileName)

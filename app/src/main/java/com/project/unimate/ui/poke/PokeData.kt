@@ -19,6 +19,7 @@ sealed class PokeData : Parcelable {
         val teamName: String,
         val teamColor: String,
         val name: String,
+        val profileImageUrl: String? = null,
         var isSelected: Boolean = false
     ) : PokeData()
 

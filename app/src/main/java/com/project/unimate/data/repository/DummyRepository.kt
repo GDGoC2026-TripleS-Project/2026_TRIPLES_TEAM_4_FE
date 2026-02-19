@@ -300,11 +300,12 @@ object DummyRepository {
     /** 팀원 목록에 'me' 보정 및 currentUserName 중복 제거 적용 */
     private fun applyMeAndCurrentUserName(list: List<TeamMember>): List<TeamMember> {
         val withoutCurrentName = list.filter { it.name != currentUserName }
+        val myImage = currentUserProfileImageResName.ifBlank { "ic_user" }
         return if (list.any { it.id == "me" }) {
-            list.map { if (it.id == "me") it.copy(name = currentUserName) else it }
+            list.map { if (it.id == "me") it.copy(name = currentUserName, iconResName = myImage) else it }
                 .filter { it.id == "me" || it.name != currentUserName }
         } else {
-            listOf(TeamMember("me", currentUserName, "ic_user")) + withoutCurrentName
+            listOf(TeamMember("me", currentUserName, myImage)) + withoutCurrentName
         }
     }
 

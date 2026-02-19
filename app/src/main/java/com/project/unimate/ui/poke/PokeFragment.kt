@@ -126,14 +126,14 @@ class PokeFragment : Fragment() {
             val localTeamIdLong = localTeamIdToLong(teamIdStr)
             val effectiveTeamId = apiSection?.teamId?.let { it } ?: localTeamIdLong
 
-            val members: List<Pair<Long, String>> = if (apiSection != null) {
+            val members: List<Triple<Long, String, String?>> = if (apiSection != null) {
                 apiSection.members
-                    ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> id to nick } } }
+                    ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> Triple(id, nick, m.profileImageUrl) } } }
                     ?.distinctBy { it.first } ?: emptyList()
             } else {
                 DummyRepository.getTeamMembers(team.id)
                     .filter { it.id != "me" && it.name != currentUserName }
-                    .mapIndexed { i, tm -> (syntheticUserId + i) to tm.name }
+                    .mapIndexed { i, tm -> Triple(syntheticUserId + i, tm.name, null as String?) }
                     .also { syntheticUserId += it.size }
             }
 
@@ -141,14 +141,15 @@ class PokeFragment : Fragment() {
             if (members.isEmpty()) {
                 result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
             } else {
-                members.forEach { (uid, name) ->
+                members.forEach { (uid, name, profileUrl) ->
                     result.add(
                         PokeData.Member(
                             userId = uid,
                             teamId = effectiveTeamId,
                             teamName = teamName,
                             teamColor = teamColor,
-                            name = name
+                            name = name,
+                            profileImageUrl = profileUrl
                         )
                     )
                 }
@@ -165,19 +166,20 @@ class PokeFragment : Fragment() {
             val teamColor = DummyRepository.getTeamById(teamIdStr)?.colorHex?.takeIf { it.isNotBlank() } ?: "#90A3ED"
             result.add(PokeData.Header(teamId = teamId, title = teamName, teamColor = teamColor))
             val others = teamSection.members
-                ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> id to nick } } }
+                ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> Triple(id, nick, m.profileImageUrl) } } }
                 ?.distinctBy { it.first } ?: emptyList()
             if (others.isEmpty()) {
                 result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
             } else {
-                others.forEach { (uid, name) ->
+                others.forEach { (uid, name, profileUrl) ->
                     result.add(
                         PokeData.Member(
                             userId = uid,
                             teamId = teamId,
                             teamName = teamName,
                             teamColor = teamColor,
-                            name = name
+                            name = name,
+                            profileImageUrl = profileUrl
                         )
                     )
                 }

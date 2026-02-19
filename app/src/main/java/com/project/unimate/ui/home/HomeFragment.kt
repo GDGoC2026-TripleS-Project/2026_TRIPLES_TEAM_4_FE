@@ -23,8 +23,10 @@ import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.HomeSummaryResponse
 import com.project.unimate.network.dto.TeamSummaryResponse
+import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.service.HomeService
 import com.project.unimate.network.service.TeamService
+import com.project.unimate.network.service.UserService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -269,6 +271,24 @@ class HomeFragment : Fragment() {
             DummyRepository.applyPersistedTeamNames(requireContext())
             refreshTeamIcons(root)
             syncTeamsFromServerAndRefresh(root)
+            syncMyProfileFromServer()
+        }
+    }
+
+    private fun syncMyProfileFromServer() {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<UserService>(ctx)
+                val resp = service.getMyInfo()
+                if (resp.isSuccessful) {
+                    val url = resp.body()?.profileImageUrl?.takeIf { it.isNotBlank() } ?: return@launch
+                    if (DummyRepository.getCurrentUserProfileImageResName() != url) {
+                        DummyRepository.setCurrentUserProfileImageResName(url)
+                        ProfileImageStore.save(ctx, url)
+                    }
+                }
+            } catch (_: Exception) { }
         }
     }
 
