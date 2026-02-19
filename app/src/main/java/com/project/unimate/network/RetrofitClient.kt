@@ -32,6 +32,7 @@ RetrofitClient {
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)
             .addInterceptor(AuthInterceptor(appContext))
+            .authenticator(TokenAuthenticator(appContext))
             .addInterceptor(logging)
             .build()
 

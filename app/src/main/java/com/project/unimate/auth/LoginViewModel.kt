@@ -20,14 +20,18 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
     private val authApi = AuthApi(baseUrl)
 
     private data class AuthPayload(
-        val token: String,
+        val accessToken: String,
+        val refreshToken: String?,
         val userId: Long?,
         val email: String?,
         val nickname: String?
     )
 
-    fun onLoginSuccessSaveJwtAndRegisterFcm(jwt: String, userId: Long?) {
-        JwtStore.save(getApplication(), jwt)
+    fun onLoginSuccessSaveJwtAndRegisterFcm(accessToken: String, refreshToken: String?, userId: Long?) {
+        JwtStore.saveAccessToken(getApplication(), accessToken)
+        if (!refreshToken.isNullOrBlank()) {
+            JwtStore.saveRefreshToken(getApplication(), refreshToken)
+        }
         if (userId != null && userId > 0) {
             JwtStore.saveUserId(getApplication(), userId)
         }
@@ -48,8 +52,8 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
 
                 if (code in 200..299 && !body.isNullOrBlank()) {
                     val auth = parseAuthResponse(body)
-                    if (auth != null && auth.token.isNotBlank()) {
-                        onLoginSuccessSaveJwtAndRegisterFcm(auth.token, auth.userId)
+                    if (auth != null && auth.accessToken.isNotBlank()) {
+                        onLoginSuccessSaveJwtAndRegisterFcm(auth.accessToken, auth.refreshToken, auth.userId)
                         Log.d(TAG, "email login ok userId=${auth.userId} email=${auth.email} nickname=${auth.nickname}")
                         onDone(true, null)
                         return
@@ -90,8 +94,8 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
 
                 if (code in 200..299 && !body.isNullOrBlank()) {
                     val auth = parseAuthResponse(body)
-                    if (auth != null && auth.token.isNotBlank()) {
-                        onLoginSuccessSaveJwtAndRegisterFcm(auth.token, auth.userId)
+                    if (auth != null && auth.accessToken.isNotBlank()) {
+                        onLoginSuccessSaveJwtAndRegisterFcm(auth.accessToken, auth.refreshToken, auth.userId)
                         Log.d(TAG, "social login ok userId=${auth.userId} email=${auth.email} nickname=${auth.nickname}")
                         onDone(true, null)
                         return
@@ -105,14 +109,34 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
     private fun parseAuthResponse(body: String): AuthPayload? {
         return try {
             val json = JSONObject(body)
-            val token = json.optString("token", "")
-            val userId = json.optLong("userId", -1L).takeIf { it > 0 }
-            val email = json.optString("email", null)
-            val nickname = json.optString("nickname", null)
-            AuthPayload(token, userId, email, nickname)
+            val nested = json.optJSONObject("data")
+            val accessToken = firstNonBlank(
+                json.optString("accessToken"),
+                json.optString("token"),
+                json.optString("jwt"),
+                nested?.optString("accessToken"),
+                nested?.optString("token"),
+                nested?.optString("jwt")
+            ) ?: ""
+            val refreshToken = firstNonBlank(
+                json.optString("refreshToken"),
+                json.optString("newRefreshToken"),
+                nested?.optString("refreshToken"),
+                nested?.optString("newRefreshToken")
+            )
+            val userId = json.optLong("userId", -1L)
+                .takeIf { it > 0 }
+                ?: nested?.optLong("userId", -1L)?.takeIf { it > 0 }
+            val email = firstNonBlank(json.optString("email"), nested?.optString("email"))
+            val nickname = firstNonBlank(json.optString("nickname"), nested?.optString("nickname"))
+            AuthPayload(accessToken, refreshToken, userId, email, nickname)
         } catch (e: Exception) {
             null
         }
+    }
+
+    private fun firstNonBlank(vararg values: String?): String? {
+        return values.firstOrNull { !it.isNullOrBlank() }?.trim()
     }
 
     private fun parseErrorMessage(code: Int, body: String?): String {

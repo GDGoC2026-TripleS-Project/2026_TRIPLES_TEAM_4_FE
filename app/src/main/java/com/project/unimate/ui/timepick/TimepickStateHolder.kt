@@ -8,6 +8,7 @@ import java.util.Calendar
  */
 object TimepickStateHolder {
     var teamId: String = ""
+    var pollId: Long? = null
 
     /** 선택된 날짜 (각 날짜의 00:00 기준 millis) */
     val selectedDates: MutableSet<Long> = mutableSetOf()
@@ -30,6 +31,7 @@ object TimepickStateHolder {
 
     fun clear() {
         teamId = ""
+        pollId = null
         selectedDates.clear()
         dateTimeRanges.clear()
         selectTimeSelected.clear()

@@ -47,9 +47,18 @@ data class ResetPasswordRequest(
     val newPassword: String
 )
 
+data class RefreshTokenRequest(
+    val refreshToken: String
+)
+
 // === Response ===
 
 data class AuthResponse(
+    @SerializedName("accessToken")
+    val accessToken: String? = null,
+    @SerializedName("refreshToken")
+    val refreshToken: String? = null,
+    @SerializedName("token")
     val token: String?,
     val userId: Long?,
     val email: String?,

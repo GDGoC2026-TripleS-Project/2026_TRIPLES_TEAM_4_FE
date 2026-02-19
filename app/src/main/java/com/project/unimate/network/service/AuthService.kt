@@ -17,6 +17,9 @@ interface AuthService {
     @POST("api/auth/social/login")
     suspend fun socialLogin(@Body request: SocialLoginRequest): Response<AuthResponse>
 
+    @POST("api/auth/refresh")
+    suspend fun refresh(@Body request: RefreshTokenRequest): Response<AuthResponse>
+
     @POST("api/auth/logout")
     suspend fun logout(): Response<Map<String, String>>
 
