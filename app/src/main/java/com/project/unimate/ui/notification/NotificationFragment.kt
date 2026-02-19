@@ -9,8 +9,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
 import com.project.unimate.notification.NotificationApi
+import com.project.unimate.notification.NotificationItem
 import com.project.unimate.notification.NotificationStore
 import com.project.unimate.ui.alarm.NotificationAdapter
+import com.project.unimate.ui.timepick.TimepickStateHolder
 
 class NotificationFragment : Fragment() {
 
@@ -37,6 +39,7 @@ class NotificationFragment : Fragment() {
                         requireActivity().runOnUiThread {
                             NotificationStore.upsert(requireContext(), updated)
                             onResult(updated)
+                            navigateByNotification(updated)
                         }
                     }
                 }
@@ -44,11 +47,16 @@ class NotificationFragment : Fragment() {
             onCardClicked = { item, onResult ->
                 val api = NotificationApi()
                 api.markRead(requireContext(), item.notificationId) { success ->
-                    if (!success || !isAdded) return@markRead
-                    val updated = item.copy(isRead = true)
+                    if (!isAdded) return@markRead
                     requireActivity().runOnUiThread {
-                        NotificationStore.upsert(requireContext(), updated)
-                        onResult(updated)
+                        if (success) {
+                            val updated = item.copy(isRead = true)
+                            NotificationStore.upsert(requireContext(), updated)
+                            onResult(updated)
+                            navigateByNotification(updated)
+                        } else {
+                            navigateByNotification(item)
+                        }
                     }
                 }
             }
@@ -93,5 +101,38 @@ class NotificationFragment : Fragment() {
     private fun render(items: List<com.project.unimate.notification.NotificationItem>) {
         adapter.submit(items)
         emptyView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun navigateByNotification(item: NotificationItem) {
+        if (!isTimepickNotification(item)) return
+
+        val teamId = item.teamId.takeIf { it > 0 }?.toString().orEmpty()
+        if (teamId.isNotBlank()) {
+            TimepickStateHolder.teamId = teamId
+        }
+        findNavController().navigate(
+            R.id.editTimepickFragment,
+            Bundle().apply { putString("taskId", "") }
+        )
+    }
+
+    private fun isTimepickNotification(item: NotificationItem): Boolean {
+        val alarmType = item.alarmType.lowercase()
+        val title = item.messageTitle.lowercase()
+        val body = item.messageBody.lowercase()
+        return alarmType.contains("meeting_request") ||
+            alarmType.contains("meeting") ||
+            alarmType.contains("timepick") ||
+            alarmType.contains("모임") ||
+            alarmType.contains("체크요청") ||
+            title.contains("타임픽") ||
+            title.contains("모이기") ||
+            title.contains("모임") ||
+            title.contains("체크요청") ||
+            body.contains("타임픽") ||
+            body.contains("모이기") ||
+            body.contains("모임") ||
+            body.contains("체크요청") ||
+            body.contains("시간 입력")
     }
 }

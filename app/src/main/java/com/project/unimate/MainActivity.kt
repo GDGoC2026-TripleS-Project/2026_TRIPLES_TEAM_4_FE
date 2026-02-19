@@ -35,6 +35,7 @@ import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.data.repository.ServerSync
 import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
+import com.project.unimate.ui.timepick.TimepickStateHolder
 
 // 네비게이션바 로직을 위해 AppCompatActivity로 상속 변경
 class MainActivity : AppCompatActivity() {
@@ -226,17 +227,83 @@ class MainActivity : AppCompatActivity() {
         val tv = findViewById<TextView>(R.id.tvLog)
         if (intent == null) return
 
-        // 인텐트 처리 로직
-        val screen = intent.getStringExtra("EXTRA_PUSH_SCREEN")
-        val alarmId = intent.getStringExtra("EXTRA_PUSH_ALARM_ID")
+        val screen = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_SCREEN)
+        val alarmId = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_ID)
+        val alarmType = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_TYPE)
+        val teamId = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_TEAM_ID)
+        val messageTitle = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_TITLE)
+        val messageBody = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_BODY)
+        val hasPushPayload = !screen.isNullOrBlank() || !alarmId.isNullOrBlank() || !alarmType.isNullOrBlank()
+        if (!hasPushPayload) return
 
-        if (!screen.isNullOrBlank() || !alarmId.isNullOrBlank()) {
-            val msg = "PushClick: screen=$screen alarmId=$alarmId"
-            Log.d(TAG, msg)
-            tv?.text = msg
-        } else {
-            tv?.text = "Hello World!"
+        val msg = "PushClick: screen=$screen alarmId=$alarmId alarmType=$alarmType teamId=$teamId title=$messageTitle"
+        Log.d(TAG, msg)
+        tv?.text = msg
+
+        val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)
+            ?.navController ?: return
+
+        val destinationId = when {
+            isTimepickNotification(screen, alarmType, messageTitle, messageBody) -> {
+                if (!teamId.isNullOrBlank()) {
+                    TimepickStateHolder.teamId = teamId
+                }
+                R.id.editTimepickFragment
+            }
+            screen.orEmpty().lowercase().contains("calendar") -> R.id.calendarFragment
+            screen.orEmpty().lowercase().contains("poke") -> R.id.pokeFragment
+            screen.orEmpty().lowercase().contains("mypage") ||
+                screen.orEmpty().lowercase().contains("my_page") -> R.id.myPageFragment
+            screen.orEmpty().lowercase().contains("notification") ||
+                screen.orEmpty().lowercase().contains("alarm") -> R.id.notificationFragment
+            else -> R.id.homeFragment
         }
+
+        try {
+            val args = if (destinationId == R.id.editTimepickFragment) {
+                Bundle().apply { putString("taskId", "") }
+            } else {
+                null
+            }
+            val navOptions = NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .build()
+            navController.navigate(destinationId, args, navOptions)
+        } catch (e: Exception) {
+            Log.w(TAG, "Push navigation failed: ${e.message}")
+        }
+
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_SCREEN)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_ID)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_TYPE)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_TEAM_ID)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_TITLE)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_BODY)
+    }
+
+    private fun isTimepickNotification(
+        screen: String?,
+        alarmType: String?,
+        messageTitle: String?,
+        messageBody: String?
+    ): Boolean {
+        val s = screen.orEmpty().lowercase()
+        val a = alarmType.orEmpty().lowercase()
+        val t = messageTitle.orEmpty().lowercase()
+        val b = messageBody.orEmpty().lowercase()
+        return s.contains("timepick") ||
+            s.contains("meeting") ||
+            s.contains("edit") ||
+            a.contains("meeting_request") ||
+            a.contains("meeting") ||
+            a.contains("timepick") ||
+            a.contains("모임") ||
+            a.contains("체크요청") ||
+            t.contains("모임") ||
+            t.contains("체크요청") ||
+            b.contains("모임") ||
+            b.contains("체크요청") ||
+            b.contains("시간 입력")
     }
 
     private fun requestNotificationPermissionIfNeeded() {

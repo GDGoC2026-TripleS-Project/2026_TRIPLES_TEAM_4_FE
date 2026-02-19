@@ -54,6 +54,13 @@ class CreateTimepickFragment : Fragment() {
             findNavController().navigateUp()
             return root
         }
+
+        // 새 모이기 플로우 진입 시 이전 생성 상태(pollId)가 남아 있으면 초기화
+        // - 다른 팀으로 진입
+        // - 이전 모이기 생성 성공 후 같은 팀에서 다시 시작
+        if (TimepickStateHolder.teamId != teamId || TimepickStateHolder.pollId != null) {
+            TimepickStateHolder.clear()
+        }
         TimepickStateHolder.teamId = teamId
 
         // 서버 팀원 미리 캐시 → TimepickStatusFragment에서 merge된 팀원 표시
