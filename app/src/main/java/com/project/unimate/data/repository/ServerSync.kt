@@ -31,6 +31,16 @@ object ServerSync {
     private const val TAG = "ServerSync"
     private val syncMutex = Mutex()
 
+    private fun alarmLabelFromMinutes(minutes: Int?): String {
+        return when (minutes) {
+            5 -> "5분 전"
+            15 -> "15분 전"
+            30 -> "30분 전"
+            60 -> "1시간 전"
+            else -> "없음"
+        }
+    }
+
     suspend fun syncFromServer(context: Context) {
         syncMutex.withLock {
             syncFromServerInternal(context)
@@ -120,7 +130,8 @@ object ServerSync {
                         startTimeMillis = startMs,
                         endTimeMillis = endMs,
                         isChecked = false,
-                        creatorName = null
+                        creatorName = null,
+                        notificationCategory = alarmLabelFromMinutes(s.alarmMinutes)
                     )
                 }
                 withContext(Dispatchers.Main) {
@@ -158,7 +169,7 @@ object ServerSync {
                                 endTimeMillis = endMs,
                                 isLocked = s.isPrivate == true,
                                 isChecked = false,
-                                notificationCategory = "없음",
+                                notificationCategory = alarmLabelFromMinutes(s.alarmMinutes),
                                 scheduleCategory = "없음"
                             )
                         )

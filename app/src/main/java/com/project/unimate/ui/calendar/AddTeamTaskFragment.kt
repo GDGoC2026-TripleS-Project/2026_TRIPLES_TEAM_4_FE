@@ -42,6 +42,16 @@ class AddTeamTaskFragment : Fragment() {
     private var isPrivate = true
     private var selectedTeamId: String? = null
 
+    private fun alarmMinutesFromLabel(label: String): Int? {
+        return when (label.trim()) {
+            "5분 전" -> 5
+            "15분 전" -> 15
+            "30분 전" -> 30
+            "1시간 전" -> 60
+            else -> null
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_add_team_task, container, false)
     }
@@ -267,11 +277,14 @@ class AddTeamTaskFragment : Fragment() {
             try {
                 val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
                 val service = RetrofitClient.create<TeamScheduleService>(requireContext())
+                val notiLabel = view?.findViewById<TextView>(R.id.addTeamNotificationBtn)?.text?.toString()
+                    ?: getString(R.string.none)
                 val resp = service.create(numericTeamId, TeamScheduleCreateRequest(
                     title = name,
                     startAt = isoFmt.format(Date(startCal.timeInMillis)),
                     endAt = isoFmt.format(Date(endCal.timeInMillis)),
-                    category = "MEETING"
+                    category = "MEETING",
+                    alarmMinutes = alarmMinutesFromLabel(notiLabel)
                 ))
                 val serverId = resp.body()?.id
                 if (resp.isSuccessful && serverId != null) {
@@ -283,7 +296,8 @@ class AddTeamTaskFragment : Fragment() {
                         startTimeMillis = startCal.timeInMillis,
                         endTimeMillis = endCal.timeInMillis,
                         isChecked = false,
-                        creatorName = null
+                        creatorName = null,
+                        notificationCategory = notiLabel
                     )
                     DummyRepository.addTask(item)
                     DummyRepository.saveSchedulesTo(requireContext())

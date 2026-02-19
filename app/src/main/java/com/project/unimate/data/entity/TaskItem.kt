@@ -12,6 +12,7 @@ import java.util.Calendar
  * @param endTimeMillis 일정 종료 시각 (ms)
  * @param isChecked 완료 여부
  * @param creatorName 일정을 생성한 팀원 이름 (팀 스페이스에서만 표시)
+ * @param notificationCategory 알림 (예: "없음", "5분 전")
  */
 data class TaskItem(
     val id: String,
@@ -21,7 +22,8 @@ data class TaskItem(
     val startTimeMillis: Long = date.timeInMillis,
     val endTimeMillis: Long = date.timeInMillis,
     val isChecked: Boolean,
-    val creatorName: String? = null
+    val creatorName: String? = null,
+    val notificationCategory: String = "없음"
 ) {
     fun isSameDay(other: Calendar): Boolean {
         return date.get(Calendar.YEAR) == other.get(Calendar.YEAR) &&

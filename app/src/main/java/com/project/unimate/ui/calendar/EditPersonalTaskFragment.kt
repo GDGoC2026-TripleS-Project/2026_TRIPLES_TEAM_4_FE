@@ -41,6 +41,16 @@ class EditPersonalTaskFragment : Fragment() {
     private var isPrivate = true
     private var category: String? = null
 
+    private fun alarmMinutesFromLabel(label: String): Int? {
+        return when (label.trim()) {
+            "5분 전" -> 5
+            "15분 전" -> 15
+            "30분 전" -> 30
+            "1시간 전" -> 60
+            else -> null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         personalId = arguments?.getString("personalId")
@@ -341,7 +351,8 @@ class EditPersonalTaskFragment : Fragment() {
                         startAt = isoFmt.format(Date(startCal.timeInMillis)),
                         endAt = isoFmt.format(Date(endCal.timeInMillis)),
                         isPrivate = isPrivate,
-                        category = if (cat == "없음") "OTHER" else cat
+                        category = if (cat == "없음") "OTHER" else cat,
+                        alarmMinutes = alarmMinutesFromLabel(notiLabel)
                     ))
                 } catch (_: Exception) { }
             }
