@@ -33,12 +33,12 @@ class TeamCompleteFragment : Fragment(R.layout.fragment_team_complete) {
             binding.tvInviteCode.text = code.orEmpty()
         }
 
-        // 2. 초대코드 복사 버튼
-        binding.btnCopyCode.setOnClickListener {
+        // 2. 초대코드 복사 (버튼 + 코드 옆 복사 아이콘 동일 동작)
+        fun copyInviteCode() {
             val code = binding.tvInviteCode.text?.toString()?.trim().orEmpty()
             if (code.isBlank()) {
                 Toast.makeText(context, "복사할 초대코드가 없습니다.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                return
             }
             val clipboard =
                 requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -46,18 +46,30 @@ class TeamCompleteFragment : Fragment(R.layout.fragment_team_complete) {
             clipboard.setPrimaryClip(clip)
             Toast.makeText(context, "코드가 복사되었습니다!", Toast.LENGTH_SHORT).show()
         }
+        binding.btnCopyCode.setOnClickListener { copyInviteCode() }
+        binding.ivCopyIcon.setOnClickListener { copyInviteCode() }
 
         binding.btnGoToTeam.setOnClickListener {
-            // navigate의 두 번째 인자로 navOptions 블록을 확실하게 전달합니다.
-            findNavController().navigate(
-                R.id.homeFragment,
-                null, // Bundle (전달할 데이터가 없으므로 null)
-                androidx.navigation.navOptions { // 빌더를 직접 명시
-                    popUpTo(R.id.nav_graph) {
-                        inclusive = true
+            // 팀 생성 완료 후 해당 팀 스페이스로 바로 이동
+            val teamId = arguments?.getLong("teamId", -1L) ?: -1L
+            if (teamId >= 0) {
+                val bundle = Bundle().apply { putString("teamId", teamId.toString()) }
+                findNavController().navigate(
+                    R.id.teamSpaceFragment,
+                    bundle,
+                    androidx.navigation.navOptions {
+                        popUpTo(R.id.team_nav) { inclusive = true }
                     }
-                }
-            )
+                )
+            } else {
+                findNavController().navigate(
+                    R.id.homeFragment,
+                    null,
+                    androidx.navigation.navOptions {
+                        popUpTo(R.id.nav_graph) { inclusive = true }
+                    }
+                )
+            }
         }
     }
 }

@@ -50,10 +50,13 @@ class TeamJoinFragment : Fragment(R.layout.fragment_team_join) {
                     val service = RetrofitClient.create<TeamService>(requireContext())
                     val response = service.joinTeam(TeamJoinRequest(inviteCode = code))
                     if (response.isSuccessful) {
-                        val teamName = response.body()?.team?.name ?: ""
+                        val body = response.body()
+                        val teamName = body?.team?.name ?: ""
+                        val teamId = body?.team?.id
                         val bundle = Bundle().apply {
                             putString("inviteCode", code)
                             putString("teamName", teamName)
+                            teamId?.let { putString("teamId", it.toString()) }
                         }
                         findNavController().navigate(R.id.action_teamJoin_to_teamJoinedSuccess, bundle)
                     } else {
