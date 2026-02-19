@@ -15,11 +15,15 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
 import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class TeamSpaceFragment : Fragment() {
@@ -365,6 +369,27 @@ class TeamSpaceFragment : Fragment() {
             refreshNoScheduleMembers()
         }
 
+        // API에서 팀 상세 정보 로드 시도
+        loadTeamDetailFromApi()
+
         return root
+    }
+
+    private fun loadTeamDetailFromApi() {
+        val ctx = context ?: return
+        val numericTeamId = teamId.toLongOrNull() ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<TeamService>(ctx)
+                val response = service.getTeamDetail(numericTeamId)
+                if (response.isSuccessful) {
+                    // API 데이터 로드 성공 (향후 UI 갱신에 활용 가능)
+                    val detail = response.body()
+                    android.util.Log.d("TeamSpaceFragment", "API 팀 상세 로드 성공: ${detail?.team?.name}")
+                }
+            } catch (_: Exception) {
+                // API 실패 시 더미 데이터 유지
+            }
+        }
     }
 }

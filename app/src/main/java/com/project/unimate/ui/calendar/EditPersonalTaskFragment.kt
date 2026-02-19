@@ -18,11 +18,19 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.MyScheduleUpdateRequest
+import com.project.unimate.network.service.MyScheduleService
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class EditPersonalTaskFragment : Fragment() {
 
@@ -319,6 +327,27 @@ class EditPersonalTaskFragment : Fragment() {
             scheduleCategory = cat
         )
         DummyRepository.updatePersonalSchedule(updated)
+
+        // API 호출 (개인 일정 수정)
+        val scheduleId = original.id.removePrefix("p-").toLongOrNull()
+        val teams = DummyRepository.getMyTeamSpaceTeams()
+        val firstTeamId = teams.firstOrNull()?.id?.toLongOrNull()
+        if (scheduleId != null && firstTeamId != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val service = RetrofitClient.create<MyScheduleService>(requireContext())
+                    service.update(firstTeamId, scheduleId, MyScheduleUpdateRequest(
+                        title = name,
+                        startAt = isoFmt.format(Date(startCal.timeInMillis)),
+                        endAt = isoFmt.format(Date(endCal.timeInMillis)),
+                        isPrivate = isPrivate,
+                        category = cat
+                    ))
+                } catch (_: Exception) { }
+            }
+        }
+
         findNavController().popBackStack()
     }
 

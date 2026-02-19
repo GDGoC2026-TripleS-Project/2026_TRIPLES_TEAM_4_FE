@@ -17,10 +17,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.CalendarService
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class CalendarFragment : Fragment() {
@@ -342,6 +346,40 @@ class CalendarFragment : Fragment() {
             findNavController().navigate(R.id.addPersonalTaskFragment)
         }
 
+        // API에서 캘린더 데이터 로드
+        loadCalendarFromApi(
+            { refreshGrid() },
+            { refreshDayTasks() }
+        )
+
         return root
+    }
+
+    private fun loadCalendarFromApi(onGridRefresh: () -> Unit, onDayRefresh: () -> Unit) {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<CalendarService>(ctx)
+                val monthStr = String.format("%04d-%02d", currentYear, currentMonth + 1)
+                val response = service.getMonth(monthStr)
+                if (response.isSuccessful) {
+                    // API 월간 데이터 로드 성공 시 로그
+                    android.util.Log.d("CalendarFragment", "Month API loaded: ${response.body()?.dayCounts?.size} days")
+                }
+            } catch (_: Exception) {
+                // API 실패 시 DummyRepository 데이터 유지
+            }
+            try {
+                val service = RetrofitClient.create<CalendarService>(ctx)
+                val dateStr = String.format("%04d-%02d-%02d",
+                    selectedDay.get(Calendar.YEAR),
+                    selectedDay.get(Calendar.MONTH) + 1,
+                    selectedDay.get(Calendar.DAY_OF_MONTH))
+                val response = service.getDay(dateStr)
+                if (response.isSuccessful) {
+                    android.util.Log.d("CalendarFragment", "Day API loaded: ${response.body()?.teamSchedules?.size} team groups")
+                }
+            } catch (_: Exception) { }
+        }
     }
 }

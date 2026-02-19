@@ -21,15 +21,24 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamUpdateRequest
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class EditTeamSpaceFragment : Fragment() {
 
@@ -277,6 +286,22 @@ class EditTeamSpaceFragment : Fragment() {
                 completedAtMillis = completedAt,
                 imageResName = imageResNameToSave
             )
+            // API 호출 (팀 정보 수정)
+            val numericId = team.id.toLongOrNull()
+            if (numericId != null) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val service = RetrofitClient.create<TeamService>(requireContext())
+                        val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                        service.updateTeam(numericId, TeamUpdateRequest(
+                            name = name,
+                            description = intro.ifBlank { null },
+                            startAt = isoFmt.format(Date(workStart)),
+                            endAt = isoFmt.format(Date(workEnd))
+                        ))
+                    } catch (_: Exception) { }
+                }
+            }
             if (setEndedTeam) {
                 showTeamEndDialog()
             } else {
@@ -306,6 +331,16 @@ class EditTeamSpaceFragment : Fragment() {
             .create()
         dialogView.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
             DummyRepository.deleteTeam(teamId)
+            // API 호출 (팀 삭제)
+            val numericId = teamId.toLongOrNull()
+            if (numericId != null) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val service = RetrofitClient.create<TeamService>(requireContext())
+                        service.deleteTeam(numericId)
+                    } catch (_: Exception) { }
+                }
+            }
             dialog.dismiss()
             findNavController().popBackStack()
         }

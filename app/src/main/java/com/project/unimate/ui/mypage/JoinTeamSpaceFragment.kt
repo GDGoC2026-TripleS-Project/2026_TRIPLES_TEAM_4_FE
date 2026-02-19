@@ -13,10 +13,15 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamJoinRequest
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 
 class JoinTeamSpaceFragment : Fragment() {
 
@@ -76,33 +81,64 @@ class JoinTeamSpaceFragment : Fragment() {
 
         joinButton.setOnClickListener {
             if (joinCompleted) return@setOnClickListener
-            val newId = "joined_${System.currentTimeMillis()}"
-            val newTeam = Team(
-                id = newId,
-                name = "새 팀플",
-                colorHex = "#EDF3D7",
-                imageResName = "",
-                isCompleted = false,
-                memberCount = 4,
-                deadlineDays = 7,
-                intro = "",
-                workStartMillis = null,
-                workEndMillis = null,
-                completedAtMillis = null
-            )
-            DummyRepository.addTeam(newTeam)
+            val code = codeInput.text.toString().trim()
+            if (code.isEmpty()) return@setOnClickListener
 
-            joinCompleted = true
-            joinButton.text = getString(R.string.join_complete)
-            joinButton.backgroundTintList = null
-            joinButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_join_button_complete)
-            joinButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray06))
-
-            view.postDelayed({
-                findNavController().popBackStack()
-                showCustomToast()
-            }, 1200)
+            joinButton.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<TeamService>(requireContext())
+                    val response = service.joinTeam(TeamJoinRequest(inviteCode = code))
+                    if (response.isSuccessful) {
+                        val joined = response.body()
+                        val teamName = joined?.team?.name ?: "새 팀플"
+                        val teamColorHex = joined?.team?.colorHex ?: "#EDF3D7"
+                        // 더미 데이터에도 추가 (로컬 UI 동기화)
+                        val newTeam = Team(
+                            id = joined?.team?.id?.toString() ?: "joined_${System.currentTimeMillis()}",
+                            name = teamName,
+                            colorHex = teamColorHex,
+                            imageResName = "",
+                            isCompleted = false,
+                            memberCount = joined?.memberCount ?: 4,
+                            deadlineDays = 7,
+                            intro = joined?.team?.description ?: ""
+                        )
+                        DummyRepository.addTeam(newTeam)
+                        onJoinSuccess(joinButton, view)
+                    } else {
+                        Toast.makeText(requireContext(), "유효하지 않은 초대코드입니다.", Toast.LENGTH_SHORT).show()
+                        joinButton.isEnabled = true
+                    }
+                } catch (_: Exception) {
+                    // API 실패 시 기존 더미 동작
+                    val newTeam = Team(
+                        id = "joined_${System.currentTimeMillis()}",
+                        name = "새 팀플",
+                        colorHex = "#EDF3D7",
+                        imageResName = "",
+                        isCompleted = false,
+                        memberCount = 4,
+                        deadlineDays = 7,
+                        intro = ""
+                    )
+                    DummyRepository.addTeam(newTeam)
+                    onJoinSuccess(joinButton, view)
+                }
+            }
         }
+    }
+
+    private fun onJoinSuccess(joinButton: Button, view: View) {
+        joinCompleted = true
+        joinButton.text = getString(R.string.join_complete)
+        joinButton.backgroundTintList = null
+        joinButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_join_button_complete)
+        joinButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray06))
+        view.postDelayed({
+            findNavController().popBackStack()
+            showCustomToast()
+        }, 1200)
     }
 
     private fun showCustomToast() {

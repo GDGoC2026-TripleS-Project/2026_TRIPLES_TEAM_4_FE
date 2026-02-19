@@ -17,12 +17,20 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamScheduleCreateRequest
+import com.project.unimate.network.service.TeamScheduleService
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class AddTeamTaskFragment : Fragment() {
 
@@ -248,6 +256,24 @@ class AddTeamTaskFragment : Fragment() {
             creatorName = null
         )
         DummyRepository.addTask(item)
+
+        // API 호출 (팀 일정 생성)
+        val numericTeamId = teamId.toLongOrNull()
+        if (numericTeamId != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val service = RetrofitClient.create<TeamScheduleService>(requireContext())
+                    service.create(numericTeamId, TeamScheduleCreateRequest(
+                        title = name,
+                        startAt = isoFmt.format(Date(startCal.timeInMillis)),
+                        endAt = isoFmt.format(Date(endCal.timeInMillis)),
+                        category = "MEETING"
+                    ))
+                } catch (_: Exception) { }
+            }
+        }
+
         findNavController().popBackStack()
     }
 

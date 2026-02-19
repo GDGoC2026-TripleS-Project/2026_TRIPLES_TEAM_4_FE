@@ -11,15 +11,19 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.PokeService
+import kotlinx.coroutines.launch
 
 class PokeFragment : Fragment() {
 
     private lateinit var pokeAdapter: PokeAdapter
-    private val dataList = mutableListOf<PokeData>() // 전체 데이터 (헤더 + 멤버)
+    private val dataList = mutableListOf<PokeData>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,7 +31,7 @@ class PokeFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_poke, container, false)
 
-        // 1. 더미 데이터 생성 (팀원 목록)
+        // 더미 데이터로 초기화 (API 성공 시 교체)
         setupDummyData()
 
         val rvPokeList = view.findViewById<RecyclerView>(R.id.rvPokeList)
@@ -72,7 +76,43 @@ class PokeFragment : Fragment() {
             }
         }
 
+        // API에서 찌르기 대상 로드
+        loadPokeTargetsFromApi()
+
         return view
+    }
+
+    private fun loadPokeTargetsFromApi() {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<PokeService>(ctx)
+                val response = service.getTargets()
+                if (response.isSuccessful) {
+                    val targets = response.body()?.teams ?: return@launch
+                    dataList.clear()
+                    var memberId = 1
+                    targets.forEach { teamSection ->
+                        val teamName = teamSection.teamName ?: return@forEach
+                        val teamColor = "#90A3ED" // 기본 색상
+                        dataList.add(PokeData.Header(teamName, teamColor))
+                        teamSection.members?.forEach { member ->
+                            dataList.add(PokeData.Member(
+                                id = memberId++,
+                                name = member.nickname ?: "",
+                                teamName = teamName,
+                                teamColor = teamColor
+                            ))
+                        }
+                    }
+                    if (dataList.isNotEmpty() && ::pokeAdapter.isInitialized) {
+                        pokeAdapter.notifyDataSetChanged()
+                    }
+                }
+            } catch (_: Exception) {
+                // API 실패 시 더미 데이터 유지
+            }
+        }
     }
 
     private fun setupDummyData() {
