@@ -12,7 +12,7 @@ class AuthInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
-        val jwt = JwtStore.load(appContext)
+        val jwt = JwtStore.loadAccessToken(appContext)
 
         val reqBuilder = original.newBuilder()
             .header("Content-Type", "application/json")

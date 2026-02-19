@@ -4,13 +4,21 @@ import android.content.Context
 
 object JwtStore {
     private const val PREF = "unimate_auth"
-    private const val KEY = "jwt"
+    private const val KEY_ACCESS_TOKEN = "access_token"
+    private const val KEY_REFRESH_TOKEN = "refresh_token"
     private const val KEY_USER_ID = "user_id"
 
-    fun save(context: Context, jwt: String) {
+    fun saveAccessToken(context: Context, token: String) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
             .edit()
-            .putString(KEY, jwt.trim())
+            .putString(KEY_ACCESS_TOKEN, token.trim())
+            .apply()
+    }
+
+    fun saveRefreshToken(context: Context, token: String) {
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_REFRESH_TOKEN, token.trim())
             .apply()
     }
 
@@ -21,9 +29,16 @@ object JwtStore {
             .apply()
     }
 
-    fun load(context: Context): String? {
+    fun loadAccessToken(context: Context): String? {
         return context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-            .getString(KEY, null)
+            .getString(KEY_ACCESS_TOKEN, null)
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    fun loadRefreshToken(context: Context): String? {
+        return context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+            .getString(KEY_REFRESH_TOKEN, null)
             ?.trim()
             ?.takeIf { it.isNotBlank() }
     }
@@ -37,8 +52,13 @@ object JwtStore {
     fun clear(context: Context) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
             .edit()
-            .remove(KEY)
+            .remove(KEY_ACCESS_TOKEN)
+            .remove(KEY_REFRESH_TOKEN)
             .remove(KEY_USER_ID)
             .apply()
     }
+
+    // Backward compatibility for old call sites
+    fun save(context: Context, jwt: String) = saveAccessToken(context, jwt)
+    fun load(context: Context): String? = loadAccessToken(context)
 }
