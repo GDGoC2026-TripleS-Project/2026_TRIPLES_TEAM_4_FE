@@ -409,6 +409,7 @@ object DummyRepository {
         val idx = _allTaskItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allTaskItems[idx] = item
     }
+    fun removeTaskById(id: String) { _allTaskItems.removeAll { it.id == id } }
 
     /** 서버에서 팀 일정을 불러온 뒤 해당 팀의 일정만 교체할 때 사용. (재설치 후 복구용) */
     fun replaceTasksForTeam(teamId: String, newTasks: List<TaskItem>) {
@@ -548,6 +549,7 @@ object DummyRepository {
 
     fun getPersonalById(id: String): PersonalScheduleItem? = _allPersonalItems.find { it.id == id }
     fun addPersonalSchedule(item: PersonalScheduleItem) { _allPersonalItems.add(item) }
+    fun removePersonalById(id: String) { _allPersonalItems.removeAll { it.id == id } }
     fun updatePersonalSchedule(item: PersonalScheduleItem) {
         val idx = _allPersonalItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allPersonalItems[idx] = item
