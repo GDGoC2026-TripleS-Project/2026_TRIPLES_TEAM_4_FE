@@ -113,7 +113,7 @@ class PokeFragment : Fragment() {
         val apiByTeamName = apiTeams.associateBy { it.teamName ?: "" }
         val localTeamIds = DummyRepository.getMyTeamSpaceTeams().map { it.id }.toSet()
         val apiTeamIdsAdded = mutableSetOf<String>()
-        var syntheticUserId = 1L
+        var syntheticUserId = -1L
 
         fun localTeamIdToLong(teamIdStr: String): Long =
             -abs(teamIdStr.hashCode().toLong()).let { if (it == Long.MIN_VALUE) -1L else it }
@@ -133,8 +133,8 @@ class PokeFragment : Fragment() {
             } else {
                 DummyRepository.getTeamMembers(team.id)
                     .filter { it.id != "me" && it.name != currentUserName }
-                    .mapIndexed { i, tm -> Triple(syntheticUserId + i, tm.name, null as String?) }
-                    .also { syntheticUserId += it.size }
+                    .mapIndexed { i, tm -> Triple(syntheticUserId - i, tm.name, null as String?) }
+                    .also { syntheticUserId -= it.size }
             }
 
             result.add(PokeData.Header(teamId = effectiveTeamId, title = teamName, teamColor = teamColor))

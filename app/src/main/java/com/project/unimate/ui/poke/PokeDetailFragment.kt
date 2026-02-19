@@ -113,23 +113,35 @@ class PokeDetailFragment : Fragment() {
 
             btnSendPoke.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
+                // userId <= 0 인 멤버는 더미(로컬 전용) — API 호출 없이 성공 처리
+                val serverMembers = selectedMembers.filter { it.userId > 0 }
+                val dummyCount = selectedMembers.count { it.userId <= 0 }
+
                 try {
+                    if (serverMembers.isEmpty()) {
+                        // 더미만 선택된 경우: 바로 성공 처리
+                        if (!isAdded) return@launch
+                        Toast.makeText(requireContext(), "총 ${dummyCount}명에게 찌르기를 보냈습니다.", Toast.LENGTH_SHORT).show()
+                        findNavController().popBackStack()
+                        return@launch
+                    }
+
                     val service = RetrofitClient.create<PokeService>(requireContext())
                     val request = PokeRequest(
                         messageId = msgId,
-                        targets = selectedMembers.map { PokeTarget(teamId = it.teamId, userId = it.userId) }
+                        targets = serverMembers.map { PokeTarget(teamId = it.teamId, userId = it.userId) }
                     )
                     val response = service.sendPokes(request)
                     if (!isAdded) return@launch
 
                     if (response.isSuccessful) {
                         val body = response.body()
-                        val sentCount = body?.sentCount ?: 0
+                        val sentCount = (body?.sentCount ?: 0) + dummyCount
                         val excludedSelf = body?.excludedSelfCount ?: 0
                         val invalid = body?.invalidTargets ?: emptyList()
 
                         val msg = buildString {
-                            append("${sentCount}명에게 찌르기를 보냈습니다.")
+                            append("총 ${sentCount}명에게 찌르기를 보냈습니다.")
                             if (excludedSelf > 0) append("\n본인 제외 ${excludedSelf}명")
                             if (invalid.isNotEmpty()) {
                                 append("\n전송 실패: ")
