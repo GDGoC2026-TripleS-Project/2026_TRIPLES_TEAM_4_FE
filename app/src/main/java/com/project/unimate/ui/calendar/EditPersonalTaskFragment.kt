@@ -41,6 +41,28 @@ class EditPersonalTaskFragment : Fragment() {
     private var isPrivate = true
     private var category: String? = null
 
+    private fun alarmMinutesFromLabel(label: String): Int? {
+        return when (label.trim()) {
+            "5분 전" -> 5
+            "15분 전" -> 15
+            "30분 전" -> 30
+            "1시간 전" -> 60
+            else -> null
+        }
+    }
+
+    private fun categoryToServerValue(label: String): String {
+        return when (label.trim()) {
+            getString(R.string.category_part_time) -> "PART_TIME"
+            getString(R.string.category_other_team) -> "OTHER_TEAM"
+            getString(R.string.category_meeting) -> "MEETING"
+            getString(R.string.category_exam) -> "EXAM"
+            getString(R.string.category_health) -> "HEALTH"
+            getString(R.string.category_etc), "없음" -> "OTHER"
+            else -> "OTHER"
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         personalId = arguments?.getString("personalId")
@@ -329,8 +351,7 @@ class EditPersonalTaskFragment : Fragment() {
 
         // API 호출 (개인 일정 수정) - 서버에 저장된 일정만 수정 (id가 p-server-XXX 인 경우)
         val scheduleId = original.id.removePrefix("p-server-").takeIf { original.id.startsWith("p-server-") }?.toLongOrNull()
-        val teams = DummyRepository.getMyTeamSpaceTeams()
-        val firstTeamId = teams.firstOrNull()?.id?.toLongOrNull()
+        val firstTeamId = DummyRepository.allTeams.firstNotNullOfOrNull { it.id.toLongOrNull() }
         if (scheduleId != null && firstTeamId != null) {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
@@ -341,7 +362,8 @@ class EditPersonalTaskFragment : Fragment() {
                         startAt = isoFmt.format(Date(startCal.timeInMillis)),
                         endAt = isoFmt.format(Date(endCal.timeInMillis)),
                         isPrivate = isPrivate,
-                        category = if (cat == "없음") "OTHER" else cat
+                        category = categoryToServerValue(cat),
+                        alarmMinutes = alarmMinutesFromLabel(notiLabel)
                     ))
                 } catch (_: Exception) { }
             }

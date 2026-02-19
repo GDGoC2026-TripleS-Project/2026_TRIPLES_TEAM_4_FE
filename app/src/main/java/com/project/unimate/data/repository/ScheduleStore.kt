@@ -22,7 +22,8 @@ object ScheduleStore {
         val startTimeMillis: Long,
         val endTimeMillis: Long,
         val isChecked: Boolean,
-        val creatorName: String?
+        val creatorName: String?,
+        val notificationCategory: String
     )
 
     private data class PersonalDto(
@@ -47,7 +48,8 @@ object ScheduleStore {
                 startTimeMillis = t.startTimeMillis,
                 endTimeMillis = t.endTimeMillis,
                 isChecked = t.isChecked,
-                creatorName = t.creatorName
+                creatorName = t.creatorName,
+                notificationCategory = t.notificationCategory
             )
         }
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
@@ -69,7 +71,8 @@ object ScheduleStore {
                     startTimeMillis = d.startTimeMillis,
                     endTimeMillis = d.endTimeMillis,
                     isChecked = d.isChecked,
-                    creatorName = d.creatorName
+                    creatorName = d.creatorName,
+                    notificationCategory = d.notificationCategory
                 )
             }
         } catch (_: Exception) { null }

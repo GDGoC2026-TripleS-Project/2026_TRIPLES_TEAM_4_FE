@@ -41,6 +41,16 @@ class EditTeamTaskFragment : Fragment() {
     private var isPrivate = true
     private var selectedTeamId: String? = null
 
+    private fun alarmMinutesFromLabel(label: String): Int? {
+        return when (label.trim()) {
+            "5분 전" -> 5
+            "15분 전" -> 15
+            "30분 전" -> 30
+            "1시간 전" -> 60
+            else -> null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         taskId = arguments?.getString("taskId")
@@ -114,6 +124,7 @@ class EditTeamTaskFragment : Fragment() {
         allDay = startCal.get(Calendar.HOUR_OF_DAY) == 0 && startCal.get(Calendar.MINUTE) == 0 &&
             endCal.get(Calendar.HOUR_OF_DAY) == 23 && endCal.get(Calendar.MINUTE) == 59
         alldayIcon.setImageResource(if (allDay) R.drawable.ic_allday_selected else R.drawable.ic_allday_unselected)
+        notificationBtn.text = task.notificationCategory.takeIf { it.isNotBlank() } ?: getString(R.string.none)
 
         notificationBtnWrap.setOnClickListener {
             notificationDropdown.visibility = if (notificationDropdown.visibility == View.VISIBLE) View.GONE else View.VISIBLE
@@ -281,12 +292,15 @@ class EditTeamTaskFragment : Fragment() {
             DummyRepository.addTeam(Team(teamId, teamId, "#C2C2C2", "", false, 4, 7, ""))
         }
         val date = (startCal.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+        val notiLabel = view?.findViewById<TextView>(R.id.addTeamNotificationBtn)?.text?.toString()
+            ?: getString(R.string.none)
         val updated = original.copy(
             teamId = teamId,
             title = name,
             date = date,
             startTimeMillis = startCal.timeInMillis,
-            endTimeMillis = endCal.timeInMillis
+            endTimeMillis = endCal.timeInMillis,
+            notificationCategory = notiLabel
         )
         DummyRepository.updateTask(updated)
         DummyRepository.saveSchedulesTo(requireContext())
@@ -302,7 +316,8 @@ class EditTeamTaskFragment : Fragment() {
                     service.update(numericTeamId, scheduleId, TeamScheduleUpdateRequest(
                         title = name,
                         startAt = isoFmt.format(Date(startCal.timeInMillis)),
-                        endAt = isoFmt.format(Date(endCal.timeInMillis))
+                        endAt = isoFmt.format(Date(endCal.timeInMillis)),
+                        alarmMinutes = alarmMinutesFromLabel(notiLabel)
                     ))
                 } catch (_: Exception) { }
             }
