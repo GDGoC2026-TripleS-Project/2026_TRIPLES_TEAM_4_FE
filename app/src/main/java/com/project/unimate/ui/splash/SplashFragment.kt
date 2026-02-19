@@ -5,12 +5,17 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.auth.JwtStore
+import com.project.unimate.data.repository.ServerSync
 import com.project.unimate.databinding.FragmentSplashBinding
+import kotlinx.coroutines.launch
 
 /**
- * 앱의 시작을 알리는 스플래시 프래그먼트입니다.
+ * 앱의 시작을 알리는 스플래시.
+ * JWT 있으면 서버 동기화 후 홈으로, 없으면 2초 뒤 로그인으로.
  */
 class SplashFragment : Fragment(R.layout.fragment_splash) {
 
@@ -21,17 +26,25 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentSplashBinding.bind(view)
 
-        // 2초 뒤에 로그인 화면으로 이동하는 로직
-        Handler(Looper.getMainLooper()).postDelayed({
-            // 프래그먼트가 여전히 호스트 액티비티에 붙어 있는지 확인 후 이동
-            if (isAdded) {
-                moveToLogin()
+        val jwt = JwtStore.load(requireContext())
+        if (!jwt.isNullOrBlank()) {
+            // 이미 로그인됨 → 서버 sync 1회 후 홈으로 (실패해도 홈으로 이동해 스플래시에 갇히지 않음)
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    ServerSync.syncFromServer(requireContext().applicationContext)
+                } catch (_: Exception) { /* 실패해도 로컬 캐시로 홈 표시 */ }
+                if (isAdded) {
+                    findNavController().navigate(R.id.action_splash_to_home)
+                }
             }
-        }, 2000) // 2000ms = 2초
+        } else {
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (isAdded) moveToLogin()
+            }, 2000)
+        }
     }
 
     private fun moveToLogin() {
-        // nav_graph.xml에 정의한 action_splash_to_login을 호출합니다.
         findNavController().navigate(R.id.action_splash_to_login)
     }
 

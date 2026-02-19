@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
 import com.project.unimate.notification.NotificationItem
@@ -93,6 +94,7 @@ class NotificationAdapter(
 
         fun bind(item: ListItem.Card) {
             val n = item.notification
+            val isMeetingNotification = isMeetingNotification(n)
             val done = if (n.action) n.actionDone else n.isRead
             itemView.setBackgroundResource(
                 if (done) R.drawable.bg_notification_card_done
@@ -112,7 +114,19 @@ class NotificationAdapter(
                 }
             }
 
-            if (!n.action) {
+            if (isMeetingNotification) {
+                button.visibility = View.VISIBLE
+                button.isEnabled = true
+                button.text = meetingButtonText(n)
+                button.setBackgroundResource(R.drawable.bg_notification_button_enabled)
+                button.backgroundTintList = null
+                button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
+                button.setOnClickListener {
+                    onCardClicked(n) { updated ->
+                        updateItem(updated)
+                    }
+                }
+            } else if (!n.action) {
                 button.visibility = View.GONE
                 button.setOnClickListener(null)
             } else if (n.actionDone) {
@@ -120,12 +134,16 @@ class NotificationAdapter(
                 button.isEnabled = false
                 button.text = "콕누르기 완료"
                 button.setBackgroundResource(R.drawable.bg_notification_button_disabled)
+                button.backgroundTintList = null
+                button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
                 button.setOnClickListener(null)
             } else {
                 button.visibility = View.VISIBLE
                 button.isEnabled = true
                 button.text = "확인 콕누르기"
                 button.setBackgroundResource(R.drawable.bg_notification_button_enabled)
+                button.backgroundTintList = null
+                button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
                 button.setOnClickListener {
                     onCompleteClicked(n) { updated ->
                         updateItem(updated)
@@ -134,6 +152,10 @@ class NotificationAdapter(
             }
 
             itemView.setOnClickListener {
+                if (isMeetingNotification) {
+                    // 모임 알림은 하단 CTA 버튼으로만 이동
+                    return@setOnClickListener
+                }
                 if (n.action) {
                     if (!n.actionDone || n.isRead) return@setOnClickListener
                 } else {
@@ -143,6 +165,25 @@ class NotificationAdapter(
                     updateItem(updated)
                 }
             }
+        }
+
+        private fun isMeetingNotification(n: NotificationItem): Boolean {
+            val alarmType = n.alarmType.lowercase()
+            val title = n.messageTitle.lowercase()
+            val body = n.messageBody.lowercase()
+            return alarmType.contains("meeting") ||
+                alarmType.contains("timepick") ||
+                alarmType.contains("모임") ||
+                title.contains("모임") ||
+                title.contains("체크요청") ||
+                body.contains("모임") ||
+                body.contains("시간 입력") ||
+                body.contains("체크")
+        }
+
+        private fun meetingButtonText(n: NotificationItem): String {
+            val text = "${n.messageTitle} ${n.messageBody}".lowercase()
+            return if (text.contains("생성")) "체크 일정 확인하기" else "시간 입력하기"
         }
     }
 

@@ -3,6 +3,7 @@ package com.project.unimate.auth
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.ApiClient
 import com.project.unimate.network.Env
 import okhttp3.Call
@@ -201,6 +202,9 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                     try {
                         val json = JSONObject(body)
                         val completed = json.optBoolean("profileCompleted", false)
+                        json.optString("nickname", null).takeIf { !it.isNullOrBlank() }?.let { nick ->
+                            DummyRepository.setCurrentUserName(nick)
+                        }
                         onDone(completed, null)
                         return
                     } catch (e: Exception) {

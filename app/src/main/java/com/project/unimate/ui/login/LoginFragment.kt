@@ -8,11 +8,14 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.auth.LoginViewModel
+import com.project.unimate.data.repository.ServerSync
 import com.project.unimate.databinding.FragmentLoginBinding
+import kotlinx.coroutines.launch
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
@@ -26,10 +29,13 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             if (result.resultCode == Activity.RESULT_OK) {
                 // 로그인 성공 → 프로필 완료 여부 확인 후 이동
                 vm.fetchProfileCompleted { completed, err ->
+                    if (!isAdded) return@fetchProfileCompleted
+                    // 콜백이 OkHttp 백그라운드 스레드에서 옴 → 반드시 Main에서 sync/이동
                     requireActivity().runOnUiThread {
+                        if (!isAdded) return@runOnUiThread
                         when (completed) {
-                            true -> moveToHome()
-                            false -> moveToProfileCreate()
+                            true -> runSyncThen { moveToHome() }
+                            false -> runSyncThen { moveToProfileCreate() }
                             null -> {
                                 if (!err.isNullOrBlank()) {
                                     Toast.makeText(context, err, Toast.LENGTH_SHORT).show()
@@ -82,9 +88,17 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         vm.fetchProfileCompleted { completed, _ ->
             if (!isAdded) return@fetchProfileCompleted
             requireActivity().runOnUiThread {
-                if (completed == true) {
-                    moveToHome()
-                }
+                if (isAdded && completed == true) runSyncThen { moveToHome() }
+            }
+        }
+    }
+
+    /** 로그인 직후 서버에서 유저정보·팀·일정 전부 불러온 뒤 화면 전환 */
+    private fun runSyncThen(onDone: () -> Unit) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            ServerSync.syncFromServer(requireContext().applicationContext)
+            if (isAdded) {
+                requireActivity().runOnUiThread { onDone() }
             }
         }
     }

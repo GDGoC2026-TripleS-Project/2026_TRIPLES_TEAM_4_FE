@@ -1,6 +1,9 @@
 package com.project.unimate.network
 
 import android.content.Context
+import com.google.gson.GsonBuilder
+import com.project.unimate.network.dto.TeamsListResponse
+import com.project.unimate.network.dto.TeamsListResponseDeserializer
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -33,10 +36,13 @@ RetrofitClient {
             .addInterceptor(logging)
             .build()
 
+        val gson = GsonBuilder()
+            .registerTypeAdapter(TeamsListResponse::class.java, TeamsListResponseDeserializer())
+            .create()
         return Retrofit.Builder()
             .baseUrl(Env.BASE_URL + "/")
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

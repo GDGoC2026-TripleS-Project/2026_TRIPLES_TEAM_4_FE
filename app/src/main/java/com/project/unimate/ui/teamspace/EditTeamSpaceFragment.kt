@@ -1,11 +1,12 @@
 package com.project.unimate.ui.teamspace
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -13,6 +14,8 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -23,12 +26,19 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.repository.DeletedSeedTeamStore
+import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.PendingCompletionPopupStore
+import com.project.unimate.data.repository.SeedTeamOverridesStore
+import com.project.unimate.data.repository.TeamImageStore
+import com.project.unimate.data.repository.TeamNameStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamUpdateRequest
 import com.project.unimate.network.service.TeamService
@@ -192,30 +202,27 @@ class EditTeamSpaceFragment : Fragment() {
             dlg.show()
         }
 
-        fun showTimeOptionPicker(cal: Calendar, onSet: (hour: Int, minute: Int) -> Unit) {
-            val view = layoutInflater.inflate(R.layout.dialog_time_option, null)
-            val amPmSpinner = view.findViewById<Spinner>(R.id.dialogTimeAmPm)
-            val hourSpinner = view.findViewById<Spinner>(R.id.dialogTimeHour)
-            val confirmBtn = view.findViewById<Button>(R.id.dialogTimeConfirm)
-            amPmSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, listOf("오전", "오후"))
-            hourSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, (1..12).map { "$it" })
-            val hourOfDay = cal.get(Calendar.HOUR_OF_DAY)
-            val isPm = hourOfDay >= 12
-            val hour12 = if (hourOfDay == 0) 12 else if (hourOfDay > 12) hourOfDay - 12 else hourOfDay
-            amPmSpinner.setSelection(if (isPm) 1 else 0)
-            hourSpinner.setSelection(hour12 - 1)
-            val dialog = AlertDialog.Builder(requireContext()).setView(view).create()
-            confirmBtn.setOnClickListener {
-                val pm = amPmSpinner.selectedItemPosition == 1
-                val h12 = hourSpinner.selectedItemPosition + 1
-                val h = if (pm) if (h12 == 12) 12 else h12 + 12 else if (h12 == 12) 0 else h12
-                cal.set(Calendar.HOUR_OF_DAY, h)
-                cal.set(Calendar.MINUTE, 0)
-                refreshDateTimeButtons()
-                dialog.dismiss()
+        fun showTimePicker(cal: Calendar, onSet: (hour: Int, minute: Int) -> Unit) {
+            val contextWrapper = android.view.ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = TimePickerDialog(
+                contextWrapper,
+                { _, h, m ->
+                    cal.set(Calendar.HOUR_OF_DAY, h)
+                    cal.set(Calendar.MINUTE, m)
+                    onSet(h, m)
+                },
+                cal.get(Calendar.HOUR_OF_DAY),
+                cal.get(Calendar.MINUTE),
+                false
+            )
+            dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+            dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+            dlg.setOnShowListener {
+                val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+                dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+                dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
             }
-            dialog.show()
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(resources.getColor(android.R.color.black, null))
+            dlg.show()
         }
 
         startDateBtn.setOnClickListener {
@@ -231,7 +238,7 @@ class EditTeamSpaceFragment : Fragment() {
                 refreshDateTimeButtons()
             }
         }
-        startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { _, _ -> refreshDateTimeButtons() } }
+        startTimeBtn.setOnClickListener { showTimePicker(startCal) { _, _ -> refreshDateTimeButtons() } }
         endDateBtn.setOnClickListener {
             showDatePicker(endCal) { y, m, d ->
                 endCal.set(Calendar.YEAR, y)
@@ -245,7 +252,7 @@ class EditTeamSpaceFragment : Fragment() {
                 refreshDateTimeButtons()
             }
         }
-        endTimeBtn.setOnClickListener { showTimeOptionPicker(endCal) { _, _ -> refreshDateTimeButtons() } }
+        endTimeBtn.setOnClickListener { showTimePicker(endCal) { _, _ -> refreshDateTimeButtons() } }
 
         setEndedLayout.setOnClickListener {
             setEndedTeam = !setEndedTeam
@@ -254,7 +261,9 @@ class EditTeamSpaceFragment : Fragment() {
             )
             endCheckIcon.colorFilter = null
         }
-        if (team.isCompleted) {
+        // 종료된 팀플(종료 체크했거나 마감일이 이미 지남)이면 항상 종료 체크 표시
+        val nowInit = System.currentTimeMillis()
+        if (team.isCompleted || (team.workEndMillis != null && team.workEndMillis < nowInit)) {
             setEndedTeam = true
             endCheckIcon.setImageResource(R.drawable.ic_end_selected)
             endCheckIcon.colorFilter = null
@@ -269,23 +278,34 @@ class EditTeamSpaceFragment : Fragment() {
             val intro = introEt.text.toString().trim()
             val workStart = startCal.timeInMillis
             val now = System.currentTimeMillis()
-            val workEnd = if (setEndedTeam && !team.isCompleted) now else endCal.timeInMillis
+            val workEnd = endCal.timeInMillis
+            // 종료 체크를 누르지 않았어도 마감일을 과거로 설정하고 저장하면 종료 처리
+            val effectivelyEnded = setEndedTeam || (workEnd < now)
             val completedAt = when {
-                setEndedTeam && !team.isCompleted -> now
-                setEndedTeam && team.isCompleted -> team.completedAtMillis
+                effectivelyEnded && !team.isCompleted -> now
+                effectivelyEnded && team.isCompleted -> (team.completedAtMillis ?: now)
                 else -> null
             }
             val imageResNameToSave = selectedTeamImageResName ?: team.imageResName
+            if (imageResNameToSave.isNotBlank()) {
+                TeamImageStore.save(requireContext(), team.id, imageResNameToSave)
+            }
+            if (name.isNotBlank()) {
+                TeamNameStore.save(requireContext(), team.id, name)
+            }
             DummyRepository.updateTeam(
                 teamId = team.id,
                 name = name,
                 intro = intro,
                 workStartMillis = workStart,
                 workEndMillis = workEnd,
-                setCompleted = setEndedTeam,
+                setCompleted = effectivelyEnded,
                 completedAtMillis = completedAt,
                 imageResName = imageResNameToSave
             )
+            if (DummyRepository.getSeedTeams().any { it.id == team.id }) {
+                SeedTeamOverridesStore.save(requireContext(), team.id, effectivelyEnded, workEnd, workStart)
+            }
             // API 호출 (팀 정보 수정)
             val numericId = team.id.toLongOrNull()
             if (numericId != null) {
@@ -302,8 +322,9 @@ class EditTeamSpaceFragment : Fragment() {
                     } catch (_: Exception) { }
                 }
             }
-            if (setEndedTeam) {
-                showTeamEndDialog()
+            if (effectivelyEnded && !team.isCompleted) {
+                PendingCompletionPopupStore.add(requireContext(), team.id)
+                showTeamEndDialog(team.id)
             } else {
                 findNavController().popBackStack()
             }
@@ -330,6 +351,14 @@ class EditTeamSpaceFragment : Fragment() {
             .setCancelable(true)
             .create()
         dialogView.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
+            val team = DummyRepository.getTeamById(teamId)
+            if (team != null) {
+                if (DummyRepository.getSeedTeams().any { it.name == team.name }) {
+                    DeletedSeedTeamStore.add(requireContext(), team.name)
+                } else {
+                    DeletedUserTeamStore.add(requireContext(), teamId)
+                }
+            }
             DummyRepository.deleteTeam(teamId)
             // API 호출 (팀 삭제)
             val numericId = teamId.toLongOrNull()
@@ -349,20 +378,23 @@ class EditTeamSpaceFragment : Fragment() {
         dialog.show()
     }
 
-    private fun showTeamEndDialog() {
+    private fun showTeamEndDialog(teamId: String) {
         val view = layoutInflater.inflate(R.layout.dialog_team_space_ended, null)
         val dialog = AlertDialog.Builder(requireContext(), R.style.TeamEndDialogTheme)
             .setView(view)
             .setCancelable(false)
             .create()
-        view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener { dialog.dismiss() }
+        view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
+            PendingCompletionPopupStore.remove(requireContext(), teamId)
+            dialog.dismiss() }
         dialog.setOnDismissListener { findNavController().popBackStack() }
         val dm = resources.displayMetrics
         val wPx = (dm.widthPixels * 0.9f).toInt()
         val hPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 260f, dm).toInt()
-        dialog.window?.let { window ->
-            window.setBackgroundDrawableResource(android.R.color.transparent)
-            window.attributes?.let { params ->
+        dialog.window?.let { window: Window ->
+            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            val params: WindowManager.LayoutParams? = window.attributes
+            if (params != null) {
                 params.width = wPx
                 params.height = hPx
                 window.attributes = params
@@ -370,7 +402,7 @@ class EditTeamSpaceFragment : Fragment() {
             window.setDimAmount(0.6f)
         }
         dialog.show()
-        dialog.window?.let { window ->
+        dialog.window?.let { window: Window ->
             window.setLayout(wPx, hPx)
             view.post { window.setLayout(wPx, hPx) }
         }

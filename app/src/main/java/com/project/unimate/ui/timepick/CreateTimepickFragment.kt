@@ -1,6 +1,8 @@
 package com.project.unimate.ui.timepick
 
+import android.app.TimePickerDialog
 import android.os.Bundle
+import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,12 +10,16 @@ import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.service.TeamService
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class CreateTimepickFragment : Fragment() {
@@ -48,7 +54,35 @@ class CreateTimepickFragment : Fragment() {
             findNavController().navigateUp()
             return root
         }
+
+        // 새 모이기 플로우 진입 시 이전 생성 상태(pollId)가 남아 있으면 초기화
+        // - 다른 팀으로 진입
+        // - 이전 모이기 생성 성공 후 같은 팀에서 다시 시작
+        if (TimepickStateHolder.teamId != teamId || TimepickStateHolder.pollId != null) {
+            TimepickStateHolder.clear()
+        }
         TimepickStateHolder.teamId = teamId
+
+        // 서버 팀원 미리 캐시 → TimepickStatusFragment에서 merge된 팀원 표시
+        val numericTeamIdForCache = teamId.toLongOrNull()
+        if (numericTeamIdForCache != null) {
+            lifecycleScope.launch {
+                try {
+                    val service = RetrofitClient.create<TeamService>(requireContext())
+                    val resp = service.getMembers(numericTeamIdForCache)
+                    if (resp.isSuccessful) {
+                        val serverMembers = (resp.body() ?: emptyList()).map { m ->
+                            TeamMember(
+                                id = "server-${m.userId ?: m.nickname.hashCode()}",
+                                name = m.nickname ?: "팀원",
+                                iconResName = "ic_user"
+                            )
+                        }
+                        DummyRepository.cacheServerMembers(teamId, serverMembers)
+                    }
+                } catch (_: Exception) {}
+            }
+        }
 
         val back = root.findViewById<ImageButton>(R.id.createTimepickBack)
         yearMonth = root.findViewById(R.id.createTimepickYearMonth)
@@ -241,36 +275,58 @@ class CreateTimepickFragment : Fragment() {
 
     private fun showStartTimePicker() {
         val day = selectedDateForTime ?: return
-        val endHour = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
-        val options = (0..24).filter { it < endHour }.map { timeLabels[it] }.toTypedArray()
-        if (options.isEmpty()) return
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.timepick_select_start_time))
-            .setItems(options) { _, which ->
-                val start = which
-                var end = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
-                if (end <= start) end = (start + 1).coerceAtMost(24)
-                TimepickStateHolder.dateTimeRanges[day] = start to end
+        var endHour = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
+        val startHour = TimepickStateHolder.dateTimeRanges[day]?.first ?: 9
+        val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+        val dlg = TimePickerDialog(
+            contextWrapper,
+            { _, h, _ ->
+                var start = h
+                if (endHour <= start) endHour = (start + 1).coerceAtMost(24)
+                TimepickStateHolder.dateTimeRanges[day] = start to endHour
                 refreshTimeForSelectedDate()
                 refreshDateTabs()
-            }
-            .show()
+            },
+            startHour,
+            0,
+            false
+        )
+        dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+        dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+        dlg.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
+        dlg.show()
     }
 
     private fun showEndTimePicker() {
         val day = selectedDateForTime ?: return
         val startHour = TimepickStateHolder.dateTimeRanges[day]?.first ?: 9
-        val options = (0..24).filter { it > startHour }.map { timeLabels[it] }.toTypedArray()
-        if (options.isEmpty()) return
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.timepick_select_end_time))
-            .setItems(options) { _, which ->
-                val end = (startHour + 1 + which).coerceAtMost(24)
+        var endHour = TimepickStateHolder.dateTimeRanges[day]?.second ?: 17
+        val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+        val dlg = TimePickerDialog(
+            contextWrapper,
+            { _, h, _ ->
+                var end = h
+                if (end <= startHour) end = (startHour + 1).coerceAtMost(24)
                 TimepickStateHolder.dateTimeRanges[day] = startHour to end
                 refreshTimeForSelectedDate()
                 refreshDateTabs()
-            }
-            .show()
+            },
+            endHour,
+            0,
+            false
+        )
+        dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+        dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+        dlg.setOnShowListener {
+            val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+            dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+            dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
+        }
+        dlg.show()
     }
 
     private fun hourToLabel(hour: Int): String {

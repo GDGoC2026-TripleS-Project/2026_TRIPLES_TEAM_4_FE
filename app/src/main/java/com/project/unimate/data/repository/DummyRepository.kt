@@ -1,11 +1,13 @@
 package com.project.unimate.data.repository
 
+import android.content.Context
 import com.project.unimate.data.entity.CalendarDayEvent
 import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.entity.TeamMember
 import java.util.Calendar
+import java.util.Random
 
 /**
  * 화면 연동용 더미 데이터. 홈/캘린더/마이페이지에서 공유.
@@ -26,31 +28,6 @@ object DummyRepository {
         "ai_intro" to "인공지능 입문 팀 스페이스. 실습 과제와 팀 프로젝트 일정을 공유합니다."
     )
 
-    /** 종료 팀플의 종료일: 2026년 2월 20일 이전으로 통일 */
-    private val completedTeamEndMillis: Long = run {
-        val c = Calendar.getInstance().apply {
-            set(2026, Calendar.FEBRUARY, 19, 23, 59, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        c.timeInMillis
-    }
-
-    /** 진행중 팀플 기본 시작일/종료일 (수정 페이지·마감 D-N 표시용) */
-    private val defaultOngoingStartMillis: Long = run {
-        val c = Calendar.getInstance().apply {
-            set(2026, Calendar.FEBRUARY, 1, 0, 0, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        c.timeInMillis
-    }
-    /** 모든 팀플 종료일 2026년 2월 20일 전 */
-    private val defaultOngoingEndMillis: Long = run {
-        val c = Calendar.getInstance().apply {
-            set(2026, Calendar.FEBRUARY, 19, 23, 59, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        c.timeInMillis
-    }
     /** 종료 팀플 기본 시작일 */
     private val defaultCompletedStartMillis: Long = run {
         val c = Calendar.getInstance().apply {
@@ -60,16 +37,108 @@ object DummyRepository {
         c.timeInMillis
     }
 
-    /** 팀 7개. 체리시·메가커피 진행중, 캡스톤·마모사리·모마미 종료. 사진은 cherish/megacoffe/momami만. 종료일 전부 2026-02-20 전. */
-    private val _allTeams: MutableList<Team> = listOf(
-        Team("capstone", "캡스톤", "#FFE970", "", true, 4, 10, teamIntroMap["capstone"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
-        Team("cherish", "체리시", "#F488D4", "cherish_image", false, 4, 2, teamIntroMap["cherish"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
-        Team("mamosari", "마모사리", "#D9F592", "", true, 6, 8, teamIntroMap["mamosari"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
-        Team("megacoffe", "메가커피릿", "#FBB0A9", "megacoffe_image", false, 4, 1, teamIntroMap["megacoffe"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
-        Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: "", defaultCompletedStartMillis, completedTeamEndMillis, completedTeamEndMillis),
-        Team("psychology", "행복의 심리학", "#FFF8D3", "", false, 4, 3, teamIntroMap["psychology"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null),
-        Team("ai_intro", "인공지능 입문", "#FF7A6E", "", false, 6, 7, teamIntroMap["ai_intro"] ?: "", defaultOngoingStartMillis, defaultOngoingEndMillis, null)
-    ).toMutableList()
+    /** 진행중 팀플 기본 시작일 (3월 1일) */
+    private val defaultOngoingStartMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.MARCH, 1, 0, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+
+    /** 새로 추가하는 진행중 팀플 기본 종료일 (3월 31일) */
+    private val defaultOngoingEndMillis: Long = run {
+        val c = Calendar.getInstance().apply {
+            set(2026, Calendar.MARCH, 31, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        c.timeInMillis
+    }
+
+    /** 종료 팀플 마감일: 2026-02-01 ~ 2026-02-17 구간 내 팀별 겹치지 않게 (2/5, 2/10, 2/15) */
+    private val completedTeamEndMillisList: List<Long> = listOf(5, 10, 15).map { day ->
+        Calendar.getInstance().apply {
+            set(2026, Calendar.FEBRUARY, day, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    /** 진행중 팀플 마감일: 2026-03-01 ~ 2026-03-31 구간 내 팀별 겹치지 않게 (3/8, 3/15, 3/22, 3/29) */
+    private val ongoingTeamEndMillisList: List<Long> = listOf(8, 15, 22, 29).map { day ->
+        Calendar.getInstance().apply {
+            set(2026, Calendar.MARCH, day, 23, 59, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    /** 팀 7개. 체리시·메가커피·행복의심리학·인공지능입문 진행중, 캡스톤·마모사리·모마미 종료. */
+    private val _allTeams: MutableList<Team> = buildInitialSeedTeams().toMutableList()
+
+    /** 프로필 등록 직후 서버 시드용: 서버에 생성할 초기 7개 팀 정보 (변경되지 않는 복사본). */
+    fun getSeedTeams(): List<Team> = buildInitialSeedTeams()
+
+    private fun buildInitialSeedTeams(): List<Team> {
+        val completedEnd0 = completedTeamEndMillisList[0]
+        val completedEnd1 = completedTeamEndMillisList[1]
+        val completedEnd2 = completedTeamEndMillisList[2]
+        val ongoingEnd0 = ongoingTeamEndMillisList[0]
+        val ongoingEnd1 = ongoingTeamEndMillisList[1]
+        val ongoingEnd2 = ongoingTeamEndMillisList[2]
+        val ongoingEnd3 = ongoingTeamEndMillisList[3]
+        return listOf(
+            Team("capstone", "캡스톤", "#FFE970", "", true, 4, 10, teamIntroMap["capstone"] ?: "", defaultCompletedStartMillis, completedEnd0, completedEnd0),
+            Team("cherish", "체리시", "#F488D4", "cherish_image", false, 4, 2, teamIntroMap["cherish"] ?: "", defaultOngoingStartMillis, ongoingEnd0, null),
+            Team("mamosari", "마모사리", "#D9F592", "", true, 6, 8, teamIntroMap["mamosari"] ?: "", defaultCompletedStartMillis, completedEnd1, completedEnd1),
+            Team("megacoffe", "메가커피릿", "#FBB0A9", "megacoffe_image", false, 4, 1, teamIntroMap["megacoffe"] ?: "", defaultOngoingStartMillis, ongoingEnd1, null),
+            Team("momami", "모마미", "#90A3ED", "momami_image", true, 4, 3, teamIntroMap["momami"] ?: "", defaultCompletedStartMillis, completedEnd2, completedEnd2),
+            Team("psychology", "행복의 심리학", "#FFF8D3", "", false, 4, 3, teamIntroMap["psychology"] ?: "", defaultOngoingStartMillis, ongoingEnd2, null),
+            Team("ai_intro", "인공지능 입문", "#FF7A6E", "", false, 6, 7, teamIntroMap["ai_intro"] ?: "", defaultOngoingStartMillis, ongoingEnd3, null)
+        )
+    }
+
+    /** 서버에서 받은 내 팀 목록으로 로컬 팀만 교체. 기존 팀의 imageResName(팀 사진)은 유지. 더미 일정(_allTaskItems)은 유지. */
+    fun replaceTeamsWithServerData(teams: List<Team>) {
+        val preservedImages = _allTeams.associate { it.id to it.imageResName }.filter { (_, v) -> v.isNotBlank() }
+        _allTeams.clear()
+        _allTeams.addAll(teams)
+        for (i in _allTeams.indices) {
+            val t = _allTeams[i]
+            preservedImages[t.id]?.let { img ->
+                _allTeams[i] = t.copy(imageResName = img)
+            }
+        }
+        extraTeamMembers.clear()
+        serverMembersCache.clear()
+    }
+
+    /** 저장된 팀 사진(TeamImageStore)을 _allTeams에 적용. replaceTeamsWithServerData 호출 후 호출. */
+    fun applyPersistedTeamImages(context: Context) {
+        val stored = TeamImageStore.getAll(context)
+        for (i in _allTeams.indices) {
+            val t = _allTeams[i]
+            stored[t.id]?.takeIf { it.isNotBlank() }?.let { img ->
+                _allTeams[i] = t.copy(imageResName = img)
+            }
+        }
+    }
+
+    /** 저장된 팀플명(TeamNameStore)을 _allTeams에 적용. replaceTeamsWithServerData 호출 후 호출. */
+    fun applyPersistedTeamNames(context: Context) {
+        val stored = TeamNameStore.getAll(context)
+        for (i in _allTeams.indices) {
+            val t = _allTeams[i]
+            stored[t.id]?.let { name ->
+                _allTeams[i] = t.copy(name = name)
+            }
+        }
+    }
+
+    /** 서버 팀 목록 + 더미(시드) 팀 병합. 삭제한 시드 팀 이름은 제외. 더미가 먼저, 서버 팀이 나중에 오도록 함. */
+    fun mergeServerTeamsWithSeed(serverTeams: List<Team>, deletedSeedTeamNames: Set<String> = emptySet()): List<Team> {
+        val serverNames = serverTeams.map { it.name }.toSet()
+        val seedOnly = getSeedTeams().filter { it.name !in serverNames && it.name !in deletedSeedTeamNames }
+        return seedOnly + serverTeams
+    }
 
     val allTeams: List<Team> get() = _allTeams
 
@@ -143,17 +212,21 @@ object DummyRepository {
     /** 새 팀 추가 시 사용하는 팀원 더미 (기존 7개 팀은 teamMembersMap, 이후 추가 팀은 여기) */
     private val extraTeamMembers = mutableMapOf<String, List<TeamMember>>()
 
-    /** 새 팀 추가 (초대코드 참여/팀 생성/일정에서 팀 선택 시 호출). 팀원 4명·일정 더미 함께 생성. 시작/종료일 null이면 기본값 설정. */
+    /** 서버에서 로드한 팀원 캐시 (teamId → 서버 팀원 목록). getTeamMembers()에서 더미와 merge됨 (feat/#33) */
+    private val serverMembersCache = mutableMapOf<String, List<TeamMember>>()
+
+    /** 새 팀 추가 (초대코드 참여/팀 생성/일정에서 팀 선택 시 호출). 현재 사용자 포함 팀원·일정 더미 생성. */
     fun addTeam(team: Team) {
         if (_allTeams.any { it.id == team.id }) return
         val toAdd = if (team.workStartMillis == null || team.workEndMillis == null) {
             team.copy(workStartMillis = team.workStartMillis ?: defaultOngoingStartMillis, workEndMillis = team.workEndMillis ?: defaultOngoingEndMillis)
         } else team
         _allTeams.add(toAdd)
-        val count = _teamMembersMap[toAdd.id]?.size ?: 4
-        val names = koreanNamesPool.drop(toAdd.id.hashCode().and(0x7FFFFFFF) % (koreanNamesPool.size - count).coerceAtLeast(0)).take(count)
-            .let { if (it.size >= count) it.take(count) else it + koreanNamesPool.take(count - it.size) }
-        extraTeamMembers[toAdd.id] = names.mapIndexed { i, name -> TeamMember("m-${toAdd.id}-$i", name, "ic_user") }
+        val count = 4
+        val others = koreanNamesPool.filter { it != currentUserName }.drop(toAdd.id.hashCode().and(0x7FFFFFFF) % 10).take(count - 1)
+            .let { if (it.size >= count - 1) it.take(count - 1) else it + koreanNamesPool.filter { n -> n != currentUserName }.take(count - 1 - it.size) }
+        extraTeamMembers[toAdd.id] = listOf(TeamMember("me", currentUserName, "ic_user")) +
+            others.mapIndexed { i, name -> TeamMember("m-${toAdd.id}-$i", name, "ic_user") }
         addDefaultTasksForTeam(toAdd.id, toAdd.name)
     }
 
@@ -204,8 +277,36 @@ object DummyRepository {
         }.toMap().toMutableMap()
     }
 
-    /** 팀 스페이스용: 해당 팀의 팀원 목록 (기존 팀 = _teamMembersMap, 추가 팀 = extraTeamMembers) */
-    fun getTeamMembers(teamId: String): List<TeamMember> = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+    /** 팀 스페이스용: 해당 팀의 팀원 목록. 서버 캐시 + 더미 merge 후, 'me' 멤버는 currentUserName으로 보정·중복 제거. */
+    fun getTeamMembers(teamId: String): List<TeamMember> {
+        val dummy = _teamMembersMap[teamId] ?: extraTeamMembers[teamId] ?: emptyList()
+        val server = serverMembersCache[teamId] ?: emptyList()
+        val merged = if (server.isEmpty()) dummy else mergeServerFirstMembers(server, dummy)
+        return applyMeAndCurrentUserName(merged)
+    }
+
+    /** 서버 팀원을 캐시에 저장. noScheduleMembersCache는 자동 무효화. */
+    fun cacheServerMembers(teamId: String, members: List<TeamMember>) {
+        serverMembersCache[teamId] = members
+        noScheduleMembersCache.clear()
+    }
+
+    /** 서버 팀원을 앞에, 더미 팀원 중 이름 미중복인 것을 뒤에 붙여 반환 */
+    fun mergeServerFirstMembers(server: List<TeamMember>, dummy: List<TeamMember>): List<TeamMember> {
+        val serverNames = server.map { it.name }.toSet()
+        return server + dummy.filter { it.name !in serverNames }
+    }
+
+    /** 팀원 목록에 'me' 보정 및 currentUserName 중복 제거 적용 */
+    private fun applyMeAndCurrentUserName(list: List<TeamMember>): List<TeamMember> {
+        val withoutCurrentName = list.filter { it.name != currentUserName }
+        return if (list.any { it.id == "me" }) {
+            list.map { if (it.id == "me") it.copy(name = currentUserName) else it }
+                .filter { it.id == "me" || it.name != currentUserName }
+        } else {
+            listOf(TeamMember("me", currentUserName, "ic_user")) + withoutCurrentName
+        }
+    }
 
     fun getTeamIntro(teamId: String): String = getTeamById(teamId)?.intro ?: teamIntroMap[teamId] ?: ""
 
@@ -263,16 +364,55 @@ object DummyRepository {
                 list.add(task(tid, titleByTeam[tid] ?: "팀 일정", year, month, day, false, members.getOrNull(di % members.size)))
             }
         }
+        // 진행중 팀플(체리시, 메가커피릿, 행복의 심리학, 인공지능 입문)만 2026년 3월 15일까지 더미 일정 추가 (요일 다양: 월·수·금·일·화·목·토)
+        val ongoingTeamIds = listOf("cherish", "megacoffe", "psychology", "ai_intro")
+        val marchDays = listOf(2, 4, 6, 8, 10, 12, 14, 15) // 3/2(월), 3/4(수), 3/6(금), 3/8(일), 3/10(화), 3/12(목), 3/14(토), 3/15(일)
+        marchDays.forEachIndexed { wi, day ->
+            ongoingTeamIds.forEachIndexed { ti, tid ->
+                val members = getTeamMembers(tid).map { it.name }
+                list.add(task(tid, titleByTeam[tid] ?: "팀 일정", 2026, 3, day, false, members.getOrNull((wi + ti) % members.size)))
+            }
+        }
         list
     }
 
     val allTaskItems: List<TaskItem> get() = _allTaskItems
+
+    /** 저장된 팀 목록·팀/개인 일정 복원. 앱 시작 시 MainActivity에서 호출. */
+    fun loadSchedulesFrom(context: Context) {
+        TeamStore.loadTeams(context)?.takeIf { it.isNotEmpty() }?.let { loaded ->
+            replaceTeamsWithServerData(loaded)
+            applyPersistedTeamImages(context)
+            applyPersistedTeamNames(context)
+        }
+        ScheduleStore.loadTaskItems(context)?.takeIf { it.isNotEmpty() }?.let {
+            _allTaskItems.clear()
+            _allTaskItems.addAll(it)
+        }
+        ScheduleStore.loadPersonalItems(context)?.takeIf { it.isNotEmpty() }?.let {
+            _allPersonalItems.clear()
+            _allPersonalItems.addAll(it)
+        }
+    }
+
+    /** 팀 목록·팀/개인 일정 전체 저장. sync 후·추가·수정 후 UI에서 호출. */
+    fun saveSchedulesTo(context: Context) {
+        TeamStore.saveTeams(context, _allTeams)
+        ScheduleStore.saveTaskItems(context, _allTaskItems)
+        ScheduleStore.savePersonalItems(context, _allPersonalItems)
+    }
 
     fun getTaskById(id: String): TaskItem? = _allTaskItems.find { it.id == id }
     fun addTask(item: TaskItem) { _allTaskItems.add(item) }
     fun updateTask(item: TaskItem) {
         val idx = _allTaskItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allTaskItems[idx] = item
+    }
+
+    /** 서버에서 팀 일정을 불러온 뒤 해당 팀의 일정만 교체할 때 사용. (재설치 후 복구용) */
+    fun replaceTasksForTeam(teamId: String, newTasks: List<TaskItem>) {
+        _allTaskItems.removeAll { it.teamId == teamId }
+        _allTaskItems.addAll(newTasks)
     }
 
     /** 팀 스페이스용: 해당 팀의 총 일정 개수 */
@@ -282,12 +422,34 @@ object DummyRepository {
     fun getDayEventCountForTeam(teamId: String, date: Calendar): Int =
         allTaskItems.count { it.teamId == teamId && it.isOnDate(date) }
 
-    // ---- 일정 없는 팀원 (2026-01 ~ 2026-02, 팀별 날짜당 1~3명 랜덤) ----
+    // ---- 일정 없는 팀원 (2026-02-01 ~ 2026-03-31, 모든 팀: 주당 4일 이상 표시, 그날 최소 전체 팀원 1/3명) ----
     private val noScheduleMembersCache = mutableMapOf<Long, Map<String, List<TeamMember>>>()
 
     private fun dateKey(cal: Calendar): Long = cal.get(Calendar.YEAR) * 10000L + (cal.get(Calendar.MONTH) + 1) * 100L + cal.get(Calendar.DAY_OF_MONTH)
 
+    /** 해당 날짜가 2026-02-01 ~ 2026-03-31 구간인지 */
+    private fun isInNoScheduleRange(cal: Calendar): Boolean {
+        val y = cal.get(Calendar.YEAR)
+        val m = cal.get(Calendar.MONTH) + 1
+        val d = cal.get(Calendar.DAY_OF_MONTH)
+        if (y != 2026) return false
+        if (m < 2 || m > 3) return false
+        if (m == 2 && d < 1) return false
+        if (m == 3 && d > 31) return false
+        return true
+    }
+
+    /** 해당 주에서 일정 없는 팀원 카드를 보여줄 4개의 요일(1~7)을 결정. 팀·주별로 동일한 결과. */
+    private fun getNoScheduleDaysOfWeekForWeek(teamId: String, cal: Calendar): Set<Int> {
+        val weekOfYear = cal.get(Calendar.WEEK_OF_YEAR)
+        val year = cal.get(Calendar.YEAR)
+        val seed = teamId.hashCode().toLong() * 31 + year * 53L + weekOfYear
+        val rnd = Random(seed)
+        return (1..7).toList().shuffled(rnd).take(4).toSet()
+    }
+
     fun getNoScheduleMembers(teamId: String, date: Calendar): List<TeamMember> {
+        if (!isInNoScheduleRange(date)) return emptyList()
         val key = dateKey(date)
         val byTeam = noScheduleMembersCache.getOrPut(key) {
             allTeams.associate { team ->
@@ -295,10 +457,16 @@ object DummyRepository {
                     val members = getTeamMembers(team.id)
                     if (members.isEmpty()) emptyList()
                     else {
-                        val seed = key * 31 + team.id.hashCode()
-                        val count = (seed % 3).toInt().coerceIn(1, 3).coerceAtMost(members.size)
-                        val start = (seed % members.size).toInt().coerceAtLeast(0)
-                        (0 until count).map { i -> members[(start + i) % members.size] }
+                        val noScheduleDays = getNoScheduleDaysOfWeekForWeek(team.id, date)
+                        val dayOfWeek = date.get(Calendar.DAY_OF_WEEK)
+                        if (dayOfWeek !in noScheduleDays) emptyList()
+                        else {
+                            val minCount = maxOf(1, (members.size + 2) / 3)
+                            val memberSeed = key * 31 + team.id.hashCode()
+                            val rnd = Random(memberSeed)
+                            val start = rnd.nextInt(members.size)
+                            (0 until minCount).map { i -> members[(start + i) % members.size] }
+                        }
                     }
                 }
             }
@@ -312,9 +480,21 @@ object DummyRepository {
     private val personalLockedOverrides = mutableMapOf<String, Boolean>()
     private val personalCheckedOverrides = mutableMapOf<String, Boolean>()
 
-    fun setTaskChecked(taskId: String, checked: Boolean) { taskCheckedOverrides[taskId] = checked }
-    fun setPersonalLocked(personalId: String, locked: Boolean) { personalLockedOverrides[personalId] = locked }
-    fun setPersonalChecked(personalId: String, checked: Boolean) { personalCheckedOverrides[personalId] = checked }
+    fun setTaskChecked(taskId: String, checked: Boolean) {
+        taskCheckedOverrides[taskId] = checked
+        val idx = _allTaskItems.indexOfFirst { it.id == taskId }
+        if (idx >= 0) _allTaskItems[idx] = _allTaskItems[idx].copy(isChecked = checked)
+    }
+    fun setPersonalLocked(personalId: String, locked: Boolean) {
+        personalLockedOverrides[personalId] = locked
+        val idx = _allPersonalItems.indexOfFirst { it.id == personalId }
+        if (idx >= 0) _allPersonalItems[idx] = _allPersonalItems[idx].copy(isLocked = locked)
+    }
+    fun setPersonalChecked(personalId: String, checked: Boolean) {
+        personalCheckedOverrides[personalId] = checked
+        val idx = _allPersonalItems.indexOfFirst { it.id == personalId }
+        if (idx >= 0) _allPersonalItems[idx] = _allPersonalItems[idx].copy(isChecked = checked)
+    }
 
     private fun effectiveTaskChecked(task: TaskItem): Boolean = taskCheckedOverrides[task.id] ?: task.isChecked
     private fun effectivePersonalLocked(item: PersonalScheduleItem): Boolean = personalLockedOverrides[item.id] ?: item.isLocked
@@ -370,6 +550,12 @@ object DummyRepository {
     fun updatePersonalSchedule(item: PersonalScheduleItem) {
         val idx = _allPersonalItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allPersonalItems[idx] = item
+    }
+
+    /** 서버에서 개인 일정을 불러온 뒤, 서버 출처 항목만 제거하고 새 목록으로 채움. (재설치 후 복구용) */
+    fun replacePersonalSchedulesFromServer(serverItems: List<PersonalScheduleItem>) {
+        _allPersonalItems.removeAll { it.id.startsWith("p-server-") }
+        _allPersonalItems.addAll(serverItems)
     }
 
     /** 특정 날짜의 개인일정. 시작일~종료일 구간에 포함되는 날 모두 표시 */

@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.time.ZoneId
 
 class EditTimepickFragment : Fragment() {
 
@@ -239,6 +240,7 @@ class EditTimepickFragment : Fragment() {
                     endTimeMillis = editEndCalendar.timeInMillis
                 )
                 DummyRepository.updateTask(updated)
+                DummyRepository.saveSchedulesTo(requireContext())
             } else if (teamId.isNotEmpty()) {
                 val task = TaskItem(
                     id = "timepick-${teamId}-${System.currentTimeMillis()}",
@@ -251,24 +253,30 @@ class EditTimepickFragment : Fragment() {
                     creatorName = null
                 )
                 DummyRepository.addTask(task)
+                DummyRepository.saveSchedulesTo(requireContext())
 
                 // API 호출 (시간 조율 투표 생성)
                 val numericTeamId = teamId.toLongOrNull()
-                if (numericTeamId != null) {
+                if (numericTeamId != null && TimepickStateHolder.pollId == null) {
                     viewLifecycleOwner.lifecycleScope.launch {
                         try {
                             val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                             val timeFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
                             val dates = TimepickStateHolder.displayDates.map { dateFmt.format(Date(it)) }
+                            val timezone = ZoneId.systemDefault().id
                             val service = RetrofitClient.create<SchedulePollService>(requireContext())
-                            service.create(SchedulePollCreateRequest(
+                            val response = service.create(SchedulePollCreateRequest(
                                 teamId = numericTeamId,
                                 dates = dates,
                                 startTime = timeFmt.format(Date(editStartCalendar.timeInMillis)),
                                 endTime = timeFmt.format(Date(editEndCalendar.timeInMillis)),
+                                timezone = timezone,
                                 title = title,
                                 slotMinutes = 30
                             ))
+                            if (response.isSuccessful) {
+                                TimepickStateHolder.pollId = response.body()?.pollId
+                            }
                         } catch (_: Exception) { }
                     }
                 }

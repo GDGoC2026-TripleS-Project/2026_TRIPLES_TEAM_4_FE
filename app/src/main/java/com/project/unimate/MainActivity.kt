@@ -19,7 +19,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
+import kotlinx.coroutines.launch
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationBarView
@@ -27,8 +29,13 @@ import com.project.unimate.auth.FcmRegistrar
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.PendingCompletionPopupStore
+import com.project.unimate.data.repository.NicknameStore
+import com.project.unimate.data.repository.ProfileImageStore
+import com.project.unimate.data.repository.ServerSync
 import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
+import com.project.unimate.ui.timepick.TimepickStateHolder
 
 // 네비게이션바 로직을 위해 AppCompatActivity로 상속 변경
 class MainActivity : AppCompatActivity() {
@@ -71,11 +78,36 @@ class MainActivity : AppCompatActivity() {
         val jwt = JwtStore.load(this)
         Log.d(TAG, "JWT exists? ${!jwt.isNullOrBlank()} len=${jwt?.length ?: 0}")
         FcmRegistrar.registerIfPossible(this, BASE_URL)
+
+        // 저장된 유저 프로필 이미지 경로 복원 (서버 sync에서 덮어쓸 수 있음)
+        ProfileImageStore.get(this).takeIf { it.isNotBlank() }?.let {
+            DummyRepository.setCurrentUserProfileImageResName(it)
+        }
+        // 저장된 팀 사진·팀플명 복원
+        DummyRepository.applyPersistedTeamImages(this)
+        DummyRepository.applyPersistedTeamNames(this)
+
+        if (!jwt.isNullOrBlank()) {
+            // 이미 로그인된 상태: 닉네임 + 로컬 캐시 복원. 서버 sync는 Splash(또는 로그인 직후)에서만 1회 수행
+            NicknameStore.get(this).takeIf { it.isNotBlank() }?.let {
+                DummyRepository.setCurrentUserName(it)
+            }
+            DummyRepository.loadSchedulesFrom(this)
+        } else {
+            DummyRepository.loadSchedulesFrom(this)
+        }
     }
+
+    /** 스플래시를 한 번이라도 떠났으면 true (onResume에서 서버 sync 할지 판단용) */
+    private var hasLeftSplashScreen = false
 
     override fun onResume() {
         super.onResume()
         checkAndShowTeamEndPopups()
+        // 앱 백그라운드 복귀 시에만 서버 동기화. cold start 시에는 Splash에서만 sync 하므로 여기서는 스킵
+        if (JwtStore.load(this).isNullOrBlank()) return
+        if (!hasLeftSplashScreen) return
+        lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
     }
 
     private val teamEndPopupPrefs: SharedPreferences
@@ -89,12 +121,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkAndShowTeamEndPopups() {
-        val now = System.currentTimeMillis()
-        val endedTeams = DummyRepository.getCalendarFilterTeams()
-            .filter { it.workEndMillis != null && it.workEndMillis < now }
-            .filter { !hasShownTeamEndPopup(it.id) }
+        val pendingIds = PendingCompletionPopupStore.getPendingIds(this)
+        if (pendingIds.isEmpty()) return
+        val endedTeams = pendingIds.mapNotNull { id -> DummyRepository.getTeamById(id) }.toMutableList()
         if (endedTeams.isEmpty()) return
-        showNextTeamEndPopup(endedTeams.toMutableList())
+        showNextTeamEndPopup(endedTeams)
     }
 
     private fun showNextTeamEndPopup(queue: MutableList<Team>) {
@@ -107,6 +138,7 @@ class MainActivity : AppCompatActivity() {
             .create()
         view.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener { dialog.dismiss() }
         dialog.setOnDismissListener {
+            PendingCompletionPopupStore.remove(this, team.id)
             markTeamEndPopupShown(team.id)
             if (queue.isNotEmpty()) showNextTeamEndPopup(queue)
         }
@@ -152,8 +184,9 @@ class MainActivity : AppCompatActivity() {
         // 네비게이션바 내부 간격 조정 호출
         applyBottomNavGap(navView, gapDp = 6)
 
-        // 목적지 변경 리스너
+        // 목적지 변경 리스너 (스플래시 이탈 여부 기록 → onResume에서 sync 1회만 하기 위함)
         navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id != R.id.splashFragment) hasLeftSplashScreen = true
             when (destination.id) {
                 // 숨김 목록
                 R.id.splashFragment, R.id.loginFragment, R.id.profileCreateFragment,
@@ -194,17 +227,83 @@ class MainActivity : AppCompatActivity() {
         val tv = findViewById<TextView>(R.id.tvLog)
         if (intent == null) return
 
-        // 인텐트 처리 로직
-        val screen = intent.getStringExtra("EXTRA_PUSH_SCREEN")
-        val alarmId = intent.getStringExtra("EXTRA_PUSH_ALARM_ID")
+        val screen = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_SCREEN)
+        val alarmId = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_ID)
+        val alarmType = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_TYPE)
+        val teamId = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_TEAM_ID)
+        val messageTitle = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_TITLE)
+        val messageBody = intent.getStringExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_BODY)
+        val hasPushPayload = !screen.isNullOrBlank() || !alarmId.isNullOrBlank() || !alarmType.isNullOrBlank()
+        if (!hasPushPayload) return
 
-        if (!screen.isNullOrBlank() || !alarmId.isNullOrBlank()) {
-            val msg = "PushClick: screen=$screen alarmId=$alarmId"
-            Log.d(TAG, msg)
-            tv?.text = msg
-        } else {
-            tv?.text = "Hello World!"
+        val msg = "PushClick: screen=$screen alarmId=$alarmId alarmType=$alarmType teamId=$teamId title=$messageTitle"
+        Log.d(TAG, msg)
+        tv?.text = msg
+
+        val navController = (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)
+            ?.navController ?: return
+
+        val destinationId = when {
+            isTimepickNotification(screen, alarmType, messageTitle, messageBody) -> {
+                if (!teamId.isNullOrBlank()) {
+                    TimepickStateHolder.teamId = teamId
+                }
+                R.id.editTimepickFragment
+            }
+            screen.orEmpty().lowercase().contains("calendar") -> R.id.calendarFragment
+            screen.orEmpty().lowercase().contains("poke") -> R.id.pokeFragment
+            screen.orEmpty().lowercase().contains("mypage") ||
+                screen.orEmpty().lowercase().contains("my_page") -> R.id.myPageFragment
+            screen.orEmpty().lowercase().contains("notification") ||
+                screen.orEmpty().lowercase().contains("alarm") -> R.id.notificationFragment
+            else -> R.id.homeFragment
         }
+
+        try {
+            val args = if (destinationId == R.id.editTimepickFragment) {
+                Bundle().apply { putString("taskId", "") }
+            } else {
+                null
+            }
+            val navOptions = NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .build()
+            navController.navigate(destinationId, args, navOptions)
+        } catch (e: Exception) {
+            Log.w(TAG, "Push navigation failed: ${e.message}")
+        }
+
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_SCREEN)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_ID)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_ALARM_TYPE)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_TEAM_ID)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_TITLE)
+        intent.removeExtra(UnimateFirebaseMessagingService.EXTRA_PUSH_MESSAGE_BODY)
+    }
+
+    private fun isTimepickNotification(
+        screen: String?,
+        alarmType: String?,
+        messageTitle: String?,
+        messageBody: String?
+    ): Boolean {
+        val s = screen.orEmpty().lowercase()
+        val a = alarmType.orEmpty().lowercase()
+        val t = messageTitle.orEmpty().lowercase()
+        val b = messageBody.orEmpty().lowercase()
+        return s.contains("timepick") ||
+            s.contains("meeting") ||
+            s.contains("edit") ||
+            a.contains("meeting_request") ||
+            a.contains("meeting") ||
+            a.contains("timepick") ||
+            a.contains("모임") ||
+            a.contains("체크요청") ||
+            t.contains("모임") ||
+            t.contains("체크요청") ||
+            b.contains("모임") ||
+            b.contains("체크요청") ||
+            b.contains("시간 입력")
     }
 
     private fun requestNotificationPermissionIfNeeded() {

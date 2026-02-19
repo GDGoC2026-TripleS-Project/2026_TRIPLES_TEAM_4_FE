@@ -10,9 +10,18 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.SchedulePollCreateRequest
+import com.project.unimate.network.service.SchedulePollService
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class SelectTimeFragment : Fragment() {
 
@@ -128,6 +137,42 @@ class SelectTimeFragment : Fragment() {
             }
             TimepickStateHolder.selectTimeSelected.clear()
             grid.selectedCells.forEach { TimepickStateHolder.selectTimeSelected[it] = true }
+
+            if (TimepickStateHolder.pollId == null) {
+                val numericTeamId = TimepickStateHolder.teamId.toLongOrNull()
+                if (numericTeamId != null) {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        try {
+                            val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val datesText = TimepickStateHolder.displayDates.map { dateFmt.format(Date(it)) }
+                            val startTime = "${startHour.toString().padStart(2, '0')}:00"
+                            val endTime = "${endHour.coerceAtMost(24).toString().padStart(2, '0')}:00"
+                            val timezone = ZoneId.systemDefault().id
+                            val service = RetrofitClient.create<SchedulePollService>(requireContext())
+                            val response = service.create(
+                                SchedulePollCreateRequest(
+                                    teamId = numericTeamId,
+                                    dates = datesText,
+                                    startTime = startTime,
+                                    endTime = endTime,
+                                    timezone = timezone,
+                                    title = "모임 시간 체크요청",
+                                    slotMinutes = 30
+                                )
+                            )
+                            if (response.isSuccessful) {
+                                TimepickStateHolder.pollId = response.body()?.pollId
+                                findNavController().navigate(R.id.timepickStatusFragment)
+                            } else {
+                                Toast.makeText(requireContext(), "모이기 생성에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (_: Exception) {
+                            Toast.makeText(requireContext(), "모이기 생성에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    return@setOnClickListener
+                }
+            }
             findNavController().navigate(R.id.timepickStatusFragment)
         }
 

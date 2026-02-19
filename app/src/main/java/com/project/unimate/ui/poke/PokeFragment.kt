@@ -16,150 +16,190 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
+import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.PokeTeamSection
 import com.project.unimate.network.service.PokeService
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class PokeFragment : Fragment() {
 
     private lateinit var pokeAdapter: PokeAdapter
-    private val dataList = mutableListOf<PokeData>()
+    private var btnSendPoke: Button? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_poke, container, false)
-
-        // 더미 데이터로 초기화 (API 성공 시 교체)
-        setupDummyData()
-
         val rvPokeList = view.findViewById<RecyclerView>(R.id.rvPokeList)
-        val btnPokeAction = view.findViewById<Button>(R.id.btnSendPoke)
+        btnSendPoke = view.findViewById(R.id.btnSendPoke)
 
-        // 초기 버튼 상태 설정 (비활성화)
-        updateButtonState(btnPokeAction)
-
-        // 2. 어댑터 연결
-        pokeAdapter = PokeAdapter(dataList) {
-            // 리스트에서 체크박스를 누를 때마다 버튼 상태 업데이트
-            updateButtonState(btnPokeAction)
-        }
-
+        pokeAdapter = PokeAdapter { selectedCount -> updateButtonState(selectedCount) }
         rvPokeList.layoutManager = LinearLayoutManager(context)
         rvPokeList.adapter = pokeAdapter
 
-        // 3. [핵심] 찌르기 버튼 클릭 시 -> 데이터 전달 및 화면 이동
-        btnPokeAction.setOnClickListener {
-            // (1) 전체 데이터 중 'Member' 타입이면서 'isSelected'가 true인 것만 골라냄
-            val selectedMembers = dataList
-                .filterIsInstance<PokeData.Member>()
-                .filter { it.isSelected }
+        updateButtonState(0)
+        buildListMerged(emptyList()).let { pokeAdapter.submitList(it) }
 
-            if (selectedMembers.isNotEmpty()) {
-                // (2) ArrayList로 변환 (Bundle에 넣기 위함)
-                val arrayList = ArrayList(selectedMembers)
-
-                // (3) Bundle 생성 및 데이터 담기
-                // "selected_members"라는 키값은 받는 쪽(DetailFragment)과 똑같아야 합니다!
-                val bundle = Bundle().apply {
-                    putParcelableArrayList("selected_members", arrayList)
-                }
-
-                // (4) 다음 화면으로 이동 (네비게이션 액션 ID 확인 필수)
-                try {
-                    findNavController().navigate(R.id.action_pokeFragment_to_pokeDetailFragment, bundle)
-                } catch (e: Exception) {
-                    Log.e("PokeFragment", "Navigation Error: ${e.message}")
-                    Toast.makeText(context, "페이지 이동 오류: NavGraph를 확인해주세요.", Toast.LENGTH_SHORT).show()
-                }
+        btnSendPoke?.setOnClickListener {
+            val selected = pokeAdapter.getSelectedMembers()
+            if (selected.isEmpty()) {
+                Toast.makeText(context, "찌를 팀원을 선택해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val bundle = Bundle().apply {
+                putParcelableArrayList("selected_members", ArrayList(selected))
+            }
+            try {
+                findNavController().navigate(R.id.action_pokeFragment_to_pokeDetailFragment, bundle)
+            } catch (e: Exception) {
+                Log.e("PokeFragment", "Navigation Error: ${e.message}")
+                Toast.makeText(context, "페이지 이동 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // API에서 찌르기 대상 로드
-        loadPokeTargetsFromApi()
-
+        loadPokeTargets()
         return view
     }
 
-    private fun loadPokeTargetsFromApi() {
+    override fun onResume() {
+        super.onResume()
+        loadPokeTargets()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        btnSendPoke = null
+    }
+
+    /**
+     * 로컬 팀 + API 팀/팀원 정보를 합쳐 목록 구성 (#33 함수명 loadPokeTargets 유지).
+     * 팀 이름·색: 로컬(DummyRepository) 우선. 팀원 없으면 NoMembersMessage.
+     */
+    private fun loadPokeTargets() {
         val ctx = context ?: return
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val service = RetrofitClient.create<PokeService>(ctx)
                 val response = service.getTargets()
-                if (response.isSuccessful) {
-                    val targets = response.body()?.teams ?: return@launch
-                    dataList.clear()
-                    var memberId = 1
-                    targets.forEach { teamSection ->
-                        val teamName = teamSection.teamName ?: return@forEach
-                        val teamColor = "#90A3ED" // 기본 색상
-                        dataList.add(PokeData.Header(teamName, teamColor))
-                        teamSection.members?.forEach { member ->
-                            dataList.add(PokeData.Member(
-                                id = memberId++,
-                                name = member.nickname ?: "",
-                                teamName = teamName,
-                                teamColor = teamColor
-                            ))
-                        }
-                    }
-                    if (dataList.isNotEmpty() && ::pokeAdapter.isInitialized) {
-                        pokeAdapter.notifyDataSetChanged()
-                    }
+                val apiTeams = if (response.isSuccessful) response.body()?.teams ?: emptyList() else emptyList()
+                val pokeList = buildListMerged(apiTeams)
+                if (isAdded) {
+                    pokeAdapter.submitList(pokeList)
+                    updateButtonState(pokeAdapter.getSelectedMembers().size)
                 }
-            } catch (_: Exception) {
-                // API 실패 시 더미 데이터 유지
+            } catch (e: Exception) {
+                Log.e("PokeFragment", "targets 예외: ${e.message}")
+                if (isAdded) {
+                    pokeAdapter.submitList(buildListMerged(emptyList()))
+                    Toast.makeText(ctx, "네트워크 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    private fun setupDummyData() {
-        dataList.clear() // 중복 방지 초기화
+    /**
+     * 로컬 팀 목록 + API 팀/팀원 정보를 합침.
+     * - 팀 이름·색: 로컬 우선, 없으면 API 값 사용.
+     * - 팀원: API에 있으면 API 팀원(다른 사용자), 없으면 로컬 팀원. 나(현재 사용자)는 제외.
+     * - Header/Member는 #33 스타일(teamId: Long, userId: Long) 사용.
+     */
+    private fun buildListMerged(apiTeams: List<PokeTeamSection>): List<PokeData> {
+        val result = mutableListOf<PokeData>()
+        val currentUserName = DummyRepository.getCurrentUserName()
+        val apiByTeamId = apiTeams.associate { (it.teamId?.toString() ?: "") to it }
+        val apiByTeamName = apiTeams.associateBy { it.teamName ?: "" }
+        val localTeamIds = DummyRepository.getMyTeamSpaceTeams().map { it.id }.toSet()
+        val apiTeamIdsAdded = mutableSetOf<String>()
+        var syntheticUserId = 1L
 
-        // 색상 정의 (colors.xml의 색상과 유사하게 설정)
-        val cherryColor = "#3FE9C0" // 체리시 (분홍)
-        val megaColor = "#F488D4"   // 메가커피 (노랑)
-        val monimoColor = "#FFF8D3" // 모니모 (파랑)
+        fun localTeamIdToLong(teamIdStr: String): Long =
+            -abs(teamIdStr.hashCode().toLong()).let { if (it == Long.MIN_VALUE) -1L else it }
 
-        // --- Team 1: 체리시 ---
-        dataList.add(PokeData.Header("체리시", cherryColor))
-        dataList.add(PokeData.Member(1, "김철수", "체리시", cherryColor))
-        dataList.add(PokeData.Member(2, "이영희", "체리시", cherryColor))
-        dataList.add(PokeData.Member(3, "박민수", "체리시", cherryColor))
-        dataList.add(PokeData.Member(4, "최지우", "체리시", cherryColor))
+        DummyRepository.getMyTeamSpaceTeams().forEach { team ->
+            val teamIdStr = team.id
+            val teamName = team.name
+            val teamColor = team.colorHex.ifBlank { "#90A3ED" }
+            val apiSection = apiByTeamId[teamIdStr] ?: apiByTeamName[teamName]
+            val localTeamIdLong = localTeamIdToLong(teamIdStr)
+            val effectiveTeamId = apiSection?.teamId?.let { it } ?: localTeamIdLong
 
-        // --- Team 2: 메가커피릿 ---
-        dataList.add(PokeData.Header("메가커피릿", megaColor))
-        dataList.add(PokeData.Member(5, "정수빈", "메가커피릿", megaColor))
-        dataList.add(PokeData.Member(6, "한소희", "메가커피릿", megaColor))
-        dataList.add(PokeData.Member(7, "강동원", "메가커피릿", megaColor))
+            val members: List<Pair<Long, String>> = if (apiSection != null) {
+                apiSection.members
+                    ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> id to nick } } }
+                    ?.distinctBy { it.first } ?: emptyList()
+            } else {
+                DummyRepository.getTeamMembers(team.id)
+                    .filter { it.id != "me" && it.name != currentUserName }
+                    .mapIndexed { i, tm -> (syntheticUserId + i) to tm.name }
+                    .also { syntheticUserId += it.size }
+            }
 
-        // --- Team 3: 모니모 ---
-        dataList.add(PokeData.Header("모니모", monimoColor))
-        dataList.add(PokeData.Member(8, "아이유", "모니모", monimoColor))
-        dataList.add(PokeData.Member(9, "카리나", "모니모", monimoColor))
-        dataList.add(PokeData.Member(10, "윈터", "모니모", monimoColor))
+            result.add(PokeData.Header(teamId = effectiveTeamId, title = teamName, teamColor = teamColor))
+            if (members.isEmpty()) {
+                result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
+            } else {
+                members.forEach { (uid, name) ->
+                    result.add(
+                        PokeData.Member(
+                            userId = uid,
+                            teamId = effectiveTeamId,
+                            teamName = teamName,
+                            teamColor = teamColor,
+                            name = name
+                        )
+                    )
+                }
+            }
+            apiSection?.teamId?.toString()?.let { apiTeamIdsAdded.add(it) }
+        }
+
+        apiTeams.forEach { teamSection ->
+            val teamIdStr = teamSection.teamId?.toString() ?: return@forEach
+            if (teamIdStr in localTeamIds || teamIdStr in apiTeamIdsAdded) return@forEach
+            apiTeamIdsAdded.add(teamIdStr)
+            val teamId = teamSection.teamId ?: return@forEach
+            val teamName = teamSection.teamName ?: return@forEach
+            val teamColor = DummyRepository.getTeamById(teamIdStr)?.colorHex?.takeIf { it.isNotBlank() } ?: "#90A3ED"
+            result.add(PokeData.Header(teamId = teamId, title = teamName, teamColor = teamColor))
+            val others = teamSection.members
+                ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> id to nick } } }
+                ?.distinctBy { it.first } ?: emptyList()
+            if (others.isEmpty()) {
+                result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
+            } else {
+                others.forEach { (uid, name) ->
+                    result.add(
+                        PokeData.Member(
+                            userId = uid,
+                            teamId = teamId,
+                            teamName = teamName,
+                            teamColor = teamColor,
+                            name = name
+                        )
+                    )
+                }
+            }
+        }
+
+        return result
     }
 
-    private fun updateButtonState(button: Button) {
-        // 선택된 멤버 수 계산
-        val selectedCount = dataList.count { it is PokeData.Member && it.isSelected }
-
+    private fun updateButtonState(selectedCount: Int) {
+        val button = btnSendPoke ?: return
+        if (!isAdded) return
         val typeFace = ResourcesCompat.getFont(requireContext(), R.font.pretendard_semibold)
         button.typeface = typeFace
-
         if (selectedCount > 0) {
-            // [활성화 상태] - 메인 그린 색상
             button.isEnabled = true
             button.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.green05)
             )
             button.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-            button.text = "찌르기 (${selectedCount})" // (선택사항) 몇 명인지 표시
+            button.text = "찌르기 ($selectedCount)"
         } else {
-            // [비활성화 상태] - 회색
             button.isEnabled = false
             button.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.gray01)

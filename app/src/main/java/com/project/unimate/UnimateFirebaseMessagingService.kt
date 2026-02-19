@@ -33,25 +33,42 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
 
         val screen = data["screen"] ?: "home"
         val alarmId = data["alarmId"]
+        val alarmType = data["alarmType"]
+        val teamId = data["teamId"]
+        val messageTitle = data["messageTitle"] ?: title
+        val messageBody = data["messageBody"] ?: body
 
-        Log.d(TAG, "onMessageReceived title=$title body=$body screen=$screen alarmId=$alarmId")
+        Log.d(TAG, "onMessageReceived title=$title body=$body screen=$screen alarmId=$alarmId alarmType=$alarmType teamId=$teamId")
 
         val item = NotificationItem.fromFcmData(data)
         if (item != null) {
             NotificationStore.upsert(this, item)
         }
-        if (!showCustomNotificationIfPossible(data, screen, alarmId)) {
-            showNotification(title, body, screen, alarmId)
+        if (!showCustomNotificationIfPossible(data, screen, alarmId, alarmType, teamId, messageTitle, messageBody)) {
+            showNotification(title, body, screen, alarmId, alarmType, teamId, messageTitle, messageBody)
         }
     }
 
-    private fun showNotification(title: String, body: String, screen: String, alarmId: String?) {
+    private fun showNotification(
+        title: String,
+        body: String,
+        screen: String,
+        alarmId: String?,
+        alarmType: String?,
+        teamId: String?,
+        messageTitle: String?,
+        messageBody: String?
+    ) {
         ensureChannel()
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_PUSH_SCREEN, screen)
             putExtra(EXTRA_PUSH_ALARM_ID, alarmId)
+            putExtra(EXTRA_PUSH_ALARM_TYPE, alarmType)
+            putExtra(EXTRA_PUSH_TEAM_ID, teamId)
+            putExtra(EXTRA_PUSH_MESSAGE_TITLE, messageTitle)
+            putExtra(EXTRA_PUSH_MESSAGE_BODY, messageBody)
         }
 
         val requestCode = (System.currentTimeMillis() % 100000).toInt()
@@ -82,10 +99,14 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
     private fun showCustomNotificationIfPossible(
         data: Map<String, String>,
         screen: String,
-        alarmId: String?
+        alarmId: String?,
+        alarmTypeFromPush: String?,
+        teamId: String?,
+        messageTitleFromPush: String?,
+        messageBodyFromPush: String?
     ): Boolean {
         val teamName = data["teamName"] ?: return false
-        val alarmType = data["alarmType"] ?: return false
+        val customAlarmType = data["alarmType"] ?: return false
         val messageTitle = data["messageTitle"] ?: return false
         val messageBody = data["messageBody"] ?: return false
         val teamColorHex = data["teamColorHex"] ?: "#CCCCCC"
@@ -96,6 +117,10 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_PUSH_SCREEN, screen)
             putExtra(EXTRA_PUSH_ALARM_ID, alarmId)
+            putExtra(EXTRA_PUSH_ALARM_TYPE, alarmTypeFromPush ?: customAlarmType)
+            putExtra(EXTRA_PUSH_TEAM_ID, teamId)
+            putExtra(EXTRA_PUSH_MESSAGE_TITLE, messageTitleFromPush ?: messageTitle)
+            putExtra(EXTRA_PUSH_MESSAGE_BODY, messageBodyFromPush ?: messageBody)
         }
 
         val requestCode = (System.currentTimeMillis() % 100000).toInt()
@@ -108,7 +133,7 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
         )
 
         val contentView = RemoteViews(packageName, R.layout.notification_poke_custom).apply {
-            setTextViewText(R.id.notif_section, alarmType)
+            setTextViewText(R.id.notif_section, customAlarmType)
             setTextViewText(R.id.notif_team, teamName)
             setTextViewText(R.id.notif_title, messageTitle)
             setTextViewText(R.id.notif_body, messageBody)
@@ -121,14 +146,18 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(messageTitle)
+            .setContentText(messageBody)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomContentView(contentView)
             .setCustomBigContentView(contentView)
+            .setCustomHeadsUpContentView(contentView)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setDefaults(Notification.DEFAULT_ALL)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -147,5 +176,9 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
 
         const val EXTRA_PUSH_SCREEN = "push_screen"
         const val EXTRA_PUSH_ALARM_ID = "push_alarm_id"
+        const val EXTRA_PUSH_ALARM_TYPE = "push_alarm_type"
+        const val EXTRA_PUSH_TEAM_ID = "push_team_id"
+        const val EXTRA_PUSH_MESSAGE_TITLE = "push_message_title"
+        const val EXTRA_PUSH_MESSAGE_BODY = "push_message_body"
     }
 }

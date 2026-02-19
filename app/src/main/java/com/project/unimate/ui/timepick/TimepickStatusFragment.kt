@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
+import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
 import java.util.Calendar
 
@@ -51,7 +52,8 @@ class TimepickStatusFragment : Fragment() {
         val teamId = TimepickStateHolder.teamId
         val members = DummyRepository.getTeamMembers(teamId)
         val totalMembers = members.size
-        participantCount.text = getString(R.string.timepick_participants, totalMembers, totalMembers)
+        val participatedCount = members.count { !it.id.startsWith("server-") }
+        participantCount.text = getString(R.string.timepick_participants, participatedCount, totalMembers)
 
         val dates = TimepickStateHolder.displayDates
         val startHour = TimepickStateHolder.globalStartHour
@@ -113,7 +115,7 @@ class TimepickStatusFragment : Fragment() {
             val endSlot = ((e - startHour).coerceAtMost(endHour - startHour) * 2).coerceIn(0, slotCount)
             startSlot to endSlot
         }
-        val memberSelections: List<Set<Pair<Int, Int>>> = buildMemberSelections(members.size, dates.size, slotCount, dayTimeRanges)
+        val memberSelections: List<Set<Pair<Int, Int>>> = buildMemberSelections(members, dates.size, slotCount, dayTimeRanges)
         val allCellsCount = mutableMapOf<Pair<Int, Int>, Int>()
         memberSelections.forEach { selection ->
             selection.forEach { cell ->
@@ -205,34 +207,40 @@ class TimepickStatusFragment : Fragment() {
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     /**
-     * 더미: 멤버0은 사용자 실제 선택만 사용(모두 가능한 시간 = 교집합 = 사용자 선택).
-     * 멤버1 이상은 사용자 선택 + 날짜별 허용 범위 안에서 하루 1~3시간만 랜덤 블록 추가.
+     * 멤버0(현재 사용자)은 사용자 실제 선택만 사용.
+     * API로 연동된 다른 팀원(서버 팀원)은 랜덤 생성하지 않고 빈 선택으로 둠(실제 데이터로 채울 예정).
+     * 그 외 더미 팀원은 날짜별 허용 범위 안에서 하루 1~3시간만 랜덤 블록 추가.
      */
     private fun buildMemberSelections(
-        memberCount: Int,
+        members: List<TeamMember>,
         dayCount: Int,
         slotCount: Int,
         dayTimeRanges: List<Pair<Int, Int>>
     ): List<Set<Pair<Int, Int>>> {
         val base = TimepickStateHolder.selectTimeSelected.keys.toSet().toMutableSet()
         val list = mutableListOf<Set<Pair<Int, Int>>>()
-        for (m in 0 until memberCount) {
-            val set = if (m == 0) {
-                base.toMutableSet()
-            } else {
-                val memberSet = base.toMutableSet()
-                for (day in 0 until dayCount) {
-                    val (startSlot, endSlot) = dayTimeRanges.getOrNull(day) ?: (0 to slotCount)
-                    val rangeSize = (endSlot - startSlot).coerceAtLeast(0)
-                    if (rangeSize < 2) continue
-                    val durationSlots = when ((m + day) % 3) { 0 -> 2; 1 -> 4; else -> 6 }.coerceAtMost(rangeSize)
-                    val maxStart = (endSlot - durationSlots).coerceAtLeast(startSlot)
-                    val start = startSlot + (m * 7 + day * 11) % (maxStart - startSlot + 1).coerceAtLeast(1)
-                    for (slot in start until (start + durationSlots).coerceAtMost(endSlot)) {
-                        memberSet.add(day to slot)
+        for (m in members.indices) {
+            val member = members.getOrNull(m) ?: continue
+            val isCurrentUser = member.id == "me"
+            val isFromApi = member.id.startsWith("server-")
+            val set = when {
+                isCurrentUser -> base.toMutableSet()
+                isFromApi -> emptySet()
+                else -> {
+                    val memberSet = base.toMutableSet()
+                    for (day in 0 until dayCount) {
+                        val (startSlot, endSlot) = dayTimeRanges.getOrNull(day) ?: (0 to slotCount)
+                        val rangeSize = (endSlot - startSlot).coerceAtLeast(0)
+                        if (rangeSize < 2) continue
+                        val durationSlots = when ((m + day) % 3) { 0 -> 2; 1 -> 4; else -> 6 }.coerceAtMost(rangeSize)
+                        val maxStart = (endSlot - durationSlots).coerceAtLeast(startSlot)
+                        val start = startSlot + (m * 7 + day * 11) % (maxStart - startSlot + 1).coerceAtLeast(1)
+                        for (slot in start until (start + durationSlots).coerceAtMost(endSlot)) {
+                            memberSet.add(day to slot)
+                        }
                     }
+                    memberSet
                 }
-                memberSet
             }
             list.add(set)
         }

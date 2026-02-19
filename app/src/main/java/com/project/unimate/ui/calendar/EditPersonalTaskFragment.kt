@@ -1,7 +1,7 @@
 package com.project.unimate.ui.calendar
 
-import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.ContextThemeWrapper
@@ -173,31 +173,29 @@ class EditPersonalTaskFragment : Fragment() {
             styleDatePicker(dlg)
             dlg.show()
         }
-        fun showTimeOptionPicker(cal: Calendar, onConfirm: () -> Unit) {
-            val v = layoutInflater.inflate(R.layout.dialog_time_option, null)
-            val amPmSpinner = v.findViewById<Spinner>(R.id.dialogTimeAmPm)
-            val hourSpinner = v.findViewById<Spinner>(R.id.dialogTimeHour)
-            val confirmBtn = v.findViewById<Button>(R.id.dialogTimeConfirm)
-            amPmSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, listOf("오전", "오후"))
-            hourSpinner.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, (1..12).map { "$it" })
-            val hourOfDay = cal.get(Calendar.HOUR_OF_DAY)
-            val isPm = hourOfDay >= 12
-            val hour12 = if (hourOfDay == 0) 12 else if (hourOfDay > 12) hourOfDay - 12 else hourOfDay
-            amPmSpinner.setSelection(if (isPm) 1 else 0)
-            hourSpinner.setSelection(hour12 - 1)
-            val dialog = AlertDialog.Builder(requireContext()).setView(v).create()
-            confirmBtn.setOnClickListener {
-                val pm = amPmSpinner.selectedItemPosition == 1
-                val h12 = hourSpinner.selectedItemPosition + 1
-                val h = if (pm) if (h12 == 12) 12 else h12 + 12 else if (h12 == 12) 0 else h12
-                cal.set(Calendar.HOUR_OF_DAY, h)
-                cal.set(Calendar.MINUTE, 0)
-                onConfirm()
-                dialog.dismiss()
+        fun showTimePicker(cal: Calendar, onConfirm: () -> Unit) {
+            val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
+            val dlg = TimePickerDialog(
+                contextWrapper,
+                { _, h, m ->
+                    cal.set(Calendar.HOUR_OF_DAY, h)
+                    cal.set(Calendar.MINUTE, m)
+                    onConfirm()
+                },
+                cal.get(Calendar.HOUR_OF_DAY),
+                cal.get(Calendar.MINUTE),
+                false
+            )
+            dlg.setButton(TimePickerDialog.BUTTON_POSITIVE, "확인", dlg)
+            dlg.setButton(TimePickerDialog.BUTTON_NEGATIVE, "취소", dlg)
+            dlg.setOnShowListener {
+                val colorBlack = ContextCompat.getColor(requireContext(), android.R.color.black)
+                dlg.getButton(TimePickerDialog.BUTTON_POSITIVE).setTextColor(colorBlack)
+                dlg.getButton(TimePickerDialog.BUTTON_NEGATIVE).setTextColor(colorBlack)
             }
-            dialog.show()
+            dlg.show()
         }
-        startTimeBtn.setOnClickListener { showTimeOptionPicker(startCal) { refreshDateTime() } }
+        startTimeBtn.setOnClickListener { showTimePicker(startCal) { refreshDateTime() } }
         endDateBtn.setOnClickListener {
             val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
             val dlg = DatePickerDialog(ctx, { _, y, m, d ->
@@ -213,7 +211,7 @@ class EditPersonalTaskFragment : Fragment() {
             dlg.show()
         }
         endTimeBtn.setOnClickListener {
-            showTimeOptionPicker(endCal) {
+            showTimePicker(endCal) {
                 refreshDateTime()
                 if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && endCal.timeInMillis < startCal.timeInMillis) {
                     startCal.timeInMillis = endCal.timeInMillis
@@ -327,9 +325,10 @@ class EditPersonalTaskFragment : Fragment() {
             scheduleCategory = cat
         )
         DummyRepository.updatePersonalSchedule(updated)
+        DummyRepository.saveSchedulesTo(requireContext())
 
-        // API 호출 (개인 일정 수정)
-        val scheduleId = original.id.removePrefix("p-").toLongOrNull()
+        // API 호출 (개인 일정 수정) - 서버에 저장된 일정만 수정 (id가 p-server-XXX 인 경우)
+        val scheduleId = original.id.removePrefix("p-server-").takeIf { original.id.startsWith("p-server-") }?.toLongOrNull()
         val teams = DummyRepository.getMyTeamSpaceTeams()
         val firstTeamId = teams.firstOrNull()?.id?.toLongOrNull()
         if (scheduleId != null && firstTeamId != null) {
@@ -342,7 +341,7 @@ class EditPersonalTaskFragment : Fragment() {
                         startAt = isoFmt.format(Date(startCal.timeInMillis)),
                         endAt = isoFmt.format(Date(endCal.timeInMillis)),
                         isPrivate = isPrivate,
-                        category = cat
+                        category = if (cat == "없음") "OTHER" else cat
                     ))
                 } catch (_: Exception) { }
             }

@@ -22,6 +22,7 @@ import com.project.unimate.R
 import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.TeamMemberResponse
 import com.project.unimate.network.service.TeamService
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -40,6 +41,22 @@ class TeamSpaceFragment : Fragment() {
     private var selectedDay: Calendar = Calendar.getInstance()
     private var isIntroExpanded = false
     private var isCalendarTeamMode = true // true = 팀, false = 개인
+    private var myRole: String? = null // 서버에서 로드한 내 역할 (LEADER / MEMBER 등)
+    private var membersContainer: LinearLayout? = null
+    private var memberCountView: TextView? = null
+    private var storedTeamColor: Int = android.graphics.Color.GRAY
+
+    override fun onResume() {
+        super.onResume()
+        view?.let { v ->
+            DummyRepository.getTeamById(teamId)?.let { team ->
+                v.findViewById<TextView>(R.id.teamSpaceTeamName)?.text = team.name
+                v.findViewById<TextView>(R.id.teamSpaceIntroTitle)?.text = getString(R.string.team_intro_suffix).let { "${team.name} $it" }
+                v.findViewById<TextView>(R.id.teamSpaceIntroText)?.text = DummyRepository.getTeamIntro(teamId)
+            }
+        }
+        loadMembersFromApi()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,7 +102,13 @@ class TeamSpaceFragment : Fragment() {
         teamSpaceEdit.setOnClickListener {
             findNavController().navigate(R.id.editTeamSpaceFragment, Bundle().apply { putString("teamId", teamId) })
         }
-        teamSpaceShare.setOnClickListener { findNavController().navigate(R.id.action_teamSpace_to_teamShare) }
+        teamSpaceShare.setOnClickListener {
+            val bundle = Bundle().apply {
+                putString("teamId", teamId)
+                putString("myRole", myRole)
+            }
+            findNavController().navigate(R.id.action_teamSpace_to_teamShare, bundle)
+        }
         teamSpaceSelectMeetingDate.setOnClickListener {
             findNavController().navigate(R.id.createTimepickFragment, Bundle().apply { putString("teamId", teamId) })
         }
@@ -94,6 +117,9 @@ class TeamSpaceFragment : Fragment() {
         }
 
         val teamColor = android.graphics.Color.parseColor(team.colorHex)
+        storedTeamColor = teamColor
+        membersContainer = teamSpaceMembersIcons
+        memberCountView = teamSpaceMembersCount
         teamSpaceColorCircle.background = GradientDrawable().apply {
             setColor(teamColor)
             shape = GradientDrawable.OVAL
@@ -118,20 +144,12 @@ class TeamSpaceFragment : Fragment() {
         }
         refreshIntroHeight()
 
-        val members = DummyRepository.getTeamMembers(teamId)
         teamSpaceMembersTitle.text = "함께하는 팀원"
-        teamSpaceMembersCount.text = members.size.toString()
         teamSpaceMembersIcons.removeAllViews()
-        members.forEach { member ->
-            val item = inflater.inflate(R.layout.item_team_space_member, teamSpaceMembersIcons, false)
-            val card = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
-            card.strokeColor = teamColor
-            val resId = resources.getIdentifier(member.iconResName, "drawable", requireContext().packageName)
-            if (resId != 0) item.findViewById<ImageView>(R.id.teamMemberIcon).setImageResource(resId)
-            item.findViewById<TextView>(R.id.teamMemberName).text = member.name
-            item.findViewById<TextView>(R.id.teamMemberName).setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
-            teamSpaceMembersIcons.addView(item)
-        }
+        // 더미 팀원 즉시 렌더링 (서버 응답 전에도 목록이 보이도록)
+        val initialMembers = DummyRepository.getTeamMembers(teamId)
+        teamSpaceMembersCount.text = initialMembers.size.toString()
+        renderMembers(initialMembers)
 
         val scheduleCount = DummyRepository.getTeamScheduleCount(teamId)
         teamSpaceScheduleCount.text = scheduleCount.toString()
@@ -175,6 +193,7 @@ class TeamSpaceFragment : Fragment() {
             checkBtn.setOnClickListener {
                 if (isPersonal) DummyRepository.setPersonalChecked(id, !isChecked)
                 else DummyRepository.setTaskChecked(id, !isChecked)
+                DummyRepository.saveSchedulesTo(requireContext())
                 onRefresh()
             }
             val lockBtn = taskRow.findViewById<ImageButton>(R.id.taskLock)
@@ -183,6 +202,7 @@ class TeamSpaceFragment : Fragment() {
                 lockBtn.setImageResource(if (isLocked) R.drawable.ic_personal_lock else R.drawable.ic_personal_unlock)
                 lockBtn.setOnClickListener {
                     DummyRepository.setPersonalLocked(id, !isLocked)
+                    DummyRepository.saveSchedulesTo(requireContext())
                     onRefresh()
                 }
             } else {
@@ -375,6 +395,12 @@ class TeamSpaceFragment : Fragment() {
         return root
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        membersContainer = null
+        memberCountView = null
+    }
+
     private fun loadTeamDetailFromApi() {
         val ctx = context ?: return
         val numericTeamId = teamId.toLongOrNull() ?: return
@@ -383,13 +409,76 @@ class TeamSpaceFragment : Fragment() {
                 val service = RetrofitClient.create<TeamService>(ctx)
                 val response = service.getTeamDetail(numericTeamId)
                 if (response.isSuccessful) {
-                    // API 데이터 로드 성공 (향후 UI 갱신에 활용 가능)
                     val detail = response.body()
-                    android.util.Log.d("TeamSpaceFragment", "API 팀 상세 로드 성공: ${detail?.team?.name}")
+                    myRole = detail?.myRole
+                    android.util.Log.d("TeamSpaceFragment", "API 팀 상세 로드 성공: ${detail?.team?.name}, myRole=$myRole")
                 }
             } catch (_: Exception) {
                 // API 실패 시 더미 데이터 유지
             }
+        }
+    }
+
+    private fun loadMembersFromApi() {
+        val numericTeamId = teamId.toLongOrNull() ?: run {
+            android.util.Log.w("TeamSpace", "팀원 로드 건너뜀 — 로컬 teamId: $teamId")
+            return
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<TeamService>(requireContext())
+                val resp = service.getMembers(numericTeamId)
+                android.util.Log.d("TeamSpace", "getMembers 응답: ${resp.code()}, teamId=$numericTeamId")
+                if (resp.isSuccessful) {
+                    val raw = resp.body() ?: emptyList()
+                    android.util.Log.d("TeamSpace", "팀원 수: ${raw.size}")
+                    val serverMembers = raw.map { m ->
+                        TeamMember(
+                            id = "server-${m.userId ?: m.nickname.hashCode()}",
+                            name = m.nickname ?: "팀원",
+                            iconResName = "ic_user"
+                        )
+                    }
+                    DummyRepository.cacheServerMembers(teamId, serverMembers)
+                    renderMembers(DummyRepository.getTeamMembers(teamId))
+                } else {
+                    val errorBody = resp.errorBody()?.string() ?: ""
+                    android.util.Log.e("TeamSpace", "getMembers 실패: ${resp.code()} | $errorBody")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("TeamSpace", "getMembers 예외: ${e.message}")
+            }
+        }
+    }
+
+    private fun renderMembers(members: List<TeamMember>) {
+        if (!isAdded) return
+        val container = membersContainer ?: return
+        val countView = memberCountView ?: return
+        val lInflater = layoutInflater
+
+        countView.text = members.size.toString()
+        container.removeAllViews()
+
+        if (members.isEmpty()) {
+            val emptyTv = TextView(requireContext()).apply {
+                text = "아직 참여한 팀원이 없습니다."
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.gray06))
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f)
+            }
+            container.addView(emptyTv)
+            return
+        }
+
+        members.forEach { member ->
+            val item = lInflater.inflate(R.layout.item_team_space_member, container, false)
+            val card = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
+            card.strokeColor = storedTeamColor
+            item.findViewById<TextView>(R.id.teamMemberName).apply {
+                text = member.name
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
+            }
+            container.addView(item)
         }
     }
 }
