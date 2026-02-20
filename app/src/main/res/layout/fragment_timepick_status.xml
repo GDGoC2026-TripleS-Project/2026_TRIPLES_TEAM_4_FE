@@ -149,9 +149,10 @@
 
             <Button
                 android:id="@+id/timepickStatusEditTime"
-                android:layout_width="380dp"
-                android:layout_height="50dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="24dp"
                 app:cornerRadius="8dp"
                 android:backgroundTint="@color/gray03"

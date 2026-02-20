@@ -220,7 +220,7 @@ class TimepickResultFragment : Fragment() {
         refreshGrid()
 
         back.setOnClickListener {
-            findNavController().popBackStack(R.id.createTimepickFragment, true)
+            findNavController().navigateUp()
         }
         confirmBtn.setOnClickListener {
             TimepickStateHolder.confirmedIntersection = intersectionCells
