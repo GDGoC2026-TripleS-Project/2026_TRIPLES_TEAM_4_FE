@@ -115,6 +115,13 @@ class NotificationApi(
 
     private fun parseServerItem(obj: JSONObject): NotificationServerItem {
         val isRead = if (obj.has("isRead")) obj.optBoolean("isRead", false) else obj.optBoolean("read", false)
+        val processedAt = if (obj.has("processedAt") && !obj.isNull("processedAt")) obj.optString("processedAt") else null
+        val meetingNavigationTarget =
+            if (obj.has("meetingNavigationTarget") && !obj.isNull("meetingNavigationTarget")) {
+                obj.optString("meetingNavigationTarget")
+            } else {
+                null
+            }
 
         return NotificationServerItem(
             notificationId = obj.optLong("id", -1L).takeIf { it > 0 } ?: obj.optLong("notificationId", -1L),
@@ -128,7 +135,9 @@ class NotificationApi(
             isRead = isRead,
             action = obj.optBoolean("action", false),
             actionDone = obj.optBoolean("actionDone", false),
-            processedAt = obj.optString("processedAt", null)
+            processedAt = processedAt,
+            meetingPollId = obj.optLong("meetingPollId", -1L).takeIf { it > 0 },
+            meetingNavigationTarget = meetingNavigationTarget
         )
     }
 

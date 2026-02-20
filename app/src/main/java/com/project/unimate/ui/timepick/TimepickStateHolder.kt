@@ -7,8 +7,17 @@ import java.util.Calendar
  * 뒤로가기 시 이전 화면 상태 복원에 사용.
  */
 object TimepickStateHolder {
+    data class PollMember(
+        val memberId: Long,
+        val name: String
+    )
+
     var teamId: String = ""
     var pollId: Long? = null
+    var pollStatus: String? = null
+    var pollMembers: List<PollMember> = emptyList()
+    var pollSelectionsByMember: Map<Long, Set<Pair<Int, Int>>> = emptyMap()
+    var pollIntersectionCells: Set<Pair<Int, Int>> = emptySet()
 
     /** 선택된 날짜 (각 날짜의 00:00 기준 millis) */
     val selectedDates: MutableSet<Long> = mutableSetOf()
@@ -32,6 +41,10 @@ object TimepickStateHolder {
     fun clear() {
         teamId = ""
         pollId = null
+        pollStatus = null
+        pollMembers = emptyList()
+        pollSelectionsByMember = emptyMap()
+        pollIntersectionCells = emptySet()
         selectedDates.clear()
         dateTimeRanges.clear()
         selectTimeSelected.clear()

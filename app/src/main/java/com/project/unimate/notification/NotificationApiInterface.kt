@@ -23,7 +23,9 @@ data class NotificationServerItem(
     val isRead: Boolean?,
     val action: Boolean?,
     val actionDone: Boolean?,
-    val processedAt: String?
+    val processedAt: String?,
+    val meetingPollId: Long?,
+    val meetingNavigationTarget: String?
 ) {
     fun toNotificationItem(): NotificationItem {
         return NotificationItem(
@@ -38,7 +40,9 @@ data class NotificationServerItem(
             isRead = this.isRead ?: false,
             action = this.action ?: false,
             actionDone = this.actionDone ?: false,
-            processedAt = this.processedAt
+            processedAt = this.processedAt,
+            meetingPollId = this.meetingPollId,
+            meetingNavigationTarget = this.meetingNavigationTarget
         )
     }
 }

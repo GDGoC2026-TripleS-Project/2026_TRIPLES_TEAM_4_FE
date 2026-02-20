@@ -17,7 +17,9 @@ data class NotificationItem(
     val isRead: Boolean,
     val action: Boolean,
     val actionDone: Boolean,
-    val processedAt: String?
+    val processedAt: String?,
+    val meetingPollId: Long? = null,
+    val meetingNavigationTarget: String? = null
 ) {
     fun createdAtMillis(): Long {
         val text = createdAt.trim()
@@ -79,7 +81,9 @@ data class NotificationItem(
                 isRead = false,
                 action = action,
                 actionDone = false,
-                processedAt = null
+                processedAt = null,
+                meetingPollId = data["meetingPollId"]?.toLongOrNull(),
+                meetingNavigationTarget = data["meetingNavigationTarget"]
             )
         }
 

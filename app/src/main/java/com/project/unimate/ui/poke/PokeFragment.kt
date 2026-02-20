@@ -85,6 +85,12 @@ class PokeFragment : Fragment() {
                 val service = RetrofitClient.create<PokeService>(ctx)
                 val response = service.getTargets()
                 val apiTeams = if (response.isSuccessful) response.body()?.teams ?: emptyList() else emptyList()
+                Log.d(
+                    "PokeFragment",
+                    "targets status=${response.code()} apiTeams=${apiTeams.size} membersPerTeam=${
+                        apiTeams.joinToString { "${it.teamName}:${it.members?.size ?: 0}" }
+                    }"
+                )
                 val pokeList = buildListMerged(apiTeams)
                 if (isAdded) {
                     pokeAdapter.submitList(pokeList)
@@ -108,7 +114,7 @@ class PokeFragment : Fragment() {
      */
     private fun buildListMerged(apiTeams: List<PokeTeamSection>): List<PokeData> {
         val result = mutableListOf<PokeData>()
-        val currentUserName = DummyRepository.getCurrentUserName()
+        val currentUserName = DummyRepository.getCurrentUserName().trim()
         val apiByTeamId = apiTeams.associate { (it.teamId?.toString() ?: "") to it }
         val apiByTeamName = apiTeams.associateBy { it.teamName ?: "" }
         val localTeamIds = DummyRepository.getMyTeamSpaceTeams().map { it.id }.toSet()
@@ -117,6 +123,18 @@ class PokeFragment : Fragment() {
 
         fun localTeamIdToLong(teamIdStr: String): Long =
             -abs(teamIdStr.hashCode().toLong()).let { if (it == Long.MIN_VALUE) -1L else it }
+
+        fun localMembers(teamId: String): List<Pair<Long, String>> {
+            return DummyRepository.getTeamMembers(teamId)
+                .filter { it.id != "me" && it.name.trim() != currentUserName }
+                .mapIndexed { i, tm -> (syntheticUserId + i) to tm.name }
+                .also { syntheticUserId += it.size }
+        }
+
+        fun displayName(userId: Long, nickname: String?): String {
+            val nick = nickname?.trim().orEmpty()
+            return if (nick.isBlank()) "사용자 $userId" else nick
+        }
 
         DummyRepository.getMyTeamSpaceTeams().forEach { team ->
             val teamIdStr = team.id
@@ -127,14 +145,17 @@ class PokeFragment : Fragment() {
             val effectiveTeamId = apiSection?.teamId?.let { it } ?: localTeamIdLong
 
             val members: List<Pair<Long, String>> = if (apiSection != null) {
-                apiSection.members
-                    ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> id to nick } } }
+                val apiMembers = apiSection.members
+                    ?.mapNotNull { m ->
+                        m.userId?.let { id ->
+                            val name = displayName(id, m.nickname)
+                            if (name == currentUserName) null else (id to name)
+                        }
+                    }
                     ?.distinctBy { it.first } ?: emptyList()
+                if (apiMembers.isNotEmpty()) apiMembers else localMembers(team.id)
             } else {
-                DummyRepository.getTeamMembers(team.id)
-                    .filter { it.id != "me" && it.name != currentUserName }
-                    .mapIndexed { i, tm -> (syntheticUserId + i) to tm.name }
-                    .also { syntheticUserId += it.size }
+                localMembers(team.id)
             }
 
             result.add(PokeData.Header(teamId = effectiveTeamId, title = teamName, teamColor = teamColor))
@@ -165,7 +186,12 @@ class PokeFragment : Fragment() {
             val teamColor = DummyRepository.getTeamById(teamIdStr)?.colorHex?.takeIf { it.isNotBlank() } ?: "#90A3ED"
             result.add(PokeData.Header(teamId = teamId, title = teamName, teamColor = teamColor))
             val others = teamSection.members
-                ?.mapNotNull { m -> m.userId?.let { id -> m.nickname?.takeIf { it != currentUserName }?.let { nick -> id to nick } } }
+                ?.mapNotNull { m ->
+                    m.userId?.let { id ->
+                        val name = displayName(id, m.nickname)
+                        if (name == currentUserName) null else (id to name)
+                    }
+                }
                 ?.distinctBy { it.first } ?: emptyList()
             if (others.isEmpty()) {
                 result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.unimate.R
@@ -12,7 +13,9 @@ import com.project.unimate.notification.NotificationApi
 import com.project.unimate.notification.NotificationItem
 import com.project.unimate.notification.NotificationStore
 import com.project.unimate.ui.alarm.NotificationAdapter
+import com.project.unimate.ui.timepick.TimepickPollSync
 import com.project.unimate.ui.timepick.TimepickStateHolder
+import kotlinx.coroutines.launch
 
 class NotificationFragment : Fragment() {
 
@@ -39,7 +42,6 @@ class NotificationFragment : Fragment() {
                         requireActivity().runOnUiThread {
                             NotificationStore.upsert(requireContext(), updated)
                             onResult(updated)
-                            navigateByNotification(updated)
                         }
                     }
                 }
@@ -53,12 +55,12 @@ class NotificationFragment : Fragment() {
                             val updated = item.copy(isRead = true)
                             NotificationStore.upsert(requireContext(), updated)
                             onResult(updated)
-                            navigateByNotification(updated)
-                        } else {
-                            navigateByNotification(item)
                         }
                     }
                 }
+            },
+            onMeetingNavigated = { item ->
+                navigateByNotification(item)
             }
         )
         recyclerView.adapter = adapter
@@ -110,10 +112,39 @@ class NotificationFragment : Fragment() {
         if (teamId.isNotBlank()) {
             TimepickStateHolder.teamId = teamId
         }
-        findNavController().navigate(
-            R.id.editTimepickFragment,
-            Bundle().apply { putString("taskId", "") }
-        )
+        val pollId = item.meetingPollId
+        val target = item.meetingNavigationTarget
+
+        if (pollId != null && pollId > 0) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                if (!isAdded) return@launch
+                TimepickPollSync.refreshFromServer(requireContext(), pollId)
+                if (!isAdded) return@launch
+                navigateToMeetingScreen(target, item)
+            }
+            return
+        }
+        navigateToMeetingScreen(target, item)
+    }
+
+    private fun navigateToMeetingScreen(target: String?, item: NotificationItem) {
+        val normalized = target?.trim()?.uppercase()
+        val destination = when (normalized) {
+            "TIMEPICK_STATUS" -> R.id.timepickStatusFragment
+            "TIMEPICK_RESULT" -> R.id.timepickResultFragment
+            "EDIT_TIMEPICK" -> R.id.editTimepickFragment
+            else -> if (item.action && !item.actionDone) R.id.timepickStatusFragment else R.id.editTimepickFragment
+        }
+        runCatching {
+            if (destination == R.id.editTimepickFragment) {
+                findNavController().navigate(
+                    destination,
+                    Bundle().apply { putString("taskId", "") }
+                )
+            } else {
+                findNavController().navigate(destination)
+            }
+        }
     }
 
     private fun isTimepickNotification(item: NotificationItem): Boolean {
