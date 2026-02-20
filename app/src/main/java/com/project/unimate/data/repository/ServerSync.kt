@@ -199,7 +199,7 @@ object ServerSync {
             id = id.toString(),
             name = r.name ?: "",
             colorHex = r.colorHex ?: r.color ?: "#cccccc",
-            imageResName = "",
+            imageResName = r.imageUrl?.takeIf { it.isNotBlank() } ?: "",
             isCompleted = completed,
             memberCount = (r.memberCount ?: 0).toInt(),
             deadlineDays = null,

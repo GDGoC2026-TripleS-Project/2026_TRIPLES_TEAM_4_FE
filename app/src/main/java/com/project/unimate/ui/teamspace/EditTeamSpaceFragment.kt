@@ -36,13 +36,17 @@ import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.data.repository.PendingCompletionPopupStore
+import com.project.unimate.data.repository.SyncManager
 import com.project.unimate.data.repository.SeedTeamOverridesStore
 import com.project.unimate.data.repository.TeamImageStore
 import com.project.unimate.data.repository.TeamNameStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamUpdateRequest
 import com.project.unimate.network.service.TeamService
+import com.project.unimate.utils.ProfileImageLoader
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -61,18 +65,30 @@ class EditTeamSpaceFragment : Fragment() {
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val imageUri = result.data?.data ?: return@registerForActivityResult
-            val tid = teamId ?: return@registerForActivityResult
-            view?.findViewById<ImageView>(R.id.editTeamSpaceUserIcon)?.apply {
-                setImageURI(imageUri)
-                scaleType = ImageView.ScaleType.CENTER_CROP
-                setBackgroundColor(Color.TRANSPARENT)
-            }
-            view?.findViewById<TextView>(R.id.editTeamSpaceUserIconLetter)?.visibility = View.GONE
-            val saved = saveTeamImageToFile(imageUri, tid)
-            if (saved.isNotEmpty()) selectedTeamImageResName = saved
+        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val imageUri = result.data?.data ?: return@registerForActivityResult
+        val tid = teamId ?: return@registerForActivityResult
+        val team = DummyRepository.getTeamById(tid) ?: return@registerForActivityResult
+        view?.findViewById<ImageView>(R.id.editTeamSpaceUserIcon)?.apply {
+            setImageURI(imageUri)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setBackgroundColor(Color.TRANSPARENT)
         }
+        view?.findViewById<TextView>(R.id.editTeamSpaceUserIconLetter)?.visibility = View.GONE
+        val saved = saveTeamImageToFile(imageUri, tid)
+        if (saved.isEmpty()) return@registerForActivityResult
+        selectedTeamImageResName = saved
+        TeamImageStore.save(requireContext(), tid, saved)
+        DummyRepository.updateTeam(
+            teamId = tid,
+            name = team.name,
+            intro = team.intro,
+            workStartMillis = team.workStartMillis,
+            workEndMillis = team.workEndMillis,
+            setCompleted = team.isCompleted,
+            completedAtMillis = team.completedAtMillis,
+            imageResName = saved
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +146,10 @@ class EditTeamSpaceFragment : Fragment() {
                     userIconLetter.text = team.name.firstOrNull()?.toString() ?: ""
                     userIconLetter.visibility = View.VISIBLE
                 }
+            }
+            team.imageResName.startsWith("http://") || team.imageResName.startsWith("https://") -> {
+                ProfileImageLoader.load(userIcon, team.imageResName, requireContext())
+                userIconLetter.visibility = View.GONE
             }
             team.imageResName.isNotBlank() -> {
                 val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
@@ -306,27 +326,43 @@ class EditTeamSpaceFragment : Fragment() {
             if (DummyRepository.getSeedTeams().any { it.id == team.id }) {
                 SeedTeamOverridesStore.save(requireContext(), team.id, effectivelyEnded, workEnd, workStart)
             }
-            // API 호출 (팀 정보 수정)
+            // API 호출 (팀 정보 수정, 종료 상태 포함) 후 서버 동기화하고 화면 전환
             val numericId = team.id.toLongOrNull()
+            fun navigateAfterSave() {
+                if (effectivelyEnded && !team.isCompleted) {
+                    PendingCompletionPopupStore.add(requireContext(), team.id)
+                    showTeamEndDialog(team.id)
+                } else {
+                    findNavController().popBackStack()
+                }
+            }
             if (numericId != null) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
-                        val service = RetrofitClient.create<TeamService>(requireContext())
+                        val ctx = requireContext()
+                        val imageUrlToSend: String? = if (imageResNameToSave.startsWith("http://") || imageResNameToSave.startsWith("https://")) imageResNameToSave else null
+                        val service = RetrofitClient.create<TeamService>(ctx)
                         val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                        service.updateTeam(numericId, TeamUpdateRequest(
+                        val endAtForApi = if (effectivelyEnded && workEnd > now) isoFmt.format(Date(now)) else isoFmt.format(Date(workEnd))
+                        val resp = service.updateTeam(numericId, TeamUpdateRequest(
                             name = name,
                             description = intro.ifBlank { null },
                             startAt = isoFmt.format(Date(workStart)),
-                            endAt = isoFmt.format(Date(workEnd))
+                            endAt = endAtForApi,
+                            completed = effectivelyEnded,
+                            isCompleted = effectivelyEnded,
+                            imageUrl = imageUrlToSend
                         ))
-                    } catch (_: Exception) { }
+                        if (resp.isSuccessful) {
+                            SyncManager.syncAllDataFromServer(ctx)
+                        }
+                        withContext(Dispatchers.Main) { navigateAfterSave() }
+                    } catch (_: Exception) {
+                        withContext(Dispatchers.Main) { navigateAfterSave() }
+                    }
                 }
-            }
-            if (effectivelyEnded && !team.isCompleted) {
-                PendingCompletionPopupStore.add(requireContext(), team.id)
-                showTeamEndDialog(team.id)
             } else {
-                findNavController().popBackStack()
+                navigateAfterSave()
             }
         }
 

@@ -25,6 +25,7 @@ import com.project.unimate.network.dto.HomeSummaryResponse
 import com.project.unimate.network.dto.TeamSummaryResponse
 import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.service.HomeService
+import com.project.unimate.utils.ProfileImageLoader
 import com.project.unimate.network.service.TeamScheduleService
 import com.project.unimate.network.service.TeamService
 import com.project.unimate.network.service.UserService
@@ -404,6 +405,11 @@ class HomeFragment : Fragment() {
                         iconLetter.text = team.name.firstOrNull()?.toString() ?: ""
                         iconLetter.setBackgroundColor(Color.parseColor(team.colorHex))
                     }
+                }
+                team.imageResName.startsWith("http://") || team.imageResName.startsWith("https://") -> {
+                    iconImage.visibility = View.VISIBLE
+                    ProfileImageLoader.load(iconImage, team.imageResName, requireContext())
+                    iconLetter.visibility = View.GONE
                 }
                 team.imageResName.isNotBlank() -> {
                     val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)

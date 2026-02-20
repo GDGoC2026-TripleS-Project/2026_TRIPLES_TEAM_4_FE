@@ -19,12 +19,14 @@ import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.data.repository.SeedTeamOverridesStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamSummaryResponse
 import com.project.unimate.network.service.AuthService
 import com.project.unimate.network.service.MyPageService
 import com.project.unimate.network.service.TeamService
+import com.project.unimate.utils.ProfileImageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,7 +53,7 @@ class MyPageFragment : Fragment() {
 
         mypageUserName.text = DummyRepository.getCurrentUserName()
         mypageUserEmail.text = "juyenLe24@naver.com"
-        applyUserProfileImage(mypageUserIcon, DummyRepository.getCurrentUserProfileImageResName())
+        ProfileImageLoader.load(mypageUserIcon, DummyRepository.getCurrentUserProfileImageResName(), requireContext())
 
         mypageProfileEdit.setOnClickListener {
             findNavController().navigate(R.id.action_myPage_to_editProfile)
@@ -63,13 +65,13 @@ class MyPageFragment : Fragment() {
 
         bindTeamLists(layoutInflater, mypageParticipatingContainer, mypageCompletedContainer)
 
-        // API에서 마이페이지 정보 로드
-        loadMyPageFromApi(mypageUserName, mypageUserEmail)
+        // API에서 마이페이지 정보 로드 (닉네임·이메일·프로필 이미지)
+        loadMyPageFromApi(mypageUserName, mypageUserEmail, mypageUserIcon)
 
         return root
     }
 
-    private fun loadMyPageFromApi(nameView: TextView, emailView: TextView) {
+    private fun loadMyPageFromApi(nameView: TextView, emailView: TextView, imageView: ImageView) {
         val ctx = context ?: return
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -78,13 +80,21 @@ class MyPageFragment : Fragment() {
                 if (response.isSuccessful) {
                     val summary = response.body() ?: return@launch
                     summary.profile?.let { profile ->
-                        profile.nickname?.let { nick ->
-                            withContext(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
+                            profile.nickname?.let { nick ->
                                 nameView.text = nick
                                 DummyRepository.setCurrentUserName(nick)
                             }
+                            profile.email?.let { emailView.text = it }
+                            // 프로필 사진: 로컬에 저장된 값이 없을 때만 API URL로 표시·저장 (저장 직후 API 미갱신이어도 로컬 값 유지)
+                            val currentRef = DummyRepository.getCurrentUserProfileImageResName()
+                            if (currentRef.isNullOrBlank() && !profile.profileImageUrl.isNullOrBlank()) {
+                                val url = profile.profileImageUrl
+                                DummyRepository.setCurrentUserProfileImageResName(url)
+                                ProfileImageStore.save(ctx, url)
+                                ProfileImageLoader.load(imageView, url, ctx)
+                            }
                         }
-                        profile.email?.let { emailView.text = it }
                     }
                 }
             } catch (_: Exception) {
@@ -96,12 +106,18 @@ class MyPageFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         view?.let { v ->
+            val nameView = v.findViewById<TextView>(R.id.mypageUserName)
+            val emailView = v.findViewById<TextView>(R.id.mypageUserEmail)
+            val imageView = v.findViewById<ImageView>(R.id.mypageUserIcon)
+            if (nameView != null && emailView != null && imageView != null) {
+                loadMyPageFromApi(nameView, emailView, imageView)
+            }
             lifecycleScope.launch {
                 syncTeamsFromServerIfNeeded()
                 withContext(Dispatchers.Main) {
-                    v.findViewById<TextView>(R.id.mypageUserName)?.text = DummyRepository.getCurrentUserName()
-                    v.findViewById<ImageView>(R.id.mypageUserIcon)?.let { iv ->
-                        applyUserProfileImage(iv, DummyRepository.getCurrentUserProfileImageResName())
+                    nameView?.text = DummyRepository.getCurrentUserName()
+                    imageView?.let { iv ->
+                        ProfileImageLoader.load(iv, DummyRepository.getCurrentUserProfileImageResName(), requireContext())
                     }
                     val participating = v.findViewById<LinearLayout>(R.id.mypageParticipatingContainer)
                     val completed = v.findViewById<LinearLayout>(R.id.mypageCompletedContainer)
@@ -222,6 +238,10 @@ class MyPageFragment : Fragment() {
                         teamLetter.visibility = View.VISIBLE
                     }
                 }
+                team.imageResName.startsWith("http://") || team.imageResName.startsWith("https://") -> {
+                    ProfileImageLoader.load(teamImage, team.imageResName, requireContext())
+                    teamLetter.visibility = View.GONE
+                }
                 team.imageResName.isNotBlank() -> {
                     val resId = resources.getIdentifier(team.imageResName, "drawable", requireContext().packageName)
                     if (resId != 0) {
@@ -244,36 +264,6 @@ class MyPageFragment : Fragment() {
             }
             item.findViewById<TextView>(R.id.completedTeamName).text = team.name
             mypageCompletedContainer.addView(item)
-        }
-    }
-
-    private fun applyUserProfileImage(imageView: ImageView, imageResName: String) {
-        when {
-            imageResName.startsWith("file:") -> {
-                val file = java.io.File(requireContext().filesDir, imageResName.removePrefix("file:"))
-                if (file.exists()) {
-                    android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.let {
-                        imageView.setImageBitmap(it)
-                        imageView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-                    }
-                } else {
-                    imageView.setImageResource(com.project.unimate.R.drawable.ic_user)
-                    imageView.scaleType = ImageView.ScaleType.CENTER_INSIDE
-                }
-            }
-            imageResName.isNotBlank() -> {
-                val resId = resources.getIdentifier(imageResName, "drawable", requireContext().packageName)
-                if (resId != 0) {
-                    imageView.setImageResource(resId)
-                    imageView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                    imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-                }
-            }
-            else -> {
-                imageView.setImageResource(com.project.unimate.R.drawable.ic_user)
-                imageView.scaleType = ImageView.ScaleType.CENTER_INSIDE
-            }
         }
     }
 

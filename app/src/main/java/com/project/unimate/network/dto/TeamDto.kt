@@ -22,7 +22,10 @@ data class TeamUpdateRequest(
     val name: String? = null,
     val description: String? = null,
     val startAt: String? = null,
-    val endAt: String? = null
+    val endAt: String? = null,
+    val completed: Boolean? = null,
+    val isCompleted: Boolean? = null,
+    val imageUrl: String? = null
 )
 
 data class TeamJoinRequest(
@@ -59,7 +62,8 @@ data class TeamSummaryResponse(
     val createdAt: String?,
     val updatedAt: String?,
     val completed: Boolean?,
-    val isCompleted: Boolean?
+    val isCompleted: Boolean?,
+    val imageUrl: String? = null
 )
 
 /** GET /api/teams 응답: 배열 [] 또는 { "content"/"data"/"teams": [] } 둘 다 파싱 */
