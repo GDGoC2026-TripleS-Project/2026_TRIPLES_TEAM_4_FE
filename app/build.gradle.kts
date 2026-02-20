@@ -17,6 +17,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val googleWebClientId =
+            (project.findProperty("GOOGLE_WEB_CLIENT_ID") as String?)
+                ?: System.getenv("GOOGLE_WEB_CLIENT_ID")
+                ?: ""
+        resValue("string", "google_web_client_id", googleWebClientId)
     }
 
     buildTypes {
@@ -74,6 +80,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
