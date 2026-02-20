@@ -15,6 +15,7 @@ import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.SchedulePollCreateRequest
+import com.project.unimate.network.dto.SchedulePollVoteUpsertRequest
 import com.project.unimate.network.service.SchedulePollService
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -161,8 +162,19 @@ class SelectTimeFragment : Fragment() {
                                 )
                             )
                             if (response.isSuccessful) {
-                                TimepickStateHolder.pollId = response.body()?.pollId
-                                findNavController().navigate(R.id.timepickStatusFragment)
+                                val pollId = response.body()?.pollId
+                                if (pollId != null && pollId > 0) {
+                                    TimepickStateHolder.pollId = pollId
+                                    val saved = upsertMyVote(service, pollId, grid.selectedCells)
+                                    if (!saved) {
+                                        Toast.makeText(requireContext(), "선택 시간 저장에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                                        return@launch
+                                    }
+                                    TimepickPollSync.refreshFromServer(requireContext(), pollId)
+                                    findNavController().navigate(R.id.timepickStatusFragment)
+                                } else {
+                                    Toast.makeText(requireContext(), "모이기 생성에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                                }
                             } else {
                                 Toast.makeText(requireContext(), "모이기 생성에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
                             }
@@ -173,9 +185,71 @@ class SelectTimeFragment : Fragment() {
                     return@setOnClickListener
                 }
             }
-            findNavController().navigate(R.id.timepickStatusFragment)
+            val pollId = TimepickStateHolder.pollId
+            if (pollId != null && pollId > 0) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        val service = RetrofitClient.create<SchedulePollService>(requireContext())
+                        val saved = upsertMyVote(service, pollId, grid.selectedCells)
+                        if (!saved) {
+                            Toast.makeText(requireContext(), "선택 시간 저장에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                        TimepickPollSync.refreshFromServer(requireContext(), pollId)
+                        findNavController().navigate(R.id.timepickStatusFragment)
+                    } catch (_: Exception) {
+                        Toast.makeText(requireContext(), "선택 시간 저장에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                findNavController().navigate(R.id.timepickStatusFragment)
+            }
         }
 
         return root
+    }
+
+    private suspend fun upsertMyVote(
+        service: SchedulePollService,
+        pollId: Long,
+        selectedCells: Set<Pair<Int, Int>>
+    ): Boolean {
+        val detailResp = service.getDetail(pollId)
+        if (!detailResp.isSuccessful) return false
+        val detail = detailResp.body() ?: return false
+
+        val dateOrder = detail.dates.orEmpty().mapIndexed { index, date -> date to index }.toMap()
+        val startHour = parseHour(detail.startTime) ?: TimepickStateHolder.globalStartHour
+
+        val slotIds = detail.slotDefinitions.orEmpty()
+            .mapNotNull { slot ->
+                val slotId = slot.slotId ?: return@mapNotNull null
+                val date = slot.date ?: return@mapNotNull null
+                val dayIndex = dateOrder[date] ?: return@mapNotNull null
+                val hour = parseHour(slot.startTime) ?: return@mapNotNull null
+                val minute = parseMinute(slot.startTime) ?: 0
+                val slotIndex = (hour - startHour) * 2 + if (minute >= 30) 1 else 0
+                if ((dayIndex to slotIndex) in selectedCells) slotId else null
+            }
+            .distinct()
+            .sorted()
+
+        val voteResp = service.upsertMyVote(
+            pollId,
+            SchedulePollVoteUpsertRequest(slots = slotIds)
+        )
+        return voteResp.isSuccessful
+    }
+
+    private fun parseHour(text: String?): Int? {
+        val t = text?.trim().orEmpty()
+        if (!t.contains(":")) return null
+        return t.substringBefore(":").toIntOrNull()
+    }
+
+    private fun parseMinute(text: String?): Int? {
+        val t = text?.trim().orEmpty()
+        if (!t.contains(":")) return null
+        return t.substringAfter(":").take(2).toIntOrNull()
     }
 }

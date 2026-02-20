@@ -18,14 +18,12 @@ import com.project.unimate.R
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
-import com.project.unimate.network.dto.SchedulePollCreateRequest
-import com.project.unimate.network.service.SchedulePollService
+import com.project.unimate.network.dto.TeamScheduleCreateRequest
+import com.project.unimate.network.service.TeamScheduleService
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
-import java.time.ZoneId
 
 class EditTimepickFragment : Fragment() {
 
@@ -227,11 +225,10 @@ class EditTimepickFragment : Fragment() {
             }
         }
 
-        cancelBtn.setOnClickListener {
-            findNavController().popBackStack(R.id.createTimepickFragment, true)
-        }
+        cancelBtn.setOnClickListener { closeAfterEdit() }
         saveBtn.setOnClickListener {
             val title = scheduleName.text.toString().ifBlank { "${team?.name ?: ""} 회의" }
+            val notificationLabel = notificationBtn.text?.toString().orEmpty()
             if (existingTask != null) {
                 val updated = existingTask.copy(
                     title = title,
@@ -241,50 +238,107 @@ class EditTimepickFragment : Fragment() {
                 )
                 DummyRepository.updateTask(updated)
                 DummyRepository.saveSchedulesTo(requireContext())
+                closeAfterEdit()
             } else if (teamId.isNotEmpty()) {
-                val task = TaskItem(
-                    id = "timepick-${teamId}-${System.currentTimeMillis()}",
-                    teamId = teamId,
-                    title = title,
-                    date = editStartCalendar,
-                    startTimeMillis = editStartCalendar.timeInMillis,
-                    endTimeMillis = editEndCalendar.timeInMillis,
-                    isChecked = false,
-                    creatorName = null
-                )
-                DummyRepository.addTask(task)
-                DummyRepository.saveSchedulesTo(requireContext())
-
-                // API 호출 (시간 조율 투표 생성)
                 val numericTeamId = teamId.toLongOrNull()
-                if (numericTeamId != null && TimepickStateHolder.pollId == null) {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        try {
-                            val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val timeFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
-                            val dates = TimepickStateHolder.displayDates.map { dateFmt.format(Date(it)) }
-                            val timezone = ZoneId.systemDefault().id
-                            val service = RetrofitClient.create<SchedulePollService>(requireContext())
-                            val response = service.create(SchedulePollCreateRequest(
-                                teamId = numericTeamId,
-                                dates = dates,
-                                startTime = timeFmt.format(Date(editStartCalendar.timeInMillis)),
-                                endTime = timeFmt.format(Date(editEndCalendar.timeInMillis)),
-                                timezone = timezone,
-                                title = title,
-                                slotMinutes = 30
-                            ))
-                            if (response.isSuccessful) {
-                                TimepickStateHolder.pollId = response.body()?.pollId
-                            }
-                        } catch (_: Exception) { }
-                    }
+                if (numericTeamId == null) {
+                    val task = TaskItem(
+                        id = "timepick-${teamId}-${System.currentTimeMillis()}",
+                        teamId = teamId,
+                        title = title,
+                        date = editStartCalendar,
+                        startTimeMillis = editStartCalendar.timeInMillis,
+                        endTimeMillis = editEndCalendar.timeInMillis,
+                        isChecked = false,
+                        creatorName = null,
+                        notificationCategory = notificationLabel.ifBlank { "없음" }
+                    )
+                    DummyRepository.addTask(task)
+                    DummyRepository.saveSchedulesTo(requireContext())
+                    closeAfterEdit()
+                    return@setOnClickListener
                 }
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val serverId = createTeamScheduleOnServer(
+                        teamId = numericTeamId,
+                        title = title,
+                        alarmMinutes = alarmMinutesFromLabel(notificationLabel)
+                    )
+                    if (serverId == null) {
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            "일정 저장에 실패했어요. 다시 시도해주세요.",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                        return@launch
+                    }
+
+                    val task = TaskItem(
+                        id = "t-${teamId}-${serverId}",
+                        teamId = teamId,
+                        title = title,
+                        date = editStartCalendar,
+                        startTimeMillis = editStartCalendar.timeInMillis,
+                        endTimeMillis = editEndCalendar.timeInMillis,
+                        isChecked = false,
+                        creatorName = null,
+                        notificationCategory = notificationLabel.ifBlank { "없음" }
+                    )
+                    DummyRepository.addTask(task)
+                    DummyRepository.saveSchedulesTo(requireContext())
+                    closeAfterEdit()
+                }
+            } else {
+                closeAfterEdit()
             }
-            findNavController().popBackStack(R.id.createTimepickFragment, true)
         }
 
         return root
+    }
+
+    private suspend fun createTeamScheduleOnServer(
+        teamId: Long,
+        title: String,
+        alarmMinutes: Int?
+    ): Long? {
+        return try {
+            val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val service = RetrofitClient.create<TeamScheduleService>(requireContext())
+            val response = service.create(
+                teamId,
+                TeamScheduleCreateRequest(
+                    title = title,
+                    startAt = isoFmt.format(editStartCalendar.time),
+                    endAt = isoFmt.format(editEndCalendar.time),
+                    category = "MEETING",
+                    alarmMinutes = alarmMinutes
+                )
+            )
+            if (response.isSuccessful) response.body()?.id else null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun alarmMinutesFromLabel(label: String): Int? {
+        return when (label.trim()) {
+            "5분 전" -> 5
+            "15분 전" -> 15
+            "30분 전" -> 30
+            "1시간 전" -> 60
+            else -> null
+        }
+    }
+
+    private fun closeAfterEdit() {
+        val nav = findNavController()
+        val poppedToCreate = nav.popBackStack(R.id.createTimepickFragment, true)
+        if (poppedToCreate) return
+        val poppedOne = nav.popBackStack()
+        if (!poppedOne) {
+            nav.navigate(R.id.calendarFragment)
+        }
     }
 
     private fun formatTime(cal: Calendar): String {
