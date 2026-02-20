@@ -13,12 +13,17 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.repository.DummyRepository
+import android.util.Log
 import com.project.unimate.network.RetrofitClient
+import com.project.unimate.network.dto.MemberVoteDto
+import com.project.unimate.network.dto.SlotDefinitionResponse
 import com.project.unimate.network.dto.TeamScheduleCreateRequest
+import com.project.unimate.network.service.SchedulePollService
 import com.project.unimate.network.service.TeamScheduleService
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -190,6 +195,11 @@ class EditTimepickFragment : Fragment() {
 
         refreshStartEndDisplay()
 
+        // 참여자 투표 기반 최적 시간 자동 계산 (existingTask 없는 신규 확정 케이스)
+        if (existingTask == null) {
+            loadAndPickConfirmedTime { refreshStartEndDisplay() }
+        }
+
         val notificationOptions = arrayOf(getString(R.string.none), "5분 전", "15분 전", "30분 전", "1시간 전")
         val notificationValues = arrayOf<Int?>(null, 5, 15, 30, 60)
         val notificationDropdown = root.findViewById<View>(R.id.editTimepickNotificationDropdown)
@@ -238,7 +248,7 @@ class EditTimepickFragment : Fragment() {
                 )
                 DummyRepository.updateTask(updated)
                 DummyRepository.saveSchedulesTo(requireContext())
-                closeAfterEdit()
+                navigateToHome()
             } else if (teamId.isNotEmpty()) {
                 val numericTeamId = teamId.toLongOrNull()
                 if (numericTeamId == null) {
@@ -255,7 +265,7 @@ class EditTimepickFragment : Fragment() {
                     )
                     DummyRepository.addTask(task)
                     DummyRepository.saveSchedulesTo(requireContext())
-                    closeAfterEdit()
+                    navigateToHome()
                     return@setOnClickListener
                 }
 
@@ -287,10 +297,10 @@ class EditTimepickFragment : Fragment() {
                     )
                     DummyRepository.addTask(task)
                     DummyRepository.saveSchedulesTo(requireContext())
-                    closeAfterEdit()
+                    navigateToHome()
                 }
             } else {
-                closeAfterEdit()
+                navigateToHome()
             }
         }
 
@@ -331,6 +341,18 @@ class EditTimepickFragment : Fragment() {
         }
     }
 
+    /** 저장 완료 후 홈으로 이동. 모이기 플로우 백스택을 모두 제거한다. */
+    private fun navigateToHome() {
+        TimepickStateHolder.clear()
+        findNavController().navigate(
+            R.id.homeFragment,
+            null,
+            NavOptions.Builder()
+                .setPopUpTo(R.id.homeFragment, true)
+                .build()
+        )
+    }
+
     private fun closeAfterEdit() {
         val nav = findNavController()
         val poppedToCreate = nav.popBackStack(R.id.createTimepickFragment, true)
@@ -368,6 +390,224 @@ class EditTimepickFragment : Fragment() {
             grid.cellCounts = (startSlot until endSlotExclusive).associate { s -> (dayIndex to s) to 1 }
         }
         grid.invalidate()
+    }
+
+    // =========================================================
+    // 참여자 투표 기반 최적 확정 시간 계산
+    // =========================================================
+
+    /**
+     * 서버 poll detail을 조회해 votesByMember + slotDefinitions 기반으로
+     * 최적 시간 구간을 자동 선택한 뒤 editStartCalendar / editEndCalendar 를 갱신한다.
+     * 완료 후 [onUpdated] 콜백으로 UI를 다시 그린다.
+     */
+    private fun loadAndPickConfirmedTime(onUpdated: () -> Unit) {
+        val pollId = TimepickStateHolder.pollId ?: run {
+            Log.w("ConfirmDebug", "pollId=null → API 조회 불가, fallback 기본값(13:00) 유지")
+            return
+        }
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                Log.d("ConfirmDebug", "==============================")
+                Log.d("ConfirmDebug", "loadAndPickConfirmedTime 시작: pollId=$pollId")
+                val service  = RetrofitClient.create<SchedulePollService>(ctx)
+                val response = service.getDetail(pollId)
+
+                if (!response.isSuccessful) {
+                    Log.w("ConfirmDebug", "getDetail 실패 code=${response.code()} → fallback")
+                    return@launch
+                }
+                val detail = response.body() ?: run {
+                    Log.w("ConfirmDebug", "getDetail body=null → fallback")
+                    return@launch
+                }
+
+                val slotMinutes   = detail.slotMinutes ?: 30
+                val requiredSlots = (60 / slotMinutes).coerceAtLeast(1)
+                val slotDefs      = detail.slotDefinitions.orEmpty()
+                val votesByMember = detail.votesByMember.orEmpty()
+
+                Log.d("ConfirmDebug", "slotMinutes=$slotMinutes, requiredSlots=$requiredSlots")
+                Log.d("ConfirmDebug", "slotDefinitions=${slotDefs.size}개, votesByMember=${votesByMember.size}개")
+
+                val voters = extractVoters(votesByMember)
+                Log.d("ConfirmDebug", "voter(투표한 사람) 수=${voters.size}")
+                voters.forEach { v ->
+                    Log.d("ConfirmDebug", "  voter memberId=${v.memberId}, slots=${v.slots?.size ?: 0}개")
+                }
+
+                if (voters.isEmpty()) {
+                    Log.d("ConfirmDebug", "voter=0 → 기본값(13:00~14:00) 유지")
+                    return@launch
+                }
+
+                val slotDefMap: Map<Int, SlotDefinitionResponse> =
+                    slotDefs.filter { it.slotId != null }.associateBy { it.slotId!! }
+
+                val intervals         = buildContinuousIntervals(slotDefs, requiredSlots)
+                val intersectionSet   = computeIntersectionSlotIds(voters)
+                val intersectionIntvs = filterIntervalsByAllowedSet(intervals, intersectionSet)
+
+                Log.d("ConfirmDebug", "전체 연속구간 ${intervals.size}개, intersectionSlots=${intersectionSet.size}개")
+                Log.d("ConfirmDebug", "교집합 기반 후보 ${intersectionIntvs.size}개")
+
+                val chosen: List<Int>? = if (intersectionIntvs.isNotEmpty()) {
+                    Log.d("ConfirmDebug", "분기: 교집합 기반 랜덤 선택")
+                    pickRandomInterval(intersectionIntvs)
+                } else {
+                    Log.d("ConfirmDebug", "분기: 교집합 없음 → 최다선택 기반")
+                    val countMap   = buildCountMap(voters)
+                    val bestIntvs  = pickBestIntervalsByCount(intervals, countMap)
+                    Log.d("ConfirmDebug", "최다선택 기반 후보 ${bestIntvs?.size ?: 0}개")
+                    bestIntvs?.let { pickRandomInterval(it) } ?: pickRandomInterval(intervals)
+                }
+
+                if (chosen == null) {
+                    Log.w("ConfirmDebug", "구간 선택 실패 → fallback")
+                    return@launch
+                }
+
+                val (startDef, endDef) = intervalToStartEnd(chosen, slotDefMap) ?: run {
+                    Log.w("ConfirmDebug", "intervalToStartEnd 실패 → fallback")
+                    return@launch
+                }
+                Log.d("ConfirmDebug", "최종 선택: date=${startDef.date}, start=${startDef.startTime}, end=${endDef.endTime}")
+                Log.d("ConfirmDebug", "==============================")
+
+                if (!isAdded) return@launch
+                updateCalendarsFromDefs(startDef, endDef)
+                onUpdated()
+
+            } catch (e: Exception) {
+                Log.e("ConfirmDebug", "loadAndPickConfirmedTime 예외: ${e.message}", e)
+            }
+        }
+    }
+
+    /** slots가 비어있지 않은 사람만 voter로 간주 */
+    private fun extractVoters(votesByMember: List<MemberVoteDto>): List<MemberVoteDto> =
+        votesByMember.filter { !it.slots.isNullOrEmpty() }
+
+    /** 모든 voter가 공통으로 고른 slotId 교집합 */
+    private fun computeIntersectionSlotIds(voters: List<MemberVoteDto>): Set<Int> {
+        if (voters.isEmpty()) return emptySet()
+        val first = voters[0].slots.orEmpty().toSet()
+        return voters.drop(1).fold(first) { acc, voter ->
+            acc.intersect(voter.slots.orEmpty().toSet())
+        }
+    }
+
+    /**
+     * slotDefinitions 에서 같은 날짜의 연속 슬롯으로 이루어진 [requiredSlots]개짜리 구간 후보를 만든다.
+     * 반환값: List<List<slotId>>  (각 원소가 하나의 구간)
+     */
+    private fun buildContinuousIntervals(
+        slotDefs: List<SlotDefinitionResponse>,
+        requiredSlots: Int
+    ): List<List<Int>> {
+        val sorted = slotDefs
+            .filter { it.slotId != null && it.date != null && it.startTime != null && it.endTime != null }
+            .sortedWith(compareBy({ it.date!! }, { normalizeTimeStr(it.startTime!!) }))
+        val intervals = mutableListOf<List<Int>>()
+        val n = sorted.size
+        for (i in 0..(n - requiredSlots)) {
+            val candidate = mutableListOf(sorted[i].slotId!!)
+            var valid = true
+            for (j in 1 until requiredSlots) {
+                val prev = sorted[i + j - 1]
+                val curr = sorted[i + j]
+                if (prev.date != curr.date ||
+                    normalizeTimeStr(prev.endTime!!) != normalizeTimeStr(curr.startTime!!)
+                ) {
+                    valid = false
+                    break
+                }
+                candidate.add(curr.slotId!!)
+            }
+            if (valid) intervals.add(candidate)
+        }
+        return intervals
+    }
+
+    /** "HH:mm:ss" → "HH:mm" 정규화 (시간 문자열 비교용) */
+    private fun normalizeTimeStr(time: String): String =
+        time.trim().split(":").take(2).joinToString(":")
+
+    /** allowedSet 에 속하는 slotId 만으로 구성된 구간만 필터링 */
+    private fun filterIntervalsByAllowedSet(
+        intervals: List<List<Int>>,
+        allowedSet: Set<Int>
+    ): List<List<Int>> = intervals.filter { interval -> interval.all { it in allowedSet } }
+
+    /** 구간 목록에서 랜덤 1개 선택 */
+    private fun pickRandomInterval(intervals: List<List<Int>>): List<Int>? =
+        if (intervals.isEmpty()) null else intervals.random()
+
+    /** voter 전체를 대상으로 slotId 별 선택 횟수 집계 */
+    private fun buildCountMap(voters: List<MemberVoteDto>): Map<Int, Int> {
+        val countMap = mutableMapOf<Int, Int>()
+        voters.forEach { voter ->
+            voter.slots.orEmpty().forEach { slotId ->
+                countMap[slotId] = (countMap[slotId] ?: 0) + 1
+            }
+        }
+        return countMap
+    }
+
+    /**
+     * 점수(구간 내 슬롯들의 count 합)가 최대인 구간들을 모두 반환.
+     * 동점이면 여러 개 반환 → 호출부에서 random 선택.
+     */
+    private fun pickBestIntervalsByCount(
+        intervals: List<List<Int>>,
+        countMap: Map<Int, Int>
+    ): List<List<Int>>? {
+        if (intervals.isEmpty()) return null
+        val scored  = intervals.map { it to it.sumOf { id -> countMap[id] ?: 0 } }
+        val maxScore = scored.maxOf { it.second }
+        if (maxScore == 0) return null
+        return scored.filter { it.second == maxScore }.map { it.first }
+    }
+
+    /** slotId 리스트 → (첫 슬롯 정의, 마지막 슬롯 정의) 쌍으로 변환 */
+    private fun intervalToStartEnd(
+        intervalSlotIds: List<Int>,
+        slotDefMap: Map<Int, SlotDefinitionResponse>
+    ): Pair<SlotDefinitionResponse, SlotDefinitionResponse>? {
+        val startDef = slotDefMap[intervalSlotIds.first()] ?: return null
+        val endDef   = slotDefMap[intervalSlotIds.last()]  ?: return null
+        return startDef to endDef
+    }
+
+    /** SlotDefinitionResponse 의 date/time 정보로 editStartCalendar / editEndCalendar 갱신 */
+    private fun updateCalendarsFromDefs(
+        startDef: SlotDefinitionResponse,
+        endDef: SlotDefinitionResponse
+    ) {
+        val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        fun parseHM(time: String): Pair<Int, Int>? {
+            val parts = time.trim().split(":")
+            val h = parts.getOrNull(0)?.toIntOrNull() ?: return null
+            val m = parts.getOrNull(1)?.toIntOrNull() ?: return null
+            return h to m
+        }
+        val startDateMs = try { dateFmt.parse(startDef.date ?: return)?.time ?: return } catch (_: Exception) { return }
+        val endDateMs   = try { dateFmt.parse(endDef.date   ?: return)?.time ?: return } catch (_: Exception) { return }
+        val (sH, sM) = parseHM(startDef.startTime ?: return) ?: return
+        val (eH, eM) = parseHM(endDef.endTime     ?: return) ?: return
+
+        editStartCalendar = Calendar.getInstance().apply {
+            timeInMillis = startDateMs
+            set(Calendar.HOUR_OF_DAY, sH); set(Calendar.MINUTE, sM)
+            set(Calendar.SECOND, 0);       set(Calendar.MILLISECOND, 0)
+        }
+        editEndCalendar = Calendar.getInstance().apply {
+            timeInMillis = endDateMs
+            set(Calendar.HOUR_OF_DAY, eH); set(Calendar.MINUTE, eM)
+            set(Calendar.SECOND, 0);       set(Calendar.MILLISECOND, 0)
+        }
+        Log.d("ConfirmDebug", "캘린더 갱신: ${startDef.date} $sH:${sM.toString().padStart(2,'0')} ~ $eH:${eM.toString().padStart(2,'0')}")
     }
 
     /** 확정 교집합 셀을 같은 날짜의 연속 슬롯대로 블록화. (dayIndex, startSlot..endSlot) */
