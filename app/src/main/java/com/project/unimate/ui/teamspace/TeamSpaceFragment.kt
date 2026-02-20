@@ -19,13 +19,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
+import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamMemberResponse
+import com.project.unimate.network.service.TeamScheduleService
 import com.project.unimate.network.service.TeamService
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class TeamSpaceFragment : Fragment() {
 
@@ -45,6 +49,7 @@ class TeamSpaceFragment : Fragment() {
     private var membersContainer: LinearLayout? = null
     private var memberCountView: TextView? = null
     private var storedTeamColor: Int = android.graphics.Color.GRAY
+    private var skipScheduleReloadOnce = false
 
     override fun onResume() {
         super.onResume()
@@ -54,6 +59,11 @@ class TeamSpaceFragment : Fragment() {
                 v.findViewById<TextView>(R.id.teamSpaceIntroTitle)?.text = getString(R.string.team_intro_suffix).let { "${team.name} $it" }
                 v.findViewById<TextView>(R.id.teamSpaceIntroText)?.text = DummyRepository.getTeamIntro(teamId)
             }
+        }
+        if (skipScheduleReloadOnce) {
+            skipScheduleReloadOnce = false
+        } else {
+            loadTeamSchedulesFromApi()
         }
         loadMembersFromApi()
     }
@@ -449,6 +459,72 @@ class TeamSpaceFragment : Fragment() {
                 android.util.Log.e("TeamSpace", "getMembers 예외: ${e.message}")
             }
         }
+    }
+
+    private fun loadTeamSchedulesFromApi() {
+        val numericTeamId = teamId.toLongOrNull() ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<TeamScheduleService>(requireContext())
+                val response = service.getByRange(
+                    numericTeamId,
+                    "2025-01-01",
+                    "2027-12-31"
+                )
+                if (!response.isSuccessful) return@launch
+                val list = response.body().orEmpty()
+                val mapped = list.mapNotNull { s ->
+                    val scheduleId = s.id ?: return@mapNotNull null
+                    val startMs = parseIsoToMillis(s.startAt) ?: return@mapNotNull null
+                    val endMs = parseIsoToMillis(s.endAt) ?: return@mapNotNull null
+                    val day = Calendar.getInstance().apply { timeInMillis = startMs }
+                    TaskItem(
+                        id = "t-${teamId}-${scheduleId}",
+                        teamId = teamId,
+                        title = s.title.orEmpty(),
+                        date = day,
+                        startTimeMillis = startMs,
+                        endTimeMillis = endMs,
+                        isChecked = false,
+                        creatorName = null
+                    )
+                }
+                DummyRepository.replaceTasksForTeam(teamId, mapped)
+                DummyRepository.saveSchedulesTo(requireContext())
+                view?.post {
+                    // 일정 동기화 후 캘린더/리스트 즉시 반영
+                    recreateCalendarAndTasks()
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun recreateCalendarAndTasks() {
+        if (!isAdded) return
+        skipScheduleReloadOnce = true
+        parentFragmentManager.beginTransaction()
+            .detach(this)
+            .attach(this)
+            .commitAllowingStateLoss()
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        val text = iso.replace("Z", "")
+        val patterns = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd"
+        )
+        for (pattern in patterns) {
+            try {
+                val parsed = SimpleDateFormat(pattern, Locale.getDefault()).parse(text)
+                if (parsed != null) return parsed.time
+            } catch (_: Exception) {
+            }
+        }
+        return null
     }
 
     private fun renderMembers(members: List<TeamMember>) {
