@@ -45,12 +45,13 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private val googleLoginLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != Activity.RESULT_OK) {
-                Toast.makeText(context, "구글 로그인이 취소되었습니다", Toast.LENGTH_SHORT).show()
+            val data = result.data
+            if (data == null) {
+                Toast.makeText(context, "구글 로그인 응답이 없습니다", Toast.LENGTH_SHORT).show()
                 return@registerForActivityResult
             }
 
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)
                 val idToken = account.idToken
@@ -71,7 +72,12 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                     }
                 }
             } catch (e: ApiException) {
-                Toast.makeText(context, "구글 로그인 실패: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+                val message = if (e.statusCode == 12501) {
+                    "구글 로그인이 취소되었습니다"
+                } else {
+                    "구글 로그인 실패: ${e.statusCode}"
+                }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
         }
 
