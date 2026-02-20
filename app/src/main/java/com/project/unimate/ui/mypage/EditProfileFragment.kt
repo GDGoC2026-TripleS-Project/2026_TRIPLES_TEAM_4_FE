@@ -21,6 +21,7 @@ import com.project.unimate.R
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.RetrofitClient
+import com.project.unimate.utils.ProfileImageLoader
 import com.project.unimate.network.dto.ProfileUpsertRequest
 import com.project.unimate.network.service.UserService
 import kotlinx.coroutines.Dispatchers
@@ -37,18 +38,41 @@ class EditProfileFragment : Fragment() {
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val imageUri = result.data?.data ?: return@registerForActivityResult
-            view?.findViewById<ImageView>(R.id.iv_profile_edit_placeholder)?.apply {
-                setImageURI(imageUri)
-                scaleType = ImageView.ScaleType.CENTER_CROP
-                setBackgroundColor(Color.TRANSPARENT)
-            }
-            val saved = saveUserProfileImageToFile(imageUri)
-            if (saved.isNotEmpty()) {
-                DummyRepository.setCurrentUserProfileImageResName(saved)
-                ProfileImageStore.save(requireContext(), saved)
-            }
+        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val imageUri = result.data?.data ?: return@registerForActivityResult
+        val iv = view?.findViewById<ImageView>(R.id.iv_profile_edit_placeholder)
+        iv?.apply {
+            setImageURI(imageUri)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setBackgroundColor(Color.TRANSPARENT)
+        }
+        val saved = saveUserProfileImageToFile(imageUri)
+        if (saved.isEmpty()) return@registerForActivityResult
+        DummyRepository.setCurrentUserProfileImageResName(saved)
+        ProfileImageStore.save(requireContext(), saved)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val ctx = requireContext()
+                val service = RetrofitClient.create<UserService>(ctx)
+                val meResp = service.getMyInfo()
+                val universityId = if (meResp.isSuccessful) (meResp.body()?.universityId ?: 0L) else 0L
+                val name = withContext(Dispatchers.Main) { view?.findViewById<EditText>(R.id.et_name_edit)?.text?.toString()?.trim() ?: DummyRepository.getCurrentUserName() } ?: DummyRepository.getCurrentUserName()
+                val f = File(ctx.filesDir, saved.removePrefix("file:"))
+                if (!f.exists()) return@launch
+                val part = MultipartBody.Part.createFormData("file", f.name, f.asRequestBody("image/jpeg".toMediaTypeOrNull()))
+                val uploadResp = service.uploadProfileImage(part)
+                val newUrl = uploadResp.body()?.get("imageUrl")?.takeIf { it.isNotBlank() }
+                    ?: uploadResp.body()?.get("url")?.takeIf { it.isNotBlank() }
+                    ?: uploadResp.body()?.get("profileImageUrl")?.takeIf { it.isNotBlank() }
+                if (!newUrl.isNullOrBlank()) {
+                    service.upsertProfile(ProfileUpsertRequest(nickname = name, universityId = universityId, profileImageUrl = newUrl))
+                    withContext(Dispatchers.Main) {
+                        DummyRepository.setCurrentUserProfileImageResName(newUrl)
+                        ProfileImageStore.save(ctx, newUrl)
+                        iv?.let { ProfileImageLoader.load(it, newUrl, ctx) }
+                    }
+                }
+            } catch (_: Exception) { }
         }
     }
 
@@ -69,7 +93,24 @@ class EditProfileFragment : Fragment() {
         val profileEditCancel = view.findViewById<Button>(R.id.profile_edit_cancel)
 
         etNameEdit.setText(DummyRepository.getCurrentUserName())
-        applyUserProfileImage(ivProfilePlaceholder, DummyRepository.getCurrentUserProfileImageResName())
+        ProfileImageLoader.load(ivProfilePlaceholder, DummyRepository.getCurrentUserProfileImageResName(), requireContext())
+
+        // 진입 시 서버에서 프로필 로드해 아이콘/이름 갱신 (file:만 있거나 비어 있을 때 보완)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<UserService>(requireContext())
+                val meResp = service.getMyInfo()
+                if (meResp.isSuccessful) {
+                    val me = meResp.body() ?: return@launch
+                    withContext(Dispatchers.Main) {
+                        me.nickname?.takeIf { it.isNotBlank() }?.let { etNameEdit.setText(it) }
+                        me.profileImageUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                            ProfileImageLoader.load(ivProfilePlaceholder, url, requireContext())
+                        }
+                    }
+                }
+            } catch (_: Exception) { }
+        }
 
         fun openGallery() {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply { type = "image/*" }
@@ -91,20 +132,21 @@ class EditProfileFragment : Fragment() {
                 try {
                     val service = RetrofitClient.create<UserService>(requireContext())
                     val meResp = service.getMyInfo()
-                    if (!meResp.isSuccessful) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(requireContext(), "프로필을 불러올 수 없습니다", Toast.LENGTH_SHORT).show()
-                        }
-                        return@launch
+                    val universityId: Long
+                    var profileImageUrlToSend: String? = null
+                    if (meResp.isSuccessful) {
+                        val me = meResp.body()
+                        universityId = me?.universityId ?: 0L
+                        profileImageUrlToSend = me?.profileImageUrl
+                    } else {
+                        universityId = 0L
                     }
-                    val me = meResp.body() ?: return@launch
-                    val universityId = me.universityId ?: 0L
-                    var profileImageUrlToSend = me.profileImageUrl
-                    // 로컬에서 새로 고른 프로필 이미지가 있으면 서버에 업로드 후 URL 사용
                     val resName = DummyRepository.getCurrentUserProfileImageResName()
+                    // 이미 프로필 사진이 있는 상태에서 새 사진을 고른 경우: 로컬 file이면 반드시 업로드한 URL만 사용 (기존 URL로 덮어쓰지 않음)
                     if (resName.startsWith("file:")) {
                         val f = File(requireContext().filesDir, resName.removePrefix("file:"))
                         if (f.exists()) {
+                            profileImageUrlToSend = null
                             val part = MultipartBody.Part.createFormData(
                                 "file",
                                 f.name,
@@ -112,7 +154,10 @@ class EditProfileFragment : Fragment() {
                             )
                             val uploadResp = service.uploadProfileImage(part)
                             if (uploadResp.isSuccessful) {
-                                profileImageUrlToSend = uploadResp.body()?.get("imageUrl")
+                                val body = uploadResp.body()
+                                profileImageUrlToSend = body?.get("imageUrl")?.takeIf { it.isNotBlank() }
+                                    ?: body?.get("url")?.takeIf { it.isNotBlank() }
+                                    ?: body?.get("profileImageUrl")?.takeIf { it.isNotBlank() }
                             }
                         }
                     }
@@ -123,7 +168,20 @@ class EditProfileFragment : Fragment() {
                         if (upsertResp.isSuccessful) {
                             DummyRepository.setCurrentUserName(name)
                             com.project.unimate.data.repository.NicknameStore.save(requireContext(), name)
-                            ProfileImageStore.save(requireContext(), DummyRepository.getCurrentUserProfileImageResName())
+                            val fromUpsert = upsertResp.body()?.profileImageUrl?.takeIf { it.isNotBlank() }
+                            val finalRef = if (resName.startsWith("file:")) {
+                                profileImageUrlToSend?.takeIf { it.isNotBlank() } ?: resName
+                            } else {
+                                fromUpsert
+                                    ?: profileImageUrlToSend?.takeIf { it.isNotBlank() }
+                                    ?: resName.takeIf { it.isNotBlank() }
+                                    ?: DummyRepository.getCurrentUserProfileImageResName()
+                            }
+                            val refToSave = finalRef.ifBlank { null }
+                            if (refToSave != null) {
+                                DummyRepository.setCurrentUserProfileImageResName(refToSave)
+                                ProfileImageStore.save(requireContext(), refToSave)
+                            }
                             closeFragment()
                         } else {
                             Toast.makeText(requireContext(), "저장에 실패했습니다", Toast.LENGTH_SHORT).show()
@@ -138,31 +196,8 @@ class EditProfileFragment : Fragment() {
         }
     }
 
-    private fun applyUserProfileImage(imageView: ImageView, imageResName: String) {
-        when {
-            imageResName.startsWith("file:") -> {
-                val file = File(requireContext().filesDir, imageResName.removePrefix("file:"))
-                if (file.exists()) {
-                    android.graphics.BitmapFactory.decodeFile(file.absolutePath)?.let {
-                        imageView.setImageBitmap(it)
-                        imageView.setBackgroundColor(Color.TRANSPARENT)
-                        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-                    }
-                }
-            }
-            imageResName.isNotBlank() -> {
-                val resId = resources.getIdentifier(imageResName, "drawable", requireContext().packageName)
-                if (resId != 0) {
-                    imageView.setImageResource(resId)
-                    imageView.setBackgroundColor(Color.TRANSPARENT)
-                    imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-                }
-            }
-        }
-    }
-
     private fun saveUserProfileImageToFile(uri: Uri): String {
-        val fileName = "user_profile.jpg"
+        val fileName = "user_profile_${System.currentTimeMillis()}.jpg"
         return try {
             requireContext().contentResolver.openInputStream(uri)?.use { input ->
                 val file = File(requireContext().filesDir, fileName)

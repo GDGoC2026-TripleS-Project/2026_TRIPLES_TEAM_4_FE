@@ -33,6 +33,7 @@ import com.project.unimate.data.repository.PendingCompletionPopupStore
 import com.project.unimate.data.repository.NicknameStore
 import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.data.repository.ServerSync
+import com.project.unimate.data.repository.SyncManager
 import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
 import com.project.unimate.ui.timepick.TimepickStateHolder
@@ -88,13 +89,20 @@ class MainActivity : AppCompatActivity() {
         DummyRepository.applyPersistedTeamNames(this)
 
         if (!jwt.isNullOrBlank()) {
-            // 이미 로그인된 상태: 닉네임 + 로컬 캐시 복원. 서버 sync는 Splash(또는 로그인 직후)에서만 1회 수행
+            // 이미 로그인된 상태: 닉네임 + 로컬 캐시 복원 후 서버 동기화
             NicknameStore.get(this).takeIf { it.isNotBlank() }?.let {
                 DummyRepository.setCurrentUserName(it)
             }
             DummyRepository.loadSchedulesFrom(this)
+            // 앱 시작(cold start) 시 서버에서 최신 팀·일정 동기화. SplashFragment 동기화와
+            // 직렬화(syncMutex)되므로 중복 실행 안전.
+            lifecycleScope.launch {
+                val ok = SyncManager.syncAllDataFromServer(applicationContext)
+                Log.d(TAG, "앱 시작 동기화 결과: $ok")
+            }
         } else {
             DummyRepository.loadSchedulesFrom(this)
+            Log.d(TAG, "토큰 없음 → 동기화 스킵")
         }
     }
 
