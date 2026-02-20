@@ -39,15 +39,18 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
+                    android:fontFamily="@font/pretendard_regular"
                     android:text="@string/cancel"
                     android:textColor="@color/gray06"
                     android:textSize="16sp" />
+
                 <TextView
                     android:id="@+id/addPersonalTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center"
+                    android:fontFamily="@font/pretendard_semibold"
                     android:text="@string/new_schedule"
                     android:textColor="@color/gray09"
                     android:textSize="18sp"
@@ -69,8 +72,9 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
+                        android:fontFamily="@font/pretendard_semibold"
                         android:text="삭제"
-                        android:textColor="#E53935"
+                        android:textColor="@color/delete_red"
                         android:textSize="16sp" />
                     <TextView
                         android:id="@+id/addPersonalSave"
@@ -82,6 +86,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
+                        android:fontFamily="@font/pretendard_semibold"
                         android:text="@string/save"
                         android:textColor="@color/main_green"
                         android:textSize="16sp" />
@@ -107,6 +112,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_unselected"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/team"
                 android:textColor="@color/gray07"
                 android:textSize="14sp"
@@ -118,6 +124,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_selected"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/personal"
                 android:textColor="@color/white"
                 android:textSize="14sp"
@@ -132,6 +139,7 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="24dp"
             android:background="@drawable/bg_schedule_name_single"
+            android:fontFamily="@font/pretendard_medium"
             android:hint="@string/enter_schedule_name"
             android:textColorHint="@color/gray06"
             android:inputType="text"
@@ -157,6 +165,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/all_day"
                     android:textColor="@color/gray09"
                     android:textSize="14sp" />
@@ -181,6 +190,7 @@
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/start"
                     android:textColor="@color/gray09"
                     android:textSize="14sp" />
@@ -283,6 +293,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/notification"
                 android:textColor="@color/gray09"
                 android:textSize="14sp" />
@@ -301,6 +312,7 @@
                     android:id="@+id/addPersonalNotificationBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/none"
                     android:textColor="@color/gray06"
                     android:textSize="14sp" />
@@ -352,6 +364,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/schedule_category"
                     android:textColor="@color/gray09"
                     android:textSize="14sp" />
@@ -370,6 +383,7 @@
                         android:id="@+id/addPersonalCategoryBtn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="@string/select"
                         android:textColor="@color/gray06"
                         android:textSize="14sp" />
@@ -389,6 +403,7 @@
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
                 android:background="@drawable/bg_date_time_btn"
+                android:fontFamily="@font/pretendard_medium"
                 android:hint="@string/category_etc"
                 android:paddingHorizontal="12dp"
                 android:textColor="@color/gray06"
@@ -427,6 +442,7 @@
                 android:layout_marginEnd="8dp"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_unselected"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/public_visibility"
                 android:textColor="@color/gray07"
                 android:textSize="14sp" />
@@ -437,6 +453,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_selected"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/private_visibility"
                 android:textColor="@color/white"
                 android:textSize="14sp" />

@@ -28,9 +28,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
+            android:fontFamily="@font/pretendard_semibold"
             android:text="@string/timepick_meeting_full_schedule"
             android:textSize="18sp"
-            android:textStyle="bold"
             android:textColor="@color/gray10" />
     </LinearLayout>
     <View
@@ -77,6 +77,7 @@
                     android:background="@drawable/bg_timepick_filter_selected"
                     style="@style/body2_m_14"
                     android:textColor="@color/white"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/timepick_all_available" />
             </LinearLayout>
 
@@ -153,7 +154,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="24dp"
                 app:cornerRadius="8dp"
-                android:backgroundTint="#D9F592"
+                android:backgroundTint="@color/team_lime"
                 android:text="@string/timepick_confirm_meeting"
                 android:textColor="@color/gray09"
                 style="@style/body1_m_16" />

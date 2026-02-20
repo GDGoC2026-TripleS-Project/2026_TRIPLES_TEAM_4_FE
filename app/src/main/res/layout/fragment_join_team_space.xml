@@ -46,10 +46,11 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="@string/join_team_by_code"
                 android:textColor="@color/gray10"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                 />
         </FrameLayout>
 
         <!-- 안내 문구  -->
@@ -71,6 +72,7 @@
             android:layout_height="48dp"
             android:layout_marginHorizontal="24dp"
             android:background="@drawable/bg_join_code_input_selector"
+            android:fontFamily="@font/pretendard_medium"
             android:hint="@string/enter_invitation_code"
             android:inputType="number"
             android:maxLength="6"
@@ -88,6 +90,7 @@
             android:layout_marginTop="15dp"
             android:background="@drawable/bg_join_button"
             android:backgroundTint="@null"
+            android:fontFamily="@font/pretendard_medium"
             android:text="@string/join"
             android:textColor="@color/gray10"
             android:textSize="16sp" />

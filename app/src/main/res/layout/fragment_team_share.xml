@@ -48,7 +48,6 @@
             android:text="팀 초대 코드를 공유해보세요!"
             android:textColor="@color/green08"
             android:textSize="18sp"
-            android:textStyle="bold"
             android:fontFamily="@font/pretendard_bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

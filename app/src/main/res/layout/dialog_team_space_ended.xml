@@ -20,7 +20,7 @@
         android:text="팀 스페이스가 종료되었습니다!"
         android:textColor="@color/gray08"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:fontFamily="@font/pretendard_semibold" />
 
     <Button
         android:id="@+id/dialogTeamEndConfirm"

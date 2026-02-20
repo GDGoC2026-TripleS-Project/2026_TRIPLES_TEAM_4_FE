@@ -24,7 +24,6 @@
     <color name="mypage_card_bg">#FFEDF3D7</color>
     <color name="deadline_green">#FF4CAF50</color>
     <!-- GrayScale-->
-
     <color name="gray01">#F5F5F5</color>
     <color name="gray02">#EBEBEB</color>
     <color name="gray03">#DDDDDD</color>
@@ -37,12 +36,12 @@
     <color name="gray10">#151515</color>
     <color name="border_gray">#E3E6DF</color>
 
-
     <color name="border_schedule">#DDECB5</color>
 
 
     <color name="main_green">#B4D75C</color>
     <color name="sub_green">#EFFFC8</color>
+
 
     <color name="green01">#FAFFED</color>
     <color name="green02">#F8FFE0</color>

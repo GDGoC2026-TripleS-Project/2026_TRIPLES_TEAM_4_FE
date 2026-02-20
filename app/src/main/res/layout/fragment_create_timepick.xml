@@ -53,16 +53,16 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_semibold"
                     android:text="@string/timepick_select_dates"
                     android:textSize="18sp"
-                    android:textStyle="bold"
                     android:textColor="@color/gray10" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/timepick_multiple"
                     android:textSize="18sp"
-                    android:textStyle="bold"
                     android:textColor="@color/gray05"
                     android:layout_marginStart="4dp" />
             </LinearLayout>
@@ -83,6 +83,8 @@
                     android:layout_weight="1"
                     android:textSize="16sp"
                     android:textColor="@color/gray09"
+                    android:fontFamily="@font/pretendard_semibold"
+
                     tools:text="2026년 2월" />
                 <ImageButton
                     android:id="@+id/createTimepickPrevMonth"
@@ -145,9 +147,9 @@
                 android:layout_marginTop="15dp"
                 android:layout_marginBottom="20dp"
                 android:gravity="center"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/timepick_select_times"
                 android:textSize="18sp"
-                android:textStyle="bold"
                 android:textColor="@color/gray10" />
 
             <TextView
@@ -157,6 +159,7 @@
                 android:layout_marginTop="12dp"
                 style="@style/body1_m_16"
                 android:textColor="@color/gray06"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/timepick_selected_dates" />
 
             <HorizontalScrollView
@@ -180,6 +183,7 @@
                 android:layout_marginTop="20dp"
                 style="@style/body1_m_16"
                 android:textColor="@color/gray06"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="시작시간" />
             <LinearLayout
                 android:id="@+id/createTimepickStartTimeWrap"
@@ -198,6 +202,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/gray06"
                     android:textSize="14sp"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/timepick_select_start_time" />
             </LinearLayout>
 
@@ -208,6 +213,7 @@
                 android:layout_marginTop="16dp"
                 style="@style/body1_m_16"
                 android:textColor="@color/gray06"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="종료시간" />
             <LinearLayout
                 android:id="@+id/createTimepickEndTimeWrap"
@@ -226,6 +232,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/gray06"
                     android:textSize="14sp"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/timepick_select_end_time" />
             </LinearLayout>
 
@@ -258,9 +265,9 @@
                 android:layout_marginBottom="15dp"
                 app:cornerRadius="8dp"
                 android:backgroundTint="@color/gray03"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="@string/timepick_next"
                 android:textSize="18sp"
-                android:textStyle="bold"
                 android:textColor="@color/gray09" />
         </LinearLayout>
     </ScrollView>

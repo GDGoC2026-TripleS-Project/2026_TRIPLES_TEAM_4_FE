@@ -128,14 +128,12 @@
                     style="@style/body2_r_14" />
             </LinearLayout>
 
-            <!-- 날짜 7개 -->
             <LinearLayout
                 android:id="@+id/homeWeekDatesContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingTop="4dp">
-                <!-- 동적 추가 -->
             </LinearLayout>
 
             <!-- 날짜 밑 작은 동그라미/일정 표시 (선택 시) -->

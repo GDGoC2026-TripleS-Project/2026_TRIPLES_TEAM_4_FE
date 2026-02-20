@@ -37,10 +37,11 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/team_space_edit"
                 android:textColor="@color/gray09"
                 android:textSize="18sp"
-                android:textStyle="bold" />
+                />
         </FrameLayout>
 
         <!-- 유저 아이콘 + 플러스 버튼 (TeamCreateFragment처럼 동그란 카드) -->
@@ -97,6 +98,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="팀명 "
                 android:textColor="@color/gray09"
                 android:textSize="14sp"
@@ -104,6 +106,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="(필수)"
                 android:textColor="@color/main_green"
                 android:textSize="14sp" />
@@ -115,6 +118,7 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_edit_team_space_field"
+            android:fontFamily="@font/pretendard_medium"
             android:hint="@string/enter_team_name"
             android:textColorHint="@color/gray06"
             android:inputType="text"
@@ -133,13 +137,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="팀 소개 "
                 android:textColor="@color/gray09"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                 />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="(선택)"
                 android:textColor="@color/gray04"
                 android:textSize="14sp" />
@@ -152,6 +158,7 @@
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_edit_team_space_field"
             android:gravity="top"
+            android:fontFamily="@font/pretendard_medium"
             android:hint="@string/introduce_team"
             android:textColorHint="@color/gray06"
             android:inputType="textMultiLine"
@@ -171,13 +178,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="팀 작업일 "
                 android:textColor="@color/gray09"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                 />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="(필수)"
                 android:textColor="@color/main_green"
                 android:textSize="14sp" />
@@ -201,6 +210,7 @@
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/start"
                     android:textColor="@color/gray08"
                     android:textSize="14sp" />
@@ -258,6 +268,7 @@
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/end"
                     android:textColor="@color/gray08"
                     android:textSize="14sp" />
@@ -310,16 +321,19 @@
             android:paddingTop="20dp"
             android:clickable="true"
             android:focusable="true">
+
             <ImageView
                 android:id="@+id/editTeamSpaceEndCheckIcon"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:src="@drawable/ic_end_unselected"
                 android:contentDescription="종료된 팀 설정" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/set_ended_team"
                 android:textColor="@color/gray09"
                 android:textSize="14sp" />
@@ -333,6 +347,7 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="32dp"
             android:backgroundTint="@color/main_green"
+            android:fontFamily="@font/pretendard_medium"
             android:text="@string/complete"
             android:textColor="@color/white"
             android:textSize="16sp" />
@@ -344,6 +359,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="10dp"
+            android:fontFamily="@font/pretendard_medium"
             android:text="@string/delete_team"
             android:textColor="@color/gray06"
             style="@style/body2_r_16" />

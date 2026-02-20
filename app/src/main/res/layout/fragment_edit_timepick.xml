@@ -31,6 +31,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
+                android:fontFamily="@font/pretendard_medium"
                 android:text="@string/cancel"
                 android:textColor="@color/gray09"
                 android:textSize="16sp" />
@@ -39,6 +40,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
+                android:fontFamily="@font/pretendard_semibold"
                 android:text="@string/timepick_edit_meeting_title"
                 android:textColor="@color/gray09"
                 android:textSize="18sp"
@@ -83,6 +85,7 @@
                     android:gravity="center"
                     style="@style/body1_m_16"
                     android:textColor="@color/main_green"
+                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/timepick_all_available" />
 
                 <LinearLayout
@@ -138,6 +141,7 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="24dp"
                     android:background="@drawable/bg_schedule_name_single"
+                    android:fontFamily="@font/pretendard_medium"
                     android:hint="@string/enter_schedule_name"
                     android:textColorHint="@color/gray06"
                     android:inputType="text"
@@ -161,6 +165,7 @@
                         <TextView
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/pretendard_medium"
                             android:text="@string/start"
                             android:textColor="@color/gray09"
                             android:textSize="14sp" />
@@ -172,6 +177,7 @@
                             android:layout_marginEnd="8dp"
                             android:textColor="@color/gray06"
                             android:textSize="14sp"
+                            android:fontFamily="@font/pretendard_medium"
                             tools:text="2026. 2. 17" />
                         <TextView
                             android:id="@+id/editTimepickStartTime"
@@ -179,6 +185,7 @@
                             android:layout_height="wrap_content"
                             android:textColor="@color/gray06"
                             android:textSize="14sp"
+                            android:fontFamily="@font/pretendard_medium"
                             tools:text="오후 12:00" />
                     </LinearLayout>
                     <View
@@ -194,6 +201,7 @@
                         <TextView
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/pretendard_medium"
                             android:text="@string/end"
                             android:textColor="@color/gray09"
                             android:textSize="14sp" />
@@ -205,6 +213,7 @@
                             android:layout_marginEnd="8dp"
                             android:textColor="@color/gray06"
                             android:textSize="14sp"
+                            android:fontFamily="@font/pretendard_medium"
                             tools:text="2026. 2. 17" />
                         <TextView
                             android:id="@+id/editTimepickEndTime"
@@ -212,6 +221,7 @@
                             android:layout_height="wrap_content"
                             android:textColor="@color/gray06"
                             android:textSize="14sp"
+                            android:fontFamily="@font/pretendard_medium"
                             tools:text="오후 1:00" />
                     </LinearLayout>
                 </LinearLayout>
@@ -230,6 +240,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="@string/notification"
                         android:textColor="@color/gray09"
                         android:textSize="14sp" />
@@ -243,6 +254,7 @@
                         android:background="@drawable/bg_btn_white_borderless"
                         android:clickable="true"
                         android:focusable="true"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="@string/none"
                         android:textColor="@color/gray06"
                         android:textSize="14sp" />
@@ -269,6 +281,7 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="@string/none"
                         android:textSize="14sp"
                         android:textColor="@color/gray09"
@@ -281,6 +294,7 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="5분 전"
                         android:textSize="14sp"
                         android:textColor="@color/gray09"
@@ -293,6 +307,7 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="15분 전"
                         android:textSize="14sp"
                         android:textColor="@color/gray09"
@@ -305,6 +320,7 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="30분 전"
                         android:textSize="14sp"
                         android:textColor="@color/gray09"
@@ -317,6 +333,7 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
+                        android:fontFamily="@font/pretendard_medium"
                         android:text="1시간 전"
                         android:textSize="14sp"
                         android:textColor="@color/gray09"

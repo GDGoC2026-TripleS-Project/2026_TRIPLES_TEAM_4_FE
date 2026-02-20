@@ -31,6 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
+            android:fontFamily="@font/pretendard_medium"
             android:text="@string/notification"
             android:textColor="@color/gray10" />
     </FrameLayout>
@@ -55,6 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:fontFamily="@font/pretendard_medium"
             android:text="알림이 없습니다"
             android:textColor="@android:color/darker_gray"
             android:visibility="gone" />

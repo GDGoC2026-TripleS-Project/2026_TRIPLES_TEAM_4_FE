@@ -40,7 +40,7 @@
             android:textSize="18dp"
             android:fontFamily="@font/pretendard_semibold"
             android:enabled="false"
-            android:backgroundTint="#F3F4F6"
+            android:backgroundTint="@color/gray02"
             android:textColor="@color/gray05"/>
 
     </LinearLayout>

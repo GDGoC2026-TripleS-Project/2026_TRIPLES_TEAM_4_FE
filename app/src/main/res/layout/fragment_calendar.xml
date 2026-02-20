@@ -45,6 +45,7 @@
                         android:minWidth="48dp"
                         android:minHeight="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
+                        android:fontFamily="@font/pretendard_medium"
                         android:contentDescription="@string/personal"
                         android:src="@drawable/ic_personal_off"
                          />
@@ -96,6 +97,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         style="@style/body2_m_14"
+                        android:fontFamily="@font/pretendard_semibold"
                         tools:text="2026년 2월" />
 
                     <ImageButton
