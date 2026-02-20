@@ -49,6 +49,11 @@ object TimepickPollSync {
         TimepickStateHolder.globalEndHour = endHour
         TimepickStateHolder.pollId = pollId
         TimepickStateHolder.pollStatus = detail.status
+        detail.teamId?.let { teamId ->
+            if (teamId > 0) {
+                TimepickStateHolder.teamId = teamId.toString()
+            }
+        }
 
         val slotToCell = mutableMapOf<Int, Pair<Int, Int>>()
         detail.slotDefinitions.orEmpty().forEach { slot ->
