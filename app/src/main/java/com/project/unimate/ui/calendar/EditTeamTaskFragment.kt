@@ -313,7 +313,15 @@ class EditTeamTaskFragment : Fragment() {
             }
             dlg.show()
         }
-        startTimeBtn.setOnClickListener { if (!isCompletedTeam) showTimePicker(startCal) { refreshDateTime() } }
+        startTimeBtn.setOnClickListener {
+            if (!isCompletedTeam) showTimePicker(startCal) {
+                refreshDateTime()
+                if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR) && startCal.get(Calendar.DAY_OF_YEAR) == endCal.get(Calendar.DAY_OF_YEAR) && startCal.timeInMillis > endCal.timeInMillis) {
+                    endCal.timeInMillis = startCal.timeInMillis
+                    refreshDateTime()
+                }
+            }
+        }
         endDateBtn.setOnClickListener {
             if (isCompletedTeam) return@setOnClickListener
             val ctx = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)

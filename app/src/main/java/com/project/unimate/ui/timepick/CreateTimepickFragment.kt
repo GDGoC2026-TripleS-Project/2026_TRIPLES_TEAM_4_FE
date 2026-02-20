@@ -281,9 +281,9 @@ class CreateTimepickFragment : Fragment() {
         val dlg = TimePickerDialog(
             contextWrapper,
             { _, h, _ ->
-                var start = h
-                if (endHour <= start) endHour = (start + 1).coerceAtMost(24)
-                TimepickStateHolder.dateTimeRanges[day] = start to endHour
+                val start = h
+                val end = if (h > endHour) h else endHour
+                TimepickStateHolder.dateTimeRanges[day] = start to end
                 refreshTimeForSelectedDate()
                 refreshDateTabs()
             },
@@ -309,9 +309,9 @@ class CreateTimepickFragment : Fragment() {
         val dlg = TimePickerDialog(
             contextWrapper,
             { _, h, _ ->
-                var end = h
-                if (end <= startHour) end = (startHour + 1).coerceAtMost(24)
-                TimepickStateHolder.dateTimeRanges[day] = startHour to end
+                val end = h
+                val start = if (end < startHour) end else startHour
+                TimepickStateHolder.dateTimeRanges[day] = start to end
                 refreshTimeForSelectedDate()
                 refreshDateTabs()
             },
