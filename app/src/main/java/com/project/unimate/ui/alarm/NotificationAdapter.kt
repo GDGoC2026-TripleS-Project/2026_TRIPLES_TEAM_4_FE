@@ -15,7 +15,8 @@ import com.project.unimate.notification.NotificationUiMapper
 
 class NotificationAdapter(
     private val onCompleteClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit,
-    private val onCardClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit
+    private val onCardClicked: (NotificationItem, (NotificationItem) -> Unit) -> Unit,
+    private val onMeetingNavigated: (NotificationItem) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val sourceItems = mutableListOf<NotificationItem>()
@@ -95,9 +96,9 @@ class NotificationAdapter(
         fun bind(item: ListItem.Card) {
             val n = item.notification
             val isMeetingNotification = isMeetingNotification(n)
-            val done = if (n.action) n.actionDone else n.isRead
+            val useReadTone = n.isRead && !n.actionDone
             itemView.setBackgroundResource(
-                if (done) R.drawable.bg_notification_card_done
+                if (useReadTone) R.drawable.bg_notification_card_done
                 else R.drawable.bg_notification_card_unread
             )
             teamName.text = n.teamName.ifBlank { "Unknown" }
@@ -122,8 +123,16 @@ class NotificationAdapter(
                 button.backgroundTintList = null
                 button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
                 button.setOnClickListener {
-                    onCardClicked(n) { updated ->
-                        updateItem(updated)
+                    if (n.action && !n.actionDone) {
+                        onCompleteClicked(n) { updated ->
+                            updateItem(updated)
+                            onMeetingNavigated(updated)
+                        }
+                    } else {
+                        onCardClicked(n) { updated ->
+                            updateItem(updated)
+                            onMeetingNavigated(updated)
+                        }
                     }
                 }
             } else if (!n.action) {
@@ -182,8 +191,15 @@ class NotificationAdapter(
         }
 
         private fun meetingButtonText(n: NotificationItem): String {
+            val alarmType = n.alarmType.lowercase()
             val text = "${n.messageTitle} ${n.messageBody}".lowercase()
-            return if (text.contains("생성")) "체크 일정 확인하기" else "시간 입력하기"
+            val isRequest = n.action ||
+                alarmType.contains("request") ||
+                alarmType.contains("meeting_request") ||
+                text.contains("체크요청") ||
+                text.contains("시간 체크")
+
+            return if (isRequest) "시간 입력하기" else "체크 일정 확인하기"
         }
     }
 

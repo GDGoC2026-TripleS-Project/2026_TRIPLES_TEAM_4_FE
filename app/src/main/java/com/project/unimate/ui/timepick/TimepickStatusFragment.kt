@@ -50,9 +50,23 @@ class TimepickStatusFragment : Fragment() {
         val editTimeBtn = root.findViewById<android.widget.Button>(R.id.timepickStatusEditTime)
 
         val teamId = TimepickStateHolder.teamId
-        val members = DummyRepository.getTeamMembers(teamId)
+        val members = if (TimepickStateHolder.pollMembers.isNotEmpty()) {
+            TimepickStateHolder.pollMembers.map { m ->
+                TeamMember(
+                    id = m.memberId.toString(),
+                    name = m.name,
+                    iconResName = "ic_user"
+                )
+            }
+        } else {
+            DummyRepository.getTeamMembers(teamId)
+        }
         val totalMembers = members.size
-        val participatedCount = members.count { !it.id.startsWith("server-") }
+        val participatedCount = if (TimepickStateHolder.pollSelectionsByMember.isNotEmpty()) {
+            TimepickStateHolder.pollSelectionsByMember.values.count { it.isNotEmpty() }
+        } else {
+            members.count { !it.id.startsWith("server-") }
+        }
         participantCount.text = getString(R.string.timepick_participants, participatedCount, totalMembers)
 
         val dates = TimepickStateHolder.displayDates
@@ -115,14 +129,28 @@ class TimepickStatusFragment : Fragment() {
             val endSlot = ((e - startHour).coerceAtMost(endHour - startHour) * 2).coerceIn(0, slotCount)
             startSlot to endSlot
         }
-        val memberSelections: List<Set<Pair<Int, Int>>> = buildMemberSelections(members, dates.size, slotCount, dayTimeRanges)
+        val memberSelections: List<Set<Pair<Int, Int>>> = if (TimepickStateHolder.pollSelectionsByMember.isNotEmpty()
+            && TimepickStateHolder.pollMembers.isNotEmpty()
+        ) {
+            members.map { member ->
+                val memberId = member.id.toLongOrNull()
+                if (memberId == null) emptySet()
+                else TimepickStateHolder.pollSelectionsByMember[memberId].orEmpty()
+            }
+        } else {
+            buildMemberSelections(members, dates.size, slotCount, dayTimeRanges)
+        }
         val allCellsCount = mutableMapOf<Pair<Int, Int>, Int>()
         memberSelections.forEach { selection ->
             selection.forEach { cell ->
                 allCellsCount[cell] = (allCellsCount[cell] ?: 0) + 1
             }
         }
-        val intersectionCells = allCellsCount.filter { it.value == totalMembers }.keys
+        val intersectionCells = if (TimepickStateHolder.pollIntersectionCells.isNotEmpty()) {
+            TimepickStateHolder.pollIntersectionCells
+        } else {
+            allCellsCount.filter { it.value == totalMembers }.keys
+        }
 
         fun refreshFilterUi() {
             allAvailableBtn.setBackgroundResource(
@@ -194,7 +222,10 @@ class TimepickStatusFragment : Fragment() {
 
         back.setOnClickListener { findNavController().popBackStack() }
         editTimeBtn.setOnClickListener {
-            findNavController().popBackStack(R.id.selectTimeFragment, false)
+            val popped = findNavController().popBackStack(R.id.selectTimeFragment, false)
+            if (!popped) {
+                findNavController().navigate(R.id.selectTimeFragment)
+            }
         }
 
         root.findViewById<android.widget.Button>(R.id.timepickStatusGoResult)?.setOnClickListener {

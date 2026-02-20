@@ -1,5 +1,7 @@
 package com.project.unimate.network.dto
 
+import com.google.gson.annotations.SerializedName
+
 // === Request ===
 
 data class PokeRequest(
@@ -27,17 +29,23 @@ data class InvalidTarget(
 )
 
 data class PokeTargetsResponse(
+    @SerializedName(value = "teams", alternate = ["data", "content"])
     val teams: List<PokeTeamSection>?
 )
 
 data class PokeTeamSection(
+    @SerializedName(value = "teamId", alternate = ["id"])
     val teamId: Long?,
+    @SerializedName(value = "teamName", alternate = ["name"])
     val teamName: String?,
+    @SerializedName(value = "members", alternate = ["users", "targets"])
     val members: List<PokeMember>?
 )
 
 data class PokeMember(
+    @SerializedName(value = "userId", alternate = ["id", "memberId"])
     val userId: Long?,
+    @SerializedName(value = "nickname", alternate = ["name", "userName"])
     val nickname: String?,
     val profileImageUrl: String?
 )

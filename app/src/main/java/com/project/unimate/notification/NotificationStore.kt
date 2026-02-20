@@ -70,7 +70,9 @@ object NotificationStore {
             isRead = server.isRead ?: local.isRead,
             action = server.action ?: local.action,
             actionDone = server.actionDone ?: local.actionDone,
-            processedAt = server.processedAt ?: local.processedAt
+            processedAt = server.processedAt ?: local.processedAt,
+            meetingPollId = server.meetingPollId ?: local.meetingPollId,
+            meetingNavigationTarget = server.meetingNavigationTarget ?: local.meetingNavigationTarget
         )
     }
 
@@ -108,11 +110,20 @@ object NotificationStore {
             .put("action", item.action)
             .put("actionDone", item.actionDone)
             .put("processedAt", item.processedAt)
+            .put("meetingPollId", item.meetingPollId)
+            .put("meetingNavigationTarget", item.meetingNavigationTarget)
     }
 
     private fun fromJson(obj: JSONObject): NotificationItem? {
         val notificationId = obj.optLong("notificationId", -1L)
         if (notificationId <= 0) return null
+        val processedAt = if (obj.has("processedAt") && !obj.isNull("processedAt")) obj.optString("processedAt") else null
+        val meetingNavigationTarget =
+            if (obj.has("meetingNavigationTarget") && !obj.isNull("meetingNavigationTarget")) {
+                obj.optString("meetingNavigationTarget")
+            } else {
+                null
+            }
 
         return NotificationItem(
             notificationId = notificationId,
@@ -126,7 +137,9 @@ object NotificationStore {
             isRead = obj.optBoolean("isRead", false),
             action = obj.optBoolean("action", false),
             actionDone = obj.optBoolean("actionDone", false),
-            processedAt = obj.optString("processedAt", null)
+            processedAt = processedAt,
+            meetingPollId = obj.optLong("meetingPollId", -1L).takeIf { it > 0 },
+            meetingNavigationTarget = meetingNavigationTarget
         )
     }
 }
