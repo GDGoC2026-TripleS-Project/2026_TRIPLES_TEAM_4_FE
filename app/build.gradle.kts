@@ -9,15 +9,6 @@ android {
     namespace = "com.project.unimate"
     compileSdk = 36
 
-    signingConfigs {
-        create("teamDebug") {
-            storeFile = file("debug-team.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
-        }
-    }
-
     defaultConfig {
         applicationId = "com.project.unimate"
         minSdk = 24
@@ -35,9 +26,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            signingConfig = signingConfigs.getByName("teamDebug")
-        }
         release {
             isMinifyEnabled = false
             proguardFiles(
