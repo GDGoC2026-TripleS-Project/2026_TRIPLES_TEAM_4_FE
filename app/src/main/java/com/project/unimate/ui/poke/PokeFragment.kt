@@ -119,16 +119,17 @@ class PokeFragment : Fragment() {
         val apiByTeamName = apiTeams.associateBy { it.teamName ?: "" }
         val localTeamIds = DummyRepository.getMyTeamSpaceTeams().map { it.id }.toSet()
         val apiTeamIdsAdded = mutableSetOf<String>()
-        var syntheticUserId = 1L
+        var syntheticUserId = -1L
 
         fun localTeamIdToLong(teamIdStr: String): Long =
             -abs(teamIdStr.hashCode().toLong()).let { if (it == Long.MIN_VALUE) -1L else it }
 
-        fun localMembers(teamId: String): List<Pair<Long, String>> {
+        /** 더미/로컬 전용 팀원: userId를 항상 음수로 부여해 PokeDetailFragment에서 API 호출 없이 찌르기 완료 처리 */
+        fun localMembersAsTriple(teamId: String): List<Triple<Long, String, String?>> {
             return DummyRepository.getTeamMembers(teamId)
                 .filter { it.id != "me" && it.name.trim() != currentUserName }
-                .mapIndexed { i, tm -> (syntheticUserId + i) to tm.name }
-                .also { syntheticUserId += it.size }
+                .mapIndexed { i, tm -> Triple(syntheticUserId - i, tm.name, null) }
+                .also { syntheticUserId -= it.size }
         }
 
         fun displayName(userId: Long, nickname: String?): String {
@@ -144,32 +145,33 @@ class PokeFragment : Fragment() {
             val localTeamIdLong = localTeamIdToLong(teamIdStr)
             val effectiveTeamId = apiSection?.teamId?.let { it } ?: localTeamIdLong
 
-            val members: List<Pair<Long, String>> = if (apiSection != null) {
+            val members: List<Triple<Long, String, String?>> = if (apiSection != null) {
                 val apiMembers = apiSection.members
                     ?.mapNotNull { m ->
                         m.userId?.let { id ->
                             val name = displayName(id, m.nickname)
-                            if (name == currentUserName) null else (id to name)
+                            if (name == currentUserName) null else Triple(id, name, m.profileImageUrl)
                         }
                     }
                     ?.distinctBy { it.first } ?: emptyList()
-                if (apiMembers.isNotEmpty()) apiMembers else localMembers(team.id)
+                if (apiMembers.isNotEmpty()) apiMembers else localMembersAsTriple(team.id)
             } else {
-                localMembers(team.id)
+                localMembersAsTriple(team.id)
             }
 
             result.add(PokeData.Header(teamId = effectiveTeamId, title = teamName, teamColor = teamColor))
             if (members.isEmpty()) {
                 result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
             } else {
-                members.forEach { (uid, name) ->
+                members.forEach { (uid, name, profileUrl) ->
                     result.add(
                         PokeData.Member(
                             userId = uid,
                             teamId = effectiveTeamId,
                             teamName = teamName,
                             teamColor = teamColor,
-                            name = name
+                            name = name,
+                            profileImageUrl = profileUrl
                         )
                     )
                 }
@@ -189,21 +191,22 @@ class PokeFragment : Fragment() {
                 ?.mapNotNull { m ->
                     m.userId?.let { id ->
                         val name = displayName(id, m.nickname)
-                        if (name == currentUserName) null else (id to name)
+                        if (name == currentUserName) null else Triple(id, name, m.profileImageUrl)
                     }
                 }
                 ?.distinctBy { it.first } ?: emptyList()
             if (others.isEmpty()) {
                 result.add(PokeData.NoMembersMessage(teamName = teamName, teamColor = teamColor))
             } else {
-                others.forEach { (uid, name) ->
+                others.forEach { (uid, name, profileUrl) ->
                     result.add(
                         PokeData.Member(
                             userId = uid,
                             teamId = teamId,
                             teamName = teamName,
                             teamColor = teamColor,
-                            name = name
+                            name = name,
+                            profileImageUrl = profileUrl
                         )
                     )
                 }

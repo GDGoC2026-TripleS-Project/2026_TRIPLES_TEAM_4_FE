@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
+import com.project.unimate.utils.ProfileImageLoader
 
 class PokeAdapter(
     private val onSelectionChanged: (selectedCount: Int) -> Unit
@@ -119,9 +120,11 @@ class PokeAdapter(
         private val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
         private val viewBar: View = itemView.findViewById(R.id.viewBar)
         private val ivCheck: ImageView = itemView.findViewById(R.id.ivCheck)
+        private val ivProfile: ImageView = itemView.findViewById(R.id.ivProfile)
 
         fun bind(member: PokeData.Member) {
             tvUserName.text = member.name
+            ProfileImageLoader.load(ivProfile, member.profileImageUrl, itemView.context)
 
             val pos = bindingAdapterPosition
             val isLastTotal = pos == itemCount - 1

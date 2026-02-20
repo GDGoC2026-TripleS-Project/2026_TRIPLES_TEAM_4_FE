@@ -6,7 +6,9 @@
       "Bash(./gradlew assembleDebug:*)",
       "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\" ./gradlew:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git -C \"C:/Users/lucky/AndroidStudioProjects/2026_TRIPLES_TEAM_4_FE\" status)",
+      "Bash(git -C \"C:/Users/lucky/AndroidStudioProjects/2026_TRIPLES_TEAM_4_FE\" stash push:*)"
     ]
   }
 }

@@ -1,5 +1,6 @@
 package com.project.unimate.ui.calendar
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.graphics.Color
@@ -16,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -82,6 +84,63 @@ class EditPersonalTaskFragment : Fragment() {
         view.findViewById<TextView>(R.id.addPersonalTitle).text = getString(R.string.schedule_edit)
         view.findViewById<TextView>(R.id.addPersonalCancel).setOnClickListener { findNavController().popBackStack() }
         view.findViewById<TextView>(R.id.addPersonalSave).setOnClickListener { savePersonal(item) }
+
+        // 삭제 버튼: Edit 모드(EditPersonalTaskFragment)에서는 항상 표시
+        val deleteBtn = view.findViewById<TextView>(R.id.addPersonalDelete)
+        deleteBtn.visibility = View.VISIBLE
+        deleteBtn.setOnClickListener {
+            val dialogView = layoutInflater.inflate(R.layout.dialog_team_delete_confirm, null)
+            val dialog = AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .setCancelable(true)
+                .create()
+            dialogView.findViewById<TextView>(R.id.deleteConfirmMessage).text = "일정을 삭제하시겠습니까?"
+            dialogView.findViewById<View>(R.id.dialogTeamEndConfirm).setOnClickListener {
+                dialog.dismiss()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    // p-server-{id} 형식이면 서버 API 호출
+                    val scheduleId = item.id.removePrefix("p-server-")
+                        .takeIf { item.id.startsWith("p-server-") }?.toLongOrNull()
+                    val firstTeamId = DummyRepository.getMyTeamSpaceTeams()
+                        .firstOrNull()?.id?.toLongOrNull()
+                    if (scheduleId != null && firstTeamId != null) {
+                        try {
+                            val service = RetrofitClient.create<MyScheduleService>(requireContext())
+                            val resp = service.delete(firstTeamId, scheduleId)
+                            if (!isAdded) return@launch
+                            when (resp.code()) {
+                                200, 204 -> { /* 성공, 아래에서 로컬 삭제 */ }
+                                403 -> {
+                                    Toast.makeText(requireContext(), "권한이 없습니다", Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
+                                404 -> {
+                                    Toast.makeText(requireContext(), "일정을 찾을 수 없습니다", Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
+                                else -> {
+                                    Toast.makeText(requireContext(), "삭제 실패 (${resp.code()})", Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
+                            }
+                        } catch (e: Exception) {
+                            if (!isAdded) return@launch
+                            Toast.makeText(requireContext(), "네트워크 오류", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                    }
+                    // 로컬 삭제 (서버 성공 후 or 로컬 전용 일정)
+                    if (!isAdded) return@launch
+                    DummyRepository.removePersonalById(item.id)
+                    DummyRepository.saveSchedulesTo(requireContext())
+                    Toast.makeText(requireContext(), "일정이 삭제되었습니다", Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
+                }
+            }
+            dialogView.findViewById<View>(R.id.dialogTeamEndCancel).setOnClickListener { dialog.dismiss() }
+            dialog.show()
+        }
+
         // 일정 편집 페이지: 팀/개인 토글 선택 불가
         view.findViewById<TextView>(R.id.addPersonalToggleTeam).apply {
             isClickable = false

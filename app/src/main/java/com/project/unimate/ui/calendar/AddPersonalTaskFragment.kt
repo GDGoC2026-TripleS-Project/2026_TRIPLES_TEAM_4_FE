@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -328,7 +329,7 @@ class AddPersonalTaskFragment : Fragment() {
             findNavController().popBackStack()
             return
         }
-        // 서버에 먼저 생성 후, 응답 id로 로컬에 추가 (재설치 후 복구 가능)
+        // 서버에 생성 후, 서버 전체 개인일정으로 완전 교체 (재설치 후에도 서버에서 복구 보장)
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -341,33 +342,72 @@ class AddPersonalTaskFragment : Fragment() {
                     category = categoryToServerValue(cat),
                     alarmMinutes = alarmMinutesFromLabel(notiLabel)
                 ))
-                val serverId = resp.body()?.id
-                if (resp.isSuccessful && serverId != null) {
-                    val item = PersonalScheduleItem(
-                        id = "p-server-$serverId",
-                        title = name,
-                        date = date,
-                        startTimeMillis = startCal.timeInMillis,
-                        endTimeMillis = endCal.timeInMillis,
-                        isLocked = isPrivate,
-                        isChecked = false,
-                        notificationCategory = notiLabel,
-                        scheduleCategory = cat
-                    )
-                    DummyRepository.addPersonalSchedule(item)
-                    DummyRepository.saveSchedulesTo(requireContext())
+                if (resp.isSuccessful) {
+                    Log.d("AddPersonalTask", "개인 일정 생성 성공: teamId=$firstTeamId")
+                    // 서버에서 개인 일정 전체 재로드 → 로컬 완전 교체
+                    try {
+                        val markedResp = service.getMarkedDates(firstTeamId, "2025-01-01", "2026-12-31")
+                        if (markedResp.isSuccessful) {
+                            val dates = markedResp.body()?.markedDates ?: emptyList()
+                            val personalItems = mutableListOf<PersonalScheduleItem>()
+                            for (dateStr in dates) {
+                                val dayResp = service.getDaySchedules(firstTeamId, dateStr)
+                                if (dayResp.isSuccessful) {
+                                    dayResp.body()?.forEach { s ->
+                                        val sid = s.id ?: return@forEach
+                                        val startMs = parseIsoToMillis(s.startAt)
+                                        val endMs = parseIsoToMillis(s.endAt)
+                                        if (startMs == null || endMs == null) return@forEach
+                                        val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+                                        personalItems.add(PersonalScheduleItem(
+                                            id = "p-server-$sid",
+                                            title = s.title ?: "",
+                                            date = cal,
+                                            startTimeMillis = startMs,
+                                            endTimeMillis = endMs,
+                                            isLocked = s.isPrivate == true,
+                                            isChecked = false,
+                                            notificationCategory = notiLabel,
+                                            scheduleCategory = s.category ?: cat
+                                        ))
+                                    }
+                                }
+                            }
+                            Log.d("AddPersonalTask", "서버 개인일정 재로드: ${personalItems.size}개")
+                            withContext(Dispatchers.Main) {
+                                DummyRepository.replacePersonalSchedulesFromServer(personalItems)
+                                DummyRepository.saveSchedulesTo(requireContext())
+                            }
+                        } else {
+                            Log.w("AddPersonalTask", "서버 개인일정 재로드 실패: ${markedResp.code()}")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AddPersonalTask", "서버 개인일정 재로드 예외: ${e.message}")
+                    }
                     withContext(Dispatchers.Main) { findNavController().popBackStack() }
                 } else {
+                    Log.w("AddPersonalTask", "개인 일정 생성 실패: ${resp.code()}")
                     withContext(Dispatchers.Main) {
                         android.widget.Toast.makeText(requireContext(), "일정 저장에 실패했습니다.", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
+                Log.e("AddPersonalTask", "개인 일정 생성 예외: ${e.message}")
                 withContext(Dispatchers.Main) {
                     android.widget.Toast.makeText(requireContext(), "일정 저장 실패: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        val s = iso.replace("Z", "").trim()
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).parse(s)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(s)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(s)?.time
+        } catch (_: Exception) { null }
     }
 
     private fun styleDatePicker(dialog: DatePickerDialog) {

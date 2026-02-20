@@ -22,8 +22,10 @@ import androidx.navigation.fragment.findNavController
 import com.project.unimate.R
 import com.project.unimate.data.entity.Team
 import com.project.unimate.data.repository.DummyRepository
+import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.service.CalendarService
+import com.project.unimate.network.service.UserService
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -356,6 +358,28 @@ class CalendarFragment : Fragment() {
         )
 
         return root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncMyProfileFromServer()
+    }
+
+    private fun syncMyProfileFromServer() {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val service = RetrofitClient.create<UserService>(ctx)
+                val resp = service.getMyInfo()
+                if (resp.isSuccessful) {
+                    val url = resp.body()?.profileImageUrl?.takeIf { it.isNotBlank() } ?: return@launch
+                    if (DummyRepository.getCurrentUserProfileImageResName() != url) {
+                        DummyRepository.setCurrentUserProfileImageResName(url)
+                        ProfileImageStore.save(ctx, url)
+                    }
+                }
+            } catch (_: Exception) { }
+        }
     }
 
     private fun loadCalendarFromApi(onGridRefresh: () -> Unit, onDayRefresh: () -> Unit) {

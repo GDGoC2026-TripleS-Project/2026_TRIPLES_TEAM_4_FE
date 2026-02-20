@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.View
@@ -257,6 +258,7 @@ class AddTeamTaskFragment : Fragment() {
         val date = (startCal.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
         val numericTeamId = teamId.toLongOrNull()
         if (numericTeamId == null) {
+            // 더미 팀(비숫자 ID): 로컬에만 추가 (서버 미연동)
             val item = TaskItem(
                 id = "t-$teamId-${System.currentTimeMillis()}",
                 teamId = teamId,
@@ -272,7 +274,7 @@ class AddTeamTaskFragment : Fragment() {
             findNavController().popBackStack()
             return
         }
-        // 서버에 먼저 생성 후, 응답 id로 로컬에 추가 (재설치 후 복구 가능)
+        // 서버에 생성 후, 서버 전체 목록으로 완전 교체 (재설치 후에도 서버에서 복구 보장)
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -286,33 +288,83 @@ class AddTeamTaskFragment : Fragment() {
                     category = "MEETING",
                     alarmMinutes = alarmMinutesFromLabel(notiLabel)
                 ))
-                val serverId = resp.body()?.id
-                if (resp.isSuccessful && serverId != null) {
-                    val item = TaskItem(
-                        id = "t-$teamId-$serverId",
-                        teamId = teamId,
-                        title = name,
-                        date = date,
-                        startTimeMillis = startCal.timeInMillis,
-                        endTimeMillis = endCal.timeInMillis,
-                        isChecked = false,
-                        creatorName = null,
-                        notificationCategory = notiLabel
-                    )
-                    DummyRepository.addTask(item)
-                    DummyRepository.saveSchedulesTo(requireContext())
-                    withContext(Dispatchers.Main) { findNavController().popBackStack() }
+                if (resp.isSuccessful) {
+                    val serverId = resp.body()?.id
+                    if (serverId != null) {
+                        withContext(Dispatchers.Main) {
+                            val notiLabel = view?.findViewById<TextView>(R.id.addTeamNotificationBtn)?.text?.toString() ?: getString(R.string.none)
+                            val item = TaskItem(
+                                id = "t-$teamId-$serverId",
+                                teamId = teamId,
+                                title = name,
+                                date = date,
+                                startTimeMillis = startCal.timeInMillis,
+                                endTimeMillis = endCal.timeInMillis,
+                                isChecked = false,
+                                creatorName = null
+                            )
+                            DummyRepository.addTask(item)
+                            DummyRepository.saveSchedulesTo(requireContext())
+                            findNavController().popBackStack()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) { findNavController().popBackStack() }
+                    }
+                    Log.d("AddTeamTask", "팀 일정 생성 성공: teamId=$numericTeamId")
+                    try {
+                        val listResp = service.getByRange(numericTeamId, "2025-01-01", "2026-12-31")
+                        if (listResp.isSuccessful) {
+                            val taskItems = listResp.body()?.mapNotNull { s ->
+                                val sid = s.id ?: return@mapNotNull null
+                                val startMs = parseIsoToMillis(s.startAt)
+                                val endMs = parseIsoToMillis(s.endAt)
+                                if (startMs == null || endMs == null) return@mapNotNull null
+                                val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+                                TaskItem(
+                                    id = "t-$teamId-$sid",
+                                    teamId = teamId,
+                                    title = s.title ?: "",
+                                    date = cal,
+                                    startTimeMillis = startMs,
+                                    endTimeMillis = endMs,
+                                    isChecked = false,
+                                    creatorName = null
+                                )
+                            }.orEmpty()
+                            Log.d("AddTeamTask", "서버 일정 재로드: ${taskItems.size}개")
+                            withContext(Dispatchers.Main) {
+                                DummyRepository.replaceTasksForTeam(teamId, taskItems)
+                                DummyRepository.saveSchedulesTo(requireContext())
+                            }
+                        } else {
+                            Log.w("AddTeamTask", "서버 일정 재로드 실패: ${listResp.code()}")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AddTeamTask", "서버 일정 재로드 예외: ${e.message}")
+                    }
                 } else {
+                    Log.w("AddTeamTask", "팀 일정 생성 실패: ${resp.code()}")
                     withContext(Dispatchers.Main) {
                         android.widget.Toast.makeText(requireContext(), "일정 저장에 실패했습니다.", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
+                Log.e("AddTeamTask", "팀 일정 생성 예외: ${e.message}")
                 withContext(Dispatchers.Main) {
                     android.widget.Toast.makeText(requireContext(), "일정 저장 실패: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
+    }
+
+    private fun parseIsoToMillis(iso: String?): Long? {
+        if (iso.isNullOrBlank()) return null
+        val s = iso.replace("Z", "").trim()
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).parse(s)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).parse(s)?.time
+                ?: SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(s)?.time
+        } catch (_: Exception) { null }
     }
 
     private fun styleDatePicker(dialog: DatePickerDialog) {

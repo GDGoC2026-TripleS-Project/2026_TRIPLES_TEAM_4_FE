@@ -20,6 +20,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.card.MaterialCardView
 import com.project.unimate.R
 import com.project.unimate.data.entity.TaskItem
+import com.project.unimate.utils.ProfileImageLoader
 import com.project.unimate.data.entity.TeamMember
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.network.RetrofitClient
@@ -271,8 +272,11 @@ class TeamSpaceFragment : Fragment() {
                 val item = inflater.inflate(R.layout.item_team_space_member, teamSpaceNoScheduleMembersInner, false)
                 val memberCard = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
                 memberCard.strokeColor = teamColor
-                val resId = resources.getIdentifier(member.iconResName, "drawable", requireContext().packageName)
-                if (resId != 0) item.findViewById<ImageView>(R.id.teamMemberIcon).setImageResource(resId)
+                ProfileImageLoader.load(
+                    item.findViewById(R.id.teamMemberIcon),
+                    member.iconResName,
+                    requireContext()
+                )
                 item.findViewById<TextView>(R.id.teamMemberName).text = member.name
                 item.findViewById<TextView>(R.id.teamMemberName).setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))
                 (item.layoutParams as? LinearLayout.LayoutParams)?.marginEnd = 12.dpToPx()
@@ -446,7 +450,7 @@ class TeamSpaceFragment : Fragment() {
                         TeamMember(
                             id = "server-${m.userId ?: m.nickname.hashCode()}",
                             name = m.nickname ?: "팀원",
-                            iconResName = "ic_user"
+                            iconResName = m.profileImageUrl?.takeIf { it.isNotBlank() } ?: "ic_user"
                         )
                     }
                     DummyRepository.cacheServerMembers(teamId, serverMembers)
@@ -550,6 +554,11 @@ class TeamSpaceFragment : Fragment() {
             val item = lInflater.inflate(R.layout.item_team_space_member, container, false)
             val card = item.findViewById<MaterialCardView>(R.id.teamMemberCard)
             card.strokeColor = storedTeamColor
+            ProfileImageLoader.load(
+                item.findViewById(R.id.teamMemberIcon),
+                member.iconResName,
+                requireContext()
+            )
             item.findViewById<TextView>(R.id.teamMemberName).apply {
                 text = member.name
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.gray07))

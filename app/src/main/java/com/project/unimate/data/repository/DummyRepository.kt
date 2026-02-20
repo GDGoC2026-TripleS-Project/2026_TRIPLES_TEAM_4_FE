@@ -1,6 +1,7 @@
 package com.project.unimate.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.project.unimate.data.entity.CalendarDayEvent
 import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.entity.TaskItem
@@ -300,11 +301,12 @@ object DummyRepository {
     /** 팀원 목록에 'me' 보정 및 currentUserName 중복 제거 적용 */
     private fun applyMeAndCurrentUserName(list: List<TeamMember>): List<TeamMember> {
         val withoutCurrentName = list.filter { it.name != currentUserName }
+        val myImage = currentUserProfileImageResName.ifBlank { "ic_user" }
         return if (list.any { it.id == "me" }) {
-            list.map { if (it.id == "me") it.copy(name = currentUserName) else it }
+            list.map { if (it.id == "me") it.copy(name = currentUserName, iconResName = myImage) else it }
                 .filter { it.id == "me" || it.name != currentUserName }
         } else {
-            listOf(TeamMember("me", currentUserName, "ic_user")) + withoutCurrentName
+            listOf(TeamMember("me", currentUserName, myImage)) + withoutCurrentName
         }
     }
 
@@ -408,11 +410,19 @@ object DummyRepository {
         val idx = _allTaskItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allTaskItems[idx] = item
     }
+    fun removeTaskById(id: String) { _allTaskItems.removeAll { it.id == id } }
 
     /** 서버에서 팀 일정을 불러온 뒤 해당 팀의 일정만 교체할 때 사용. (재설치 후 복구용) */
     fun replaceTasksForTeam(teamId: String, newTasks: List<TaskItem>) {
         _allTaskItems.removeAll { it.teamId == teamId }
         _allTaskItems.addAll(newTasks)
+    }
+
+    /** 서버에서 받은 전체 팀 일정으로 완전 교체 (모든 팀의 일정을 한 번에 서버 데이터로 덮어씀) */
+    fun replaceSchedulesWithServerData(serverSchedules: List<TaskItem>) {
+        _allTaskItems.clear()
+        _allTaskItems.addAll(serverSchedules)
+        Log.d("DummyRepository", "일정 데이터 교체: ${serverSchedules.size}개")
     }
 
     /** 팀 스페이스용: 해당 팀의 총 일정 개수 */
@@ -547,6 +557,7 @@ object DummyRepository {
 
     fun getPersonalById(id: String): PersonalScheduleItem? = _allPersonalItems.find { it.id == id }
     fun addPersonalSchedule(item: PersonalScheduleItem) { _allPersonalItems.add(item) }
+    fun removePersonalById(id: String) { _allPersonalItems.removeAll { it.id == id } }
     fun updatePersonalSchedule(item: PersonalScheduleItem) {
         val idx = _allPersonalItems.indexOfFirst { it.id == item.id }
         if (idx >= 0) _allPersonalItems[idx] = item
