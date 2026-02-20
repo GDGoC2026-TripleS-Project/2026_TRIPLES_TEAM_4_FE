@@ -1,6 +1,7 @@
 package com.project.unimate.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.project.unimate.data.entity.CalendarDayEvent
 import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.entity.TaskItem
@@ -415,6 +416,13 @@ object DummyRepository {
     fun replaceTasksForTeam(teamId: String, newTasks: List<TaskItem>) {
         _allTaskItems.removeAll { it.teamId == teamId }
         _allTaskItems.addAll(newTasks)
+    }
+
+    /** 서버에서 받은 전체 팀 일정으로 완전 교체 (모든 팀의 일정을 한 번에 서버 데이터로 덮어씀) */
+    fun replaceSchedulesWithServerData(serverSchedules: List<TaskItem>) {
+        _allTaskItems.clear()
+        _allTaskItems.addAll(serverSchedules)
+        Log.d("DummyRepository", "일정 데이터 교체: ${serverSchedules.size}개")
     }
 
     /** 팀 스페이스용: 해당 팀의 총 일정 개수 */

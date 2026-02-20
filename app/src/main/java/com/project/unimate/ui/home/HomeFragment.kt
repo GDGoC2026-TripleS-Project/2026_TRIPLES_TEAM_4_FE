@@ -25,6 +25,7 @@ import com.project.unimate.network.dto.HomeSummaryResponse
 import com.project.unimate.network.dto.TeamSummaryResponse
 import com.project.unimate.data.repository.ProfileImageStore
 import com.project.unimate.network.service.HomeService
+import com.project.unimate.network.service.TeamScheduleService
 import com.project.unimate.network.service.TeamService
 import com.project.unimate.network.service.UserService
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,9 @@ class HomeFragment : Fragment() {
     private var isChecklistExpanded = false
     private val maxCollapsedPersonalItems = 3
     private var homeSummary: HomeSummaryResponse? = null
+
+    /** 서버 동기화 완료 후 주간 캘린더·오늘 할일을 갱신하는 콜백. onCreateView에서 설정. */
+    private var onSyncComplete: (() -> Unit)? = null
 
 
     override fun onCreateView(
@@ -257,6 +261,12 @@ class HomeFragment : Fragment() {
         refreshWeek()
         refreshTodayTasks()
 
+        // onSyncComplete: 서버 동기화 완료 후 주간 뷰와 오늘 할일 갱신
+        onSyncComplete = {
+            refreshWeek()
+            refreshTodayTasks()
+        }
+
         refreshTeamIcons(root)
         loadHomeSummary()
         syncTeamsFromServerAndRefresh(root)
@@ -295,17 +305,67 @@ class HomeFragment : Fragment() {
     private fun syncTeamsFromServerAndRefresh(root: View) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val service = RetrofitClient.create<TeamService>(requireContext())
-                val resp = service.getMyTeams()
-                if (resp.isSuccessful) {
-                    val serverTeams = resp.body()?.listOrEmpty()?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
-                    val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
-                    withContext(Dispatchers.Main) {
-                        DummyRepository.replaceTeamsWithServerData(merged)
-                        refreshTeamIcons(root)
+                // 1) 팀 목록 로드
+                val teamService = RetrofitClient.create<TeamService>(requireContext())
+                val resp = teamService.getMyTeams()
+                if (!resp.isSuccessful) {
+                    android.util.Log.w("HomeFragment", "서버 로드 실패: ${resp.code()} ${resp.message()}")
+                    return@launch
+                }
+                val serverTeams = resp.body()?.listOrEmpty()?.mapNotNull { teamSummaryToTeam(it) } ?: emptyList()
+                android.util.Log.d("HomeFragment", "서버 팀 로드: ${serverTeams.size}개")
+                val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
+                withContext(Dispatchers.Main) {
+                    DummyRepository.replaceTeamsWithServerData(merged)
+                    refreshTeamIcons(root)
+                }
+
+                // 2) 서버 팀(numeric ID) 별 일정 로드 → replaceTasksForTeam으로 완전 교체
+                val scheduleService = RetrofitClient.create<TeamScheduleService>(requireContext())
+                var totalLoaded = 0
+                for (team in serverTeams) {
+                    val numericId = team.id.toLongOrNull() ?: continue
+                    try {
+                        val listResp = scheduleService.getByRange(numericId, "2025-01-01", "2026-12-31")
+                        if (listResp.isSuccessful) {
+                            val taskItems = listResp.body()?.mapNotNull { s ->
+                                val sid = s.id ?: return@mapNotNull null
+                                val startMs = parseIsoToMillis(s.startAt)
+                                val endMs = parseIsoToMillis(s.endAt)
+                                if (startMs == null || endMs == null) return@mapNotNull null
+                                val cal = Calendar.getInstance().apply { timeInMillis = startMs }
+                                TaskItem(
+                                    id = "t-${team.id}-$sid",
+                                    teamId = team.id,
+                                    title = s.title ?: "",
+                                    date = cal,
+                                    startTimeMillis = startMs,
+                                    endTimeMillis = endMs,
+                                    isChecked = false,
+                                    creatorName = null
+                                )
+                            }.orEmpty()
+                            totalLoaded += taskItems.size
+                            withContext(Dispatchers.Main) {
+                                DummyRepository.replaceTasksForTeam(team.id, taskItems)
+                            }
+                        } else {
+                            android.util.Log.w("HomeFragment", "팀 ${team.id} 일정 로드 실패: ${listResp.code()}")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("HomeFragment", "팀 ${team.id} 일정 로드 예외: ${e.message}")
                     }
                 }
-            } catch (_: Exception) { }
+                android.util.Log.d("HomeFragment", "서버 일정 로드: ${totalLoaded}개")
+
+                // 3) 저장 + UI 갱신
+                withContext(Dispatchers.Main) {
+                    DummyRepository.saveSchedulesTo(requireContext())
+                    onSyncComplete?.invoke()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "서버 로드 실패: ${e.message}")
+            }
         }
     }
 
