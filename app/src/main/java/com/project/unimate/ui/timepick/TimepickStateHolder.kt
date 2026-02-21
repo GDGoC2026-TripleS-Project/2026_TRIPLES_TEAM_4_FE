@@ -38,6 +38,9 @@ object TimepickStateHolder {
     /** 4페이지에서 확정한 교집합 셀 (dayIndex, hourIndex). 5페이지 편집 시 타임픽에 표시. */
     var confirmedIntersection: Set<Pair<Int, Int>> = emptySet()
 
+    /** TimepickStatusFragment에서 뒤로가기 또는 '시간 선택/수정'으로 SelectTimeFragment에 들어온 경우 true. SelectTimeFragment에서 뒤로가기 시 플로우 전체 닫기용. */
+    var cameBackFromStatus: Boolean = false
+
     fun clear() {
         teamId = ""
         pollId = null
@@ -50,6 +53,7 @@ object TimepickStateHolder {
         selectTimeSelected.clear()
         displayDates = emptyList()
         confirmedIntersection = emptySet()
+        cameBackFromStatus = false
     }
 
     fun dayStartMillis(cal: Calendar): Long {
