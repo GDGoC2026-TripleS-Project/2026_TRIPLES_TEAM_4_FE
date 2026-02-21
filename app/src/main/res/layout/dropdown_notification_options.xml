@@ -16,9 +16,8 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="10dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:text="@string/none"
-        android:textSize="14sp"
         android:textColor="@color/gray09"
         android:background="?attr/selectableItemBackground" />
 
@@ -30,9 +29,8 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="10dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:text="5분 전"
-        android:textSize="14sp"
         android:textColor="@color/gray09"
         android:background="?attr/selectableItemBackground" />
 
@@ -44,9 +42,8 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="10dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:text="15분 전"
-        android:textSize="14sp"
         android:textColor="@color/gray09"
         android:background="?attr/selectableItemBackground" />
 
@@ -58,9 +55,8 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="10dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:text="30분 전"
-        android:textSize="14sp"
         android:textColor="@color/gray09"
         android:background="?attr/selectableItemBackground" />
 
@@ -72,9 +68,8 @@
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="10dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:text="1시간 전"
-        android:textSize="14sp"
         android:textColor="@color/gray09"
         android:background="?attr/selectableItemBackground" />
 </LinearLayout>

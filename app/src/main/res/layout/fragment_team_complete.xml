@@ -35,9 +35,8 @@
             android:layout_marginTop="33dp"
             android:text="팀 생성이 완료되었습니다!"
             android:textColor="@color/green08"
-            android:textSize="18sp"
+            style="@style/body2_b_18"
             android:textStyle="bold"
-            android:fontFamily="@font/pretendard_bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -63,9 +62,8 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="B7D9KQ"
-                android:textColor="@color/black"
+                style="@style/body2_b_16"
                 android:textSize="16sp"
-                android:fontFamily="@font/pretendard_bold"
                 />
 
             <ImageView
@@ -82,11 +80,10 @@
             android:layout_marginTop="16dp"
             android:layout_marginHorizontal="18dp"
             android:background="@drawable/shape_button_create"
-            android:fontFamily="@font/pretendard_semibold"
+            style="@style/body2_b_14"
             android:text="초대코드 복사"
             android:textAllCaps="false"
             android:textColor="@color/green10"
-            android:textSize="14sp"
             android:elevation="0dp"
             android:stateListAnimator="@null"
             app:layout_constraintEnd_toEndOf="parent"
@@ -108,8 +105,7 @@
         android:paddingHorizontal="8dp"
         android:text="팀으로 이동하기 →"
         android:textColor="@color/gray08"
-        android:textSize="14sp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:textAllCaps="false"
         app:layout_constraintEnd_toEndOf="@id/layoutCard"
         app:layout_constraintTop_toBottomOf="@id/layoutCard" />

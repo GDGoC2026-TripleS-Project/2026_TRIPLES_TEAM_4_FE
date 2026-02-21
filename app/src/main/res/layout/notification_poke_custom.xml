@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:text="찌르기 자료요청"
         android:textColor="@color/gray04"
+        style="@style/body2_m_12"
         android:textSize="12sp" />
 
     <LinearLayout
@@ -32,10 +33,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:fontFamily="@font/pretendard_medium"
+            style="@style/body2_m_14"
             android:text="team1"
             android:textColor="@color/gray10"
-            android:textSize="14sp"
              />
     </LinearLayout>
 
@@ -44,10 +44,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:fontFamily="@font/pretendard_semibold"
+        style="@style/body2_b_15"
         android:text="자료를 기다리고 있는 팀원이 있어요👀"
         android:textColor="@color/black"
-        android:textSize="15sp"
          />
 
     <TextView
@@ -55,8 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_12"
         android:text="찔러준 친구에게 확인 콕을 남겨주세요!"
-        android:textColor="@color/gray08"
-        android:textSize="12sp" />
+        android:textColor="@color/gray08" />
 </LinearLayout>

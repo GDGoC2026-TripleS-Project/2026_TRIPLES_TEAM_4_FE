@@ -33,8 +33,7 @@
             android:layout_marginLeft="7dp"
             android:layout_marginTop="1dp"
             android:textColor="@color/white"
-            android:textSize="11sp"
-            android:fontFamily="@font/pretendard_semibold"
+            style="@style/body2_b_11"
             tools:text="6" />
     </FrameLayout>
 </LinearLayout>

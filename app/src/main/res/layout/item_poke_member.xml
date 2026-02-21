@@ -63,11 +63,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:fontFamily="@font/pretendard_medium"
             android:letterSpacing="-0.03"
             android:text="사용자"
-            android:textColor="@color/black"
-            android:textSize="16sp"
+            style="@style/body2_m_16"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/cvProfile"
             app:layout_constraintTop_toTopOf="parent" />

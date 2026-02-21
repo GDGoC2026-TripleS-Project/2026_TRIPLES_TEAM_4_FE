@@ -6,6 +6,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:background="@drawable/bg_timepick_chip"
+    android:layout_marginEnd="5dp"
     android:paddingStart="10dp"
     android:paddingEnd="6dp">
 
@@ -14,7 +15,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="16sp"
+        style="@style/body2_r_16"
         android:textColor="@color/white"
         android:maxLines="1"
         android:ellipsize="none"

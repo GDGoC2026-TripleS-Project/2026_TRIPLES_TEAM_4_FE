@@ -43,9 +43,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="20dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_18"
         android:text="@string/timepick_select_times"
-        android:textSize="18sp"
         android:textColor="@color/gray10" />
 
     <!-- 타임픽: 시간+타임픽공간 한 세트. 7일 미만일 때는 패딩 0으로 블록만 중앙, 7일 이상은 16dp -->
@@ -112,10 +111,9 @@
         android:layout_marginBottom="16dp"
         app:cornerRadius="8dp"
         android:backgroundTint="@color/team_lime"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_16"
         android:text="@string/timepick_done"
         android:textColor="@color/gray09"
-        android:textSize="16sp"
         />
     </LinearLayout>
 </com.project.unimate.ui.timepick.TimepickExcludeScrollView>

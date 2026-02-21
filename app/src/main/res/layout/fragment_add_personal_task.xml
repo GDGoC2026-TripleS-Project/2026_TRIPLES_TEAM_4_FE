@@ -39,10 +39,9 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:fontFamily="@font/pretendard_regular"
+                    style="@style/body2_r_16"
                     android:text="@string/cancel"
-                    android:textColor="@color/gray06"
-                    android:textSize="16sp" />
+                    android:textColor="@color/gray06" />
 
                 <TextView
                     android:id="@+id/addPersonalTitle"
@@ -50,11 +49,9 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center"
-                    android:fontFamily="@font/pretendard_semibold"
+                    style="@style/body2_b_18"
                     android:text="@string/new_schedule"
-                    android:textColor="@color/gray09"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textColor="@color/gray09" />
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -72,10 +69,9 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
-                        android:fontFamily="@font/pretendard_semibold"
+                        style="@style/body2_b_16"
                         android:text="삭제"
-                        android:textColor="@color/delete_red"
-                        android:textSize="16sp" />
+                        android:textColor="@color/delete_red" />
                     <TextView
                         android:id="@+id/addPersonalSave"
                         android:layout_width="wrap_content"
@@ -86,10 +82,9 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
-                        android:fontFamily="@font/pretendard_semibold"
+                        style="@style/body2_b_16"
                         android:text="@string/save"
-                        android:textColor="@color/main_green"
-                        android:textSize="16sp" />
+                        android:textColor="@color/main_green" />
                 </LinearLayout>
             </FrameLayout>
 
@@ -112,10 +107,9 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_unselected"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/team"
                 android:textColor="@color/gray07"
-                android:textSize="14sp"
                 android:layout_marginEnd="4dp" />
             <TextView
                 android:id="@+id/addPersonalTogglePersonal"
@@ -124,10 +118,9 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_selected"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/personal"
                 android:textColor="@color/white"
-                android:textSize="14sp"
                 android:layout_marginStart="4dp" />
         </LinearLayout>
 
@@ -139,12 +132,11 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="24dp"
             android:background="@drawable/bg_schedule_name_single"
-            android:fontFamily="@font/pretendard_medium"
             android:hint="@string/enter_schedule_name"
             android:textColorHint="@color/gray06"
             android:inputType="text"
             android:paddingHorizontal="12dp"
-            android:textSize="14sp"
+            style="@style/body2_m_14"
             android:textColor="@color/gray06" />
 
         <!-- 하루종일 + 시작 + 종료 같은 컨테이너 -->
@@ -165,10 +157,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/all_day"
-                    android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray09" />
                 <ImageView
                     android:id="@+id/addPersonalAlldayIcon"
                     android:layout_width="53dp"
@@ -190,22 +181,19 @@
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/start"
-                    android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray09" />
                 <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
                 <Button
                     android:id="@+id/addPersonalStartDate"
-                    style="@style/body2_m_14"
                     android:layout_width="88dp"
                     android:layout_height="32dp"
                     android:layout_marginEnd="8dp"
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -219,8 +207,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -242,7 +228,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/end"
                     android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    style="@style/body2_m_14"/>
                 <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
                 <Button
                     android:id="@+id/addPersonalEndDate"
@@ -253,8 +239,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -268,8 +252,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -293,10 +275,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/notification"
-                android:textColor="@color/gray09"
-                android:textSize="14sp" />
+                android:textColor="@color/gray09" />
             <LinearLayout
                 android:id="@+id/addPersonalNotificationBtnWrap"
                 android:layout_width="wrap_content"
@@ -312,10 +293,9 @@
                     android:id="@+id/addPersonalNotificationBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/none"
-                    android:textColor="@color/gray06"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray06" />
                 <ImageView
                     android:layout_width="21dp"
                     android:layout_height="48dp"
@@ -364,10 +344,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/schedule_category"
-                    android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray09" />
                 <LinearLayout
                     android:id="@+id/addPersonalCategoryBtnWrap"
                     android:layout_width="wrap_content"
@@ -383,10 +362,9 @@
                         android:id="@+id/addPersonalCategoryBtn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="@string/select"
-                        android:textColor="@color/gray06"
-                        android:textSize="14sp" />
+                        android:textColor="@color/gray06" />
                     <ImageView
                         android:layout_width="21dp"
                         android:layout_height="48dp"
@@ -403,11 +381,10 @@
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
                 android:background="@drawable/bg_date_time_btn"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:hint="@string/category_etc"
                 android:paddingHorizontal="12dp"
-                android:textColor="@color/gray06"
-                android:textSize="14sp" />
+                android:textColor="@color/gray06" />
         </LinearLayout>
         <!-- 일정 카테고리 목록  -->
         <ScrollView
@@ -442,10 +419,9 @@
                 android:layout_marginEnd="8dp"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_unselected"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/public_visibility"
-                android:textColor="@color/gray07"
-                android:textSize="14sp" />
+                android:textColor="@color/gray07" />
             <TextView
                 android:id="@+id/addPersonalPrivateBtn"
                 android:layout_width="0dp"
@@ -453,10 +429,9 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_selected"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/private_visibility"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
+                android:textColor="@color/white" />
         </LinearLayout>
     </LinearLayout>
     </ScrollView>

@@ -20,10 +20,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="21dp"
-            android:fontFamily="@font/pretendard_medium"
+            style="@style/body2_m_14"
             android:text="찌르기 가능한 팀원이 없습니다."
             android:textColor="@color/gray05"
-            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

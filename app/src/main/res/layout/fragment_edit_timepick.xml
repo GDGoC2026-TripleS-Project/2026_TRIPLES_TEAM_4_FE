@@ -31,20 +31,17 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:focusable="true"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_16"
                 android:text="@string/cancel"
-                android:textColor="@color/gray09"
-                android:textSize="16sp" />
+                android:textColor="@color/gray09" />
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:fontFamily="@font/pretendard_semibold"
+                style="@style/body2_b_18"
                 android:text="@string/timepick_edit_meeting_title"
-                android:textColor="@color/gray09"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:textColor="@color/gray09" />
             <TextView
                 android:id="@+id/editTimepickSave"
                 android:layout_width="wrap_content"
@@ -58,7 +55,7 @@
                 android:focusable="true"
                 android:text="@string/save"
                 android:textColor="@color/main_green"
-                android:textSize="16sp" />
+                style="@style/body2_b_16" />
         </FrameLayout>
 
         <View
@@ -83,9 +80,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:gravity="center"
-                    style="@style/body1_m_16"
+                    style="@style/body2_m_16"
                     android:textColor="@color/main_green"
-                    android:fontFamily="@font/pretendard_medium"
                     android:text="@string/timepick_all_available" />
 
                 <LinearLayout
@@ -141,12 +137,11 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="24dp"
                     android:background="@drawable/bg_schedule_name_single"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:hint="@string/enter_schedule_name"
                     android:textColorHint="@color/gray06"
                     android:inputType="text"
                     android:paddingHorizontal="12dp"
-                    android:textSize="14sp"
                     android:textColor="@color/gray06" />
 
                 <LinearLayout
@@ -165,10 +160,9 @@
                         <TextView
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/pretendard_medium"
+                            style="@style/body2_m_14"
                             android:text="@string/start"
-                            android:textColor="@color/gray09"
-                            android:textSize="14sp" />
+                            android:textColor="@color/gray09" />
                         <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
                         <TextView
                             android:id="@+id/editTimepickStartDate"
@@ -176,16 +170,14 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
                             android:textColor="@color/gray06"
-                            android:textSize="14sp"
-                            android:fontFamily="@font/pretendard_medium"
+                            style="@style/body2_m_14"
                             tools:text="2026. 2. 17" />
                         <TextView
                             android:id="@+id/editTimepickStartTime"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@color/gray06"
-                            android:textSize="14sp"
-                            android:fontFamily="@font/pretendard_medium"
+                            style="@style/body2_m_14"
                             tools:text="오후 12:00" />
                     </LinearLayout>
                     <View
@@ -201,10 +193,9 @@
                         <TextView
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/pretendard_medium"
+                            style="@style/body2_m_14"
                             android:text="@string/end"
-                            android:textColor="@color/gray09"
-                            android:textSize="14sp" />
+                            android:textColor="@color/gray09" />
                         <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
                         <TextView
                             android:id="@+id/editTimepickEndDate"
@@ -212,16 +203,14 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
                             android:textColor="@color/gray06"
-                            android:textSize="14sp"
-                            android:fontFamily="@font/pretendard_medium"
+                            style="@style/body2_m_14"
                             tools:text="2026. 2. 17" />
                         <TextView
                             android:id="@+id/editTimepickEndTime"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textColor="@color/gray06"
-                            android:textSize="14sp"
-                            android:fontFamily="@font/pretendard_medium"
+                            style="@style/body2_m_14"
                             tools:text="오후 1:00" />
                     </LinearLayout>
                 </LinearLayout>
@@ -240,10 +229,9 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="@string/notification"
-                        android:textColor="@color/gray09"
-                        android:textSize="14sp" />
+                        android:textColor="@color/gray09" />
                     <TextView
                         android:id="@+id/editTimepickNotificationBtn"
                         android:layout_width="wrap_content"
@@ -254,10 +242,9 @@
                         android:background="@drawable/bg_btn_white_borderless"
                         android:clickable="true"
                         android:focusable="true"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="@string/none"
-                        android:textColor="@color/gray06"
-                        android:textSize="14sp" />
+                        android:textColor="@color/gray06" />
                 </LinearLayout>
 
                 <!-- 알림 옵션 드롭다운: 참고사진처럼 알림행 밑에 인라인, 페이지 길이 연장 -->
@@ -281,9 +268,8 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="@string/none"
-                        android:textSize="14sp"
                         android:textColor="@color/gray09"
                         android:background="?attr/selectableItemBackground" />
                     <TextView
@@ -294,9 +280,8 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="5분 전"
-                        android:textSize="14sp"
                         android:textColor="@color/gray09"
                         android:background="?attr/selectableItemBackground" />
                     <TextView
@@ -307,9 +292,8 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="15분 전"
-                        android:textSize="14sp"
                         android:textColor="@color/gray09"
                         android:background="?attr/selectableItemBackground" />
                     <TextView
@@ -320,9 +304,8 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="30분 전"
-                        android:textSize="14sp"
                         android:textColor="@color/gray09"
                         android:background="?attr/selectableItemBackground" />
                     <TextView
@@ -333,9 +316,8 @@
                         android:gravity="center_vertical"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="10dp"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_m_14"
                         android:text="1시간 전"
-                        android:textSize="14sp"
                         android:textColor="@color/gray09"
                         android:background="?attr/selectableItemBackground" />
                 </LinearLayout>

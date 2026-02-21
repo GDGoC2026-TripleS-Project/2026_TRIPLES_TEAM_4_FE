@@ -96,8 +96,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        style="@style/body2_m_14"
-                        android:fontFamily="@font/pretendard_semibold"
+                        style="@style/body2_b_16"
                         tools:text="2026년 2월" />
 
                     <ImageButton
@@ -153,9 +152,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_b_18"
                 android:textColor="@color/black"
                 tools:text="2026년 2월 17일" />
 

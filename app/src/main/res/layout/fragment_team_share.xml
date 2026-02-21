@@ -47,8 +47,7 @@
             android:layout_marginTop="33dp"
             android:text="팀 초대 코드를 공유해보세요!"
             android:textColor="@color/green08"
-            android:textSize="18sp"
-            android:fontFamily="@font/pretendard_bold"
+            style="@style/body2_b_18"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -74,9 +73,8 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text=""
-                android:textColor="#151515"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textColor="@color/gray10"
+                style="@style/body2_b_16" />
 
             <ImageView
                 android:id="@+id/ivShareCopyIcon"
@@ -93,8 +91,7 @@
             android:layout_marginTop="8dp"
             android:text=""
             android:textColor="@color/gray06"
-            android:textSize="12sp"
-            android:fontFamily="@font/pretendard_medium"
+            style="@style/body2_m_13"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/shareLayoutCode" />
@@ -107,12 +104,11 @@
             android:layout_marginHorizontal="18dp"
             android:background="@drawable/shape_button_create"
             android:elevation="0dp"
-            android:fontFamily="@font/pretendard_semibold"
+            style="@style/body2_b_14"
             android:stateListAnimator="@null"
             android:text="초대코드 복사"
             android:textAllCaps="false"
             android:textColor="@color/green10"
-            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvShareCountdown" />
@@ -126,12 +122,11 @@
             android:layout_marginHorizontal="18dp"
             android:background="@drawable/shape_button_create"
             android:elevation="0dp"
-            android:fontFamily="@font/pretendard_semibold"
             android:stateListAnimator="@null"
             android:text="새 코드 재발급"
             android:textAllCaps="false"
             android:textColor="@color/green10"
-            android:textSize="14sp"
+            style="@style/body2_b_14"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

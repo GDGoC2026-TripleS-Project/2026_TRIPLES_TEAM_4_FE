@@ -32,9 +32,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:fontFamily="@font/pretendard_medium"
-            android:text="시"
-            android:textSize="16sp" />
+            style="@style/body2_m_16"
+            android:text="시" />
     </LinearLayout>
 
     <Button
@@ -42,7 +41,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:fontFamily="@font/pretendard_medium"
-        android:text="@string/confirm"
-        android:textColor="@color/black" />
+        style="@style/body2_m_16"
+        android:text="@string/confirm" />
 </LinearLayout>

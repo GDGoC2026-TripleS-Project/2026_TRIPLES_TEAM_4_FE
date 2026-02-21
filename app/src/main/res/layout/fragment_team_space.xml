@@ -318,9 +318,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/select_meeting_date"
+                    style="@style/body2_m_16"
                     android:textColor="@color/gray09"
-                    android:textSize="16sp"
-                    android:fontFamily="@font/pretendard_medium" />
+                     />
             </LinearLayout>
 
             <View
@@ -338,7 +338,6 @@
                 android:paddingTop="16dp"
                 android:paddingBottom="8dp"
                 style="@style/title2_m_18"
-                android:textColor="@color/black"
                 tools:text="2월 20일" />
 
             <!-- 일정 체크리스트 (작성자별 구분) -->
@@ -374,7 +373,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:paddingBottom="12dp"
-                        style="@style/body1_m_16"
+                        style="@style/body2_m_16"
                         android:textColor="@color/gray08"
                         android:text="@string/no_schedule_members" />
 

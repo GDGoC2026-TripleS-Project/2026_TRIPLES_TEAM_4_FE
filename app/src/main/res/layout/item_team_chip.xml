@@ -18,7 +18,6 @@
         android:paddingBottom="4dp"
         android:minHeight="26dp"
         android:background="@drawable/bg_team_chip"
-        android:textColor="@color/black"
         style="@style/body2_m_14"
         tools:text="캡스톤" />
 

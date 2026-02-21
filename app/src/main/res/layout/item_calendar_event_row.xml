@@ -22,8 +22,6 @@
         android:layout_marginStart="3dp"
         android:maxLines="1"
         android:ellipsize="end"
-        android:textSize="11sp"
-        android:fontFamily="@font/pretendard_regular"
-        android:textColor="@color/black"
+        style="@style/body2_r_11"
         tools:text="유니 마감" />
 </LinearLayout>

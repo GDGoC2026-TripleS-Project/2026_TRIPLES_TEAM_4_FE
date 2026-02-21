@@ -3,7 +3,7 @@
     android:layout_width="60dp"
     android:layout_height="28dp"
     android:gravity="center"
-    android:textSize="16sp"
+    style="@style/body2_r_16"
     android:textColor="@color/white"
     android:background="@drawable/bg_timepick_date_tab"
-    android:layout_marginEnd="8dp" />
+    android:layout_marginEnd="5dp" />

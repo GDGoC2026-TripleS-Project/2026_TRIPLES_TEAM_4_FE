@@ -39,21 +39,18 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_16"
                     android:text="@string/cancel"
-                    android:textColor="@color/gray06"
-                    android:textSize="16sp" />
+                    android:textColor="@color/gray06" />
                 <TextView
                     android:id="@+id/addTeamTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_b_18"
                     android:text="@string/new_schedule"
-                    android:textColor="@color/gray09"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textColor="@color/gray09" />
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -71,10 +68,9 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_b_16"
                         android:text="삭제"
-                        android:textColor="@color/delete_red"
-                        android:textSize="16sp" />
+                        android:textColor="@color/delete_red" />
                     <TextView
                         android:id="@+id/addTeamSave"
                         android:layout_width="wrap_content"
@@ -85,10 +81,9 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
-                        android:fontFamily="@font/pretendard_medium"
+                        style="@style/body2_b_16"
                         android:text="@string/save"
-                        android:textColor="@color/main_green"
-                        android:textSize="16sp" />
+                        android:textColor="@color/main_green" />
                 </LinearLayout>
             </FrameLayout>
 
@@ -111,10 +106,9 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_selected"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/team"
                 android:textColor="@color/white"
-                android:textSize="14sp"
                 android:layout_marginEnd="4dp" />
             <TextView
                 android:id="@+id/addTeamTogglePersonal"
@@ -123,10 +117,9 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:background="@drawable/bg_schedule_toggle_unselected"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/personal"
                 android:textColor="@color/gray07"
-                android:textSize="14sp"
                 android:layout_marginStart="4dp" />
         </LinearLayout>
 
@@ -138,12 +131,11 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="24dp"
             android:background="@drawable/bg_schedule_name_single"
-            android:fontFamily="@font/pretendard_medium"
+            style="@style/body2_m_14"
             android:hint="@string/enter_schedule_name"
             android:textColorHint="@color/gray06"
             android:inputType="text"
             android:paddingHorizontal="12dp"
-            android:textSize="14sp"
             android:textColor="@color/gray06" />
 
         <!-- 팀 스페이스  -->
@@ -160,10 +152,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/team_space"
-                android:textColor="@color/gray09"
-                android:textSize="14sp" />
+                android:textColor="@color/gray09" />
             <LinearLayout
                 android:id="@+id/addTeamTeamSpaceBtnWrap"
                 android:layout_width="wrap_content"
@@ -179,10 +170,9 @@
                     android:id="@+id/addTeamTeamSpaceBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/select"
-                    android:textColor="@color/gray06"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray06" />
                 <ImageView
                     android:layout_width="21dp"
                     android:layout_height="48dp"
@@ -229,10 +219,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/all_day"
-                    android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray09" />
                 <ImageView
                     android:id="@+id/addTeamAlldayIcon"
                     android:layout_width="53dp"
@@ -255,10 +244,9 @@
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/start"
-                    android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray09" />
                 <View android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_weight="1" />
@@ -271,8 +259,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -286,8 +272,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -308,8 +292,8 @@
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:text="@string/end"
-                    android:textColor="@color/gray09"
-                    android:textSize="14sp" />
+                    style="@style/body2_m_14"
+                    android:textColor="@color/gray09" />
                 <View android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_weight="1" />
@@ -322,8 +306,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -337,8 +319,6 @@
                     android:background="@drawable/bg_date_time_btn"
                     android:backgroundTint="@null"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/pretendard_medium"
                     android:paddingHorizontal="0dp"
                     android:paddingVertical="0dp"
                     android:minWidth="0dp"
@@ -362,10 +342,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:fontFamily="@font/pretendard_medium"
+                style="@style/body2_m_14"
                 android:text="@string/notification"
-                android:textColor="@color/gray09"
-                android:textSize="14sp" />
+                android:textColor="@color/gray09" />
             <LinearLayout
                 android:id="@+id/addTeamNotificationBtnWrap"
                 android:layout_width="wrap_content"
@@ -381,10 +360,9 @@
                     android:id="@+id/addTeamNotificationBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/pretendard_medium"
+                    style="@style/body2_m_14"
                     android:text="@string/none"
-                    android:textColor="@color/gray06"
-                    android:textSize="14sp" />
+                    android:textColor="@color/gray06" />
                 <ImageView
                     android:layout_width="21dp"
                     android:layout_height="48dp"
