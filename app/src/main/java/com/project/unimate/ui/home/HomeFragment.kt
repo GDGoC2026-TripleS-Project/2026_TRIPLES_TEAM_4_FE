@@ -239,6 +239,14 @@ class HomeFragment : Fragment() {
                 } else {
                     countBadge.visibility = View.GONE
                 }
+
+                val layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f                                      // 비율을 1로 설정 (7개 칸이 똑같이 나눠 가짐)
+                )
+                column.layoutParams = layoutParams
+
                 homeWeekDatesContainer.addView(column)
             }
         }
