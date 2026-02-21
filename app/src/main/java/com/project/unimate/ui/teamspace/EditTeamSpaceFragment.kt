@@ -47,6 +47,9 @@ import com.project.unimate.utils.ProfileImageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -322,25 +325,27 @@ class EditTeamSpaceFragment : Fragment() {
                 effectivelyEnded && team.isCompleted -> (team.completedAtMillis ?: now)
                 else -> null
             }
-            val imageResNameToSave = selectedTeamImageResName ?: team.imageResName
-            if (imageResNameToSave.isNotBlank()) {
-                TeamImageStore.save(requireContext(), team.id, imageResNameToSave)
-            }
-            if (name.isNotBlank()) {
-                TeamNameStore.save(requireContext(), team.id, name)
-            }
-            DummyRepository.updateTeam(
-                teamId = team.id,
-                name = name,
-                intro = intro,
-                workStartMillis = workStart,
-                workEndMillis = workEnd,
-                setCompleted = effectivelyEnded,
-                completedAtMillis = completedAt,
-                imageResName = imageResNameToSave
-            )
-            if (DummyRepository.getSeedTeams().any { it.id == team.id }) {
-                SeedTeamOverridesStore.save(requireContext(), team.id, effectivelyEnded, workEnd, workStart)
+            val selectedImageRef = selectedTeamImageResName ?: team.imageResName
+            fun applyLocalTeamChanges(imageRef: String) {
+                if (imageRef.isNotBlank()) {
+                    TeamImageStore.save(requireContext(), team.id, imageRef)
+                }
+                if (name.isNotBlank()) {
+                    TeamNameStore.save(requireContext(), team.id, name)
+                }
+                DummyRepository.updateTeam(
+                    teamId = team.id,
+                    name = name,
+                    intro = intro,
+                    workStartMillis = workStart,
+                    workEndMillis = workEnd,
+                    setCompleted = effectivelyEnded,
+                    completedAtMillis = completedAt,
+                    imageResName = imageRef
+                )
+                if (DummyRepository.getSeedTeams().any { it.id == team.id }) {
+                    SeedTeamOverridesStore.save(requireContext(), team.id, effectivelyEnded, workEnd, workStart)
+                }
             }
             // API 호출 (팀 정보 수정, 종료 상태 포함) 후 서버 동기화하고 화면 전환
             val numericId = team.id.toLongOrNull()
@@ -356,8 +361,30 @@ class EditTeamSpaceFragment : Fragment() {
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
                         val ctx = requireContext()
-                        val imageUrlToSend: String? = if (imageResNameToSave.startsWith("http://") || imageResNameToSave.startsWith("https://")) imageResNameToSave else null
                         val service = RetrofitClient.create<TeamService>(ctx)
+                        var finalImageRef = selectedImageRef
+                        if (selectedImageRef.startsWith("file:")) {
+                            val localFile = File(ctx.filesDir, selectedImageRef.removePrefix("file:"))
+                            if (localFile.exists()) {
+                                val part = MultipartBody.Part.createFormData(
+                                    "file",
+                                    localFile.name,
+                                    localFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                                )
+                                val uploadResp = service.uploadTeamImage(numericId, part)
+                                val uploaded = if (uploadResp.isSuccessful) {
+                                    val body = uploadResp.body()
+                                    body?.get("imageUrl")?.takeIf { it.isNotBlank() }
+                                        ?: body?.get("url")?.takeIf { it.isNotBlank() }
+                                        ?: body?.get("teamImageUrl")?.takeIf { it.isNotBlank() }
+                                } else null
+                                if (!uploaded.isNullOrBlank()) {
+                                    finalImageRef = uploaded
+                                }
+                            }
+                        }
+                        val imageUrlToSend: String? =
+                            if (finalImageRef.startsWith("http://") || finalImageRef.startsWith("https://")) finalImageRef else null
                         val isoFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
                         val endAtForApi = if (effectivelyEnded && workEnd > now) isoFmt.format(Date(now)) else isoFmt.format(Date(workEnd))
                         val resp = service.updateTeam(numericId, TeamUpdateRequest(
@@ -372,12 +399,19 @@ class EditTeamSpaceFragment : Fragment() {
                         if (resp.isSuccessful) {
                             SyncManager.syncAllDataFromServer(ctx)
                         }
-                        withContext(Dispatchers.Main) { navigateAfterSave() }
+                        withContext(Dispatchers.Main) {
+                            applyLocalTeamChanges(finalImageRef)
+                            navigateAfterSave()
+                        }
                     } catch (_: Exception) {
-                        withContext(Dispatchers.Main) { navigateAfterSave() }
+                        withContext(Dispatchers.Main) {
+                            applyLocalTeamChanges(selectedImageRef)
+                            navigateAfterSave()
+                        }
                     }
                 }
             } else {
+                applyLocalTeamChanges(selectedImageRef)
                 navigateAfterSave()
             }
         }

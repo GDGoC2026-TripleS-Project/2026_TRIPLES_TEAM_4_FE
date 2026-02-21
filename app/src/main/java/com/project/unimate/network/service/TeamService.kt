@@ -1,6 +1,7 @@
 package com.project.unimate.network.service
 
 import com.project.unimate.network.dto.*
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -20,6 +21,13 @@ interface TeamService {
         @Path("teamId") teamId: Long,
         @Body request: TeamUpdateRequest
     ): Response<TeamResponse>
+
+    @Multipart
+    @POST("api/teams/{teamId}/image")
+    suspend fun uploadTeamImage(
+        @Path("teamId") teamId: Long,
+        @Part file: MultipartBody.Part
+    ): Response<Map<String, String>>
 
     @DELETE("api/teams/{teamId}")
     suspend fun deleteTeam(@Path("teamId") teamId: Long): Response<Unit>
