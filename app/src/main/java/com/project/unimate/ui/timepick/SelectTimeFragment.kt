@@ -194,6 +194,8 @@ class SelectTimeFragment : Fragment() {
                                         return@launch
                                     }
                                     TimepickPollSync.refreshFromServer(requireContext(), pollId)
+                                    // 알림에서 진입한 경우 시간 입력 완료 시그널 전달
+                                    signalTimeInputDone()
                                     findNavController().navigate(R.id.timepickStatusFragment)
                                 } else {
                                     Toast.makeText(requireContext(), "모이기 생성에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
@@ -219,17 +221,34 @@ class SelectTimeFragment : Fragment() {
                             return@launch
                         }
                         TimepickPollSync.refreshFromServer(requireContext(), pollId)
+                        // 알림에서 진입한 경우 시간 입력 완료 시그널 전달
+                        signalTimeInputDone()
                         findNavController().navigate(R.id.timepickStatusFragment)
                     } catch (_: Exception) {
                         Toast.makeText(requireContext(), "선택 시간 저장에 실패했어요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
+                // pollId 없이 이동: 저장 없이 이동이므로 시그널 없음
                 findNavController().navigate(R.id.timepickStatusFragment)
             }
         }
 
         return root
+    }
+
+    /**
+     * 알림에서 "시간 입력하기" 플로우로 진입해 저장 성공 시 NotificationFragment에 완료 시그널을 전달.
+     * notificationFragment가 back stack에 없으면 (알림 외 진입) 아무것도 하지 않음.
+     */
+    private fun signalTimeInputDone() {
+        val notifId = TimepickStateHolder.pendingNotificationId ?: return
+        runCatching {
+            findNavController()
+                .getBackStackEntry(R.id.notificationFragment)
+                .savedStateHandle["timeInputDone"] = notifId
+        }
+        TimepickStateHolder.pendingNotificationId = null
     }
 
     private suspend fun upsertMyVote(

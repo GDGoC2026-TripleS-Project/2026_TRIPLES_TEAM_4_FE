@@ -69,7 +69,8 @@ object NotificationStore {
             createdAt = server.createdAt,
             isRead = server.isRead ?: local.isRead,
             action = server.action ?: local.action,
-            actionDone = server.actionDone ?: local.actionDone,
+            // 로컬에서 한 번 완료 처리된 경우 서버가 false를 반환해도 유지 (상태 복원)
+            actionDone = (server.actionDone ?: false) || local.actionDone,
             processedAt = server.processedAt ?: local.processedAt,
             meetingPollId = server.meetingPollId ?: local.meetingPollId,
             meetingNavigationTarget = server.meetingNavigationTarget ?: local.meetingNavigationTarget

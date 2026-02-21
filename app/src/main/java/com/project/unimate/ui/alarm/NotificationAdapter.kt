@@ -96,7 +96,8 @@ class NotificationAdapter(
         fun bind(item: ListItem.Card) {
             val n = item.notification
             val isMeetingNotification = isMeetingNotification(n)
-            val useReadTone = n.isRead && !n.actionDone
+            // 모임 알림은 항상 흰 카드 유지 (actionDone/isRead 에 따른 회색 카드 처리 제외)
+            val useReadTone = n.isRead && !n.actionDone && !isMeetingNotification
             itemView.setBackgroundResource(
                 if (useReadTone) R.drawable.bg_notification_card_done
                 else R.drawable.bg_notification_card_unread
@@ -117,21 +118,43 @@ class NotificationAdapter(
 
             if (isMeetingNotification) {
                 button.visibility = View.VISIBLE
-                button.isEnabled = true
-                button.text = meetingButtonText(n)
-                button.setBackgroundResource(R.drawable.bg_notification_button_enabled)
-                button.backgroundTintList = null
-                button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
-                button.setOnClickListener {
-                    if (n.action && !n.actionDone) {
-                        onCompleteClicked(n) { updated ->
-                            updateItem(updated)
-                            onMeetingNavigated(updated)
-                        }
-                    } else {
-                        onCardClicked(n) { updated ->
-                            updateItem(updated)
-                            onMeetingNavigated(updated)
+                when {
+                    !n.action && n.actionDone -> {
+                        // 체크 일정 확인 완료: 회색 비활성 "체크 완료"
+                        button.isEnabled = false
+                        button.text = "체크 완료"
+                        button.setBackgroundResource(R.drawable.bg_notification_button_disabled)
+                        button.backgroundTintList = null
+                        button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
+                        button.setOnClickListener(null)
+                    }
+                    n.action && n.actionDone -> {
+                        // 시간 입력 완료: 회색이지만 활성(재진입 가능) "시간 수정하기"
+                        button.isEnabled = true
+                        button.text = "시간 수정하기"
+                        button.setBackgroundResource(R.drawable.bg_notification_button_disabled)
+                        button.backgroundTintList = null
+                        button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
+                        button.setOnClickListener { onMeetingNavigated(n) }
+                    }
+                    else -> {
+                        // 미완료: 연두색 활성 버튼 (체크 일정 확인하기 / 시간 입력하기)
+                        button.isEnabled = true
+                        button.text = meetingButtonText(n)
+                        button.setBackgroundResource(R.drawable.bg_notification_button_enabled)
+                        button.backgroundTintList = null
+                        button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
+                        button.setOnClickListener {
+                            if (!n.action) {
+                                // 체크 일정 확인하기(action=false): 클릭 즉시 완료 처리 후 이동
+                                onCompleteClicked(n) { updated ->
+                                    updateItem(updated)
+                                    onMeetingNavigated(updated)
+                                }
+                            } else {
+                                // 시간 입력하기(action=true): 이동만 하고 완료는 저장 시점에 처리
+                                onMeetingNavigated(n)
+                            }
                         }
                     }
                 }

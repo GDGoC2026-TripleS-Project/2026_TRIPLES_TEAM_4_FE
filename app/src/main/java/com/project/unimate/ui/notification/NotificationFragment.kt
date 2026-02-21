@@ -34,8 +34,21 @@ class NotificationFragment : Fragment() {
         adapter = NotificationAdapter(
             onCompleteClicked = { item, onResult ->
                 val api = NotificationApi()
-                api.markActionDone(requireContext(), item.notificationId) { actionDoneOk ->
-                    if (!actionDoneOk || !isAdded) return@markActionDone
+                if (item.action) {
+                    // 체크요청(action=true): 서버에 actionDone 처리 후 markRead
+                    api.markActionDone(requireContext(), item.notificationId) { actionDoneOk ->
+                        if (!actionDoneOk || !isAdded) return@markActionDone
+                        api.markRead(requireContext(), item.notificationId) { readOk ->
+                            if (!isAdded) return@markRead
+                            val updated = item.copy(actionDone = true, isRead = readOk || item.isRead)
+                            requireActivity().runOnUiThread {
+                                NotificationStore.upsert(requireContext(), updated)
+                                onResult(updated)
+                            }
+                        }
+                    }
+                } else {
+                    // 모임 생성 등 action=false 알림: actionDone을 로컬에서 처리 + markRead 시도
                     api.markRead(requireContext(), item.notificationId) { readOk ->
                         if (!isAdded) return@markRead
                         val updated = item.copy(actionDone = true, isRead = readOk || item.isRead)
@@ -60,6 +73,10 @@ class NotificationFragment : Fragment() {
                 }
             },
             onMeetingNavigated = { item ->
+                // action=true(시간 입력하기/수정하기) 진입 시 완료 추적을 위해 notificationId 저장
+                if (item.action) {
+                    TimepickStateHolder.pendingNotificationId = item.notificationId
+                }
                 navigateByNotification(item)
             }
         )
@@ -74,6 +91,26 @@ class NotificationFragment : Fragment() {
         view.findViewById<View>(R.id.notificationBack).setOnClickListener {
             findNavController().popBackStack()
         }
+
+        // SelectTimeFragment에서 시간 입력 저장 완료 시 전달하는 시그널 수신
+        findNavController().currentBackStackEntry?.savedStateHandle
+            ?.getLiveData<Long>("timeInputDone")
+            ?.observe(viewLifecycleOwner) { notifId ->
+                if (notifId == null || notifId <= 0L) return@observe
+                // 이벤트 소비 (중복 처리 방지)
+                findNavController().currentBackStackEntry?.savedStateHandle
+                    ?.remove<Long>("timeInputDone")
+                val all = NotificationStore.loadAll(requireContext())
+                val target = all.firstOrNull { it.notificationId == notifId } ?: return@observe
+                if (target.actionDone) return@observe  // 이미 완료 처리된 경우 스킵
+                val updated = target.copy(actionDone = true, isRead = true)
+                NotificationStore.upsert(requireContext(), updated)
+                adapter.updateItem(updated)
+                // 서버에도 비동기 처리 (fire-and-forget)
+                val api = NotificationApi()
+                api.markActionDone(requireContext(), notifId) { _ -> }
+                api.markRead(requireContext(), notifId) { _ -> }
+            }
 
         val items = NotificationStore.loadAll(requireContext())
         render(items)
@@ -133,7 +170,9 @@ class NotificationFragment : Fragment() {
             "TIMEPICK_STATUS" -> R.id.timepickStatusFragment
             "TIMEPICK_RESULT" -> R.id.timepickResultFragment
             "EDIT_TIMEPICK" -> R.id.editTimepickFragment
-            else -> if (item.action && !item.actionDone) R.id.timepickStatusFragment else R.id.editTimepickFragment
+            // action=true(시간 입력/수정): 항상 timepickStatusFragment (최초+재진입 모두)
+            // action=false(체크 일정 확인): editTimepickFragment
+            else -> if (item.action) R.id.timepickStatusFragment else R.id.editTimepickFragment
         }
         runCatching {
             if (destination == R.id.editTimepickFragment) {

@@ -41,6 +41,9 @@ object TimepickStateHolder {
     /** TimepickStatusFragment에서 뒤로가기 또는 '시간 선택/수정'으로 SelectTimeFragment에 들어온 경우 true. SelectTimeFragment에서 뒤로가기 시 플로우 전체 닫기용. */
     var cameBackFromStatus: Boolean = false
 
+    /** 알림에서 시간 입력 플로우로 진입 시 완료 추적을 위해 저장하는 notificationId. null이면 알림에서 온 게 아님. */
+    var pendingNotificationId: Long? = null
+
     fun clear() {
         teamId = ""
         pollId = null
@@ -54,6 +57,7 @@ object TimepickStateHolder {
         displayDates = emptyList()
         confirmedIntersection = emptySet()
         cameBackFromStatus = false
+        pendingNotificationId = null
     }
 
     fun dayStartMillis(cal: Calendar): Long {
