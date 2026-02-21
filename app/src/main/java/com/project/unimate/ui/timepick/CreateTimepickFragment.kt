@@ -10,6 +10,7 @@ import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -99,7 +100,16 @@ class CreateTimepickFragment : Fragment() {
         selectedTimeCard = root.findViewById(R.id.createTimepickSelectedTimeCard)
         val nextBtn = root.findViewById<android.widget.Button>(R.id.createTimepickNext)
 
-        back.setOnClickListener { findNavController().navigateUp() }
+        val nav = findNavController()
+        fun popCreateFromBackStack() {
+            nav.popBackStack(R.id.createTimepickFragment, true)
+        }
+        back.setOnClickListener { popCreateFromBackStack() }
+        requireActivity().onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                popCreateFromBackStack()
+            }
+        })
         prevMonth.setOnClickListener {
             if (currentMonth == 0) { currentYear--; currentMonth = 11 } else currentMonth--
             refreshYearMonth()

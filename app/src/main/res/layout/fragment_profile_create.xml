@@ -23,10 +23,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_18"
         android:text="프로필 등록"
         android:textColor="@color/gray08"
-        android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/iv_logo" />
@@ -57,10 +56,8 @@
         android:layout_height="40dp"
         android:src="@drawable/ic_add_circle"
         android:elevation="2dp"
-
         app:layout_constraintBottom_toBottomOf="@id/cv_profile"
         app:layout_constraintEnd_toEndOf="@id/cv_profile"
-
         android:layout_marginEnd="0dp"
         android:layout_marginBottom="0dp" />
 
@@ -74,12 +71,11 @@
         android:layout_marginEnd="24dp"
         android:background="@drawable/shape_edittext_default"
         android:hint="이름"
-        android:fontFamily="@font/pretendard_medium"
+        style="@style/body2_m_14"
         android:textColor="@color/gray06"
         android:inputType="text"
         android:paddingStart="16dp"
         android:privateImeOptions="defaultInputMode=korean"
-        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cv_profile" />
@@ -99,13 +95,12 @@
             android:layout_height="match_parent"
             android:background="@drawable/shape_edittext_default"
             android:hint="학교 이름 검색 및 선택"
-            android:fontFamily="@font/pretendard_medium"
+            style="@style/body2_m_14"
             android:textColor="@color/gray06"
             android:inputType="text"
             android:paddingStart="16dp"
             android:paddingEnd="48dp"
-            android:privateImeOptions="defaultInputMode=korean"
-            android:textSize="14sp" />
+            android:privateImeOptions="defaultInputMode=korean" />
 
         <ImageView
             android:id="@+id/btn_school_search"
@@ -125,11 +120,8 @@
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="등록"
-        android:textColor="@color/black"
-        android:textSize="16sp"
-        android:textStyle="bold"
+        style="@style/body2_b_16"
         app:backgroundTint="@color/green05"
-        android:fontFamily="@font/pretendard_medium"
         app:cornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="@id/et_name"
         app:layout_constraintStart_toStartOf="@id/et_name"

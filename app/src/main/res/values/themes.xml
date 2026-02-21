@@ -6,6 +6,18 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
+    <style name="head2_b_22" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="head2_b_20" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
     <style name="head2_m_24" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">@font/pretendard_medium</item>
         <item name="android:textSize">24sp</item>
@@ -18,7 +30,49 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
+    <style name="body2_b_11" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
 
+    <style name="body2_b_13" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_b_14" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_b_15" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_b_16" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_b_18" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_bold</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+
+
+    <style name="body2_r_11" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
 
     <style name="body2_r_14" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">@font/pretendard_regular</item>
@@ -29,6 +83,30 @@
     <style name="body2_r_16" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">@font/pretendard_regular</item>
         <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_r_18" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_regular</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_m_11" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_m_12" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="body2_m_13" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/black</item>
     </style>
 
@@ -44,9 +122,9 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
-    <style name="body1_m_16" parent="Widget.AppCompat.TextView">
+    <style name="body2_m_18" parent="Widget.AppCompat.TextView">
         <item name="android:fontFamily">@font/pretendard_medium</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:textColor">@color/black</item>
     </style>
 

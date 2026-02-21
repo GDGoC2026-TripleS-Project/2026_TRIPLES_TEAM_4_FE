@@ -14,8 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/calendar_filter"
-        android:textSize="18sp"
-        android:textStyle="bold"
+        style="@style/body2_b_18"
         android:paddingBottom="16dp" />
 
     <ScrollView
@@ -39,5 +38,6 @@
         android:layout_marginTop="20dp"
         android:backgroundTint="@color/black"
         android:text="@string/confirm"
-        android:textSize="16sp" />
+        style="@style/body2_b_16"
+        android:textColor="@color/white" />
 </LinearLayout>

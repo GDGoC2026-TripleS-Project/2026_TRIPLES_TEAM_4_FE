@@ -53,16 +53,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="@style/body2_b_18"
                     android:text="@string/timepick_select_dates"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
                     android:textColor="@color/gray10" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="@style/body2_m_18"
                     android:text="@string/timepick_multiple"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
                     android:textColor="@color/gray05"
                     android:layout_marginStart="4dp" />
             </LinearLayout>
@@ -81,7 +79,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="16sp"
+                    style="@style/body2_b_16"
                     android:textColor="@color/gray09"
                     tools:text="2026년 2월" />
                 <ImageButton
@@ -145,9 +143,8 @@
                 android:layout_marginTop="15dp"
                 android:layout_marginBottom="20dp"
                 android:gravity="center"
+                style="@style/body2_m_18"
                 android:text="@string/timepick_select_times"
-                android:textSize="18sp"
-                android:textStyle="bold"
                 android:textColor="@color/gray10" />
 
             <TextView
@@ -155,7 +152,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="12dp"
-                style="@style/body1_m_16"
+                style="@style/body2_m_16"
                 android:textColor="@color/gray06"
                 android:text="@string/timepick_selected_dates" />
 
@@ -178,7 +175,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="20dp"
-                style="@style/body1_m_16"
+                style="@style/body2_m_16"
                 android:textColor="@color/gray06"
                 android:text="시작시간" />
             <LinearLayout
@@ -197,7 +194,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
+                    style="@style/body2_m_14"
                     android:text="@string/timepick_select_start_time" />
             </LinearLayout>
 
@@ -206,7 +203,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
-                style="@style/body1_m_16"
+                style="@style/body2_m_16"
                 android:textColor="@color/gray06"
                 android:text="종료시간" />
             <LinearLayout
@@ -225,7 +222,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/gray06"
-                    android:textSize="14sp"
+                    style="@style/body2_m_14"
                     android:text="@string/timepick_select_end_time" />
             </LinearLayout>
 
@@ -243,7 +240,7 @@
                     android:layout_height="28dp"
                     android:gravity="center_vertical"
                     android:paddingHorizontal="8dp"
-                    style="@style/body1_m_16"
+                    style="@style/body2_m_16"
                     android:textColor="@color/gray10"
                     android:background="@drawable/bg_date_time_btn"
                     tools:text="오전 9시 30분 - 오후 1시" />
@@ -258,9 +255,8 @@
                 android:layout_marginBottom="15dp"
                 app:cornerRadius="8dp"
                 android:backgroundTint="@color/gray03"
+                style="@style/body2_b_18"
                 android:text="@string/timepick_next"
-                android:textSize="18sp"
-                android:textStyle="bold"
                 android:textColor="@color/gray09" />
         </LinearLayout>
     </ScrollView>

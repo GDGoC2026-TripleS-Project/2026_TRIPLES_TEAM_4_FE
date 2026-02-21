@@ -120,6 +120,26 @@ class EditTeamSpaceFragment : Fragment() {
         val photoEdit = view.findViewById<ImageButton>(R.id.editTeamSpacePhotoEdit)
         val nameEt = view.findViewById<EditText>(R.id.editTeamSpaceName)
         val introEt = view.findViewById<EditText>(R.id.editTeamSpaceIntro)
+
+        // --- 팀 소개 스크롤 제어  ---
+        introEt.apply {
+            // 1. XML에서 설정했지만 코드상으로도 멀티라인 및 수직 스크롤바 명시
+            setHorizontallyScrolling(false)
+            maxLines = Int.MAX_VALUE
+
+            // 2. 터치 리스너 설정: 입력란 내부 스크롤 시 부모(ScrollView 등)가 터치를 가로채지 못하게 방해 금지 요청
+            setOnTouchListener { v, event ->
+                if (v.id == R.id.editTeamSpaceIntro) {
+                    v.parent.requestDisallowInterceptTouchEvent(true)
+                    // 터치 액션이 끝났을 때만 부모에게 터치 권한을 다시 넘김
+                    when (event.action and android.view.MotionEvent.ACTION_MASK) {
+                        android.view.MotionEvent.ACTION_UP -> v.parent.requestDisallowInterceptTouchEvent(false)
+                    }
+                }
+                false
+            }
+        }
+
         val startDateBtn = view.findViewById<Button>(R.id.editTeamSpaceStartDate)
         val startTimeBtn = view.findViewById<Button>(R.id.editTeamSpaceStartTime)
         val endDateBtn = view.findViewById<Button>(R.id.editTeamSpaceEndDate)

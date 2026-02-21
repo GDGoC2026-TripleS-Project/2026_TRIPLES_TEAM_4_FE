@@ -220,8 +220,12 @@ class TimepickStatusFragment : Fragment() {
         refreshFilterUi()
         refreshGrid()
 
-        back.setOnClickListener { findNavController().popBackStack() }
+        back.setOnClickListener {
+            TimepickStateHolder.cameBackFromStatus = true
+            findNavController().navigateUp()
+        }
         editTimeBtn.setOnClickListener {
+            TimepickStateHolder.cameBackFromStatus = true
             val popped = findNavController().popBackStack(R.id.selectTimeFragment, false)
             if (!popped) {
                 findNavController().navigate(R.id.selectTimeFragment)

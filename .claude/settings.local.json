@@ -8,7 +8,14 @@
       "mcp__ide__getDiagnostics",
       "Bash(git checkout:*)",
       "Bash(git -C \"C:/Users/lucky/AndroidStudioProjects/2026_TRIPLES_TEAM_4_FE\" status)",
-      "Bash(git -C \"C:/Users/lucky/AndroidStudioProjects/2026_TRIPLES_TEAM_4_FE\" stash push:*)"
+      "Bash(git -C \"C:/Users/lucky/AndroidStudioProjects/2026_TRIPLES_TEAM_4_FE\" stash push:*)",
+      "Bash(dir:*)",
+      "Bash(cmd /c:*)",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\lucky\\\\AndroidStudioProjects\\\\2026_TRIPLES_TEAM_4_FE\\\\app\\\\src\\\\main\\\\res\\\\drawable'' | Select-Object Name\")",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell -File:*)",
+      "Bash(echo:*)",
+      "Bash(python3:*)"
     ]
   }
 }

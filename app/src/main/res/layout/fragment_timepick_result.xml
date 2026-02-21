@@ -28,9 +28,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
+            style="@style/body2_b_18"
             android:text="@string/timepick_meeting_full_schedule"
-            android:textSize="18sp"
-            android:textStyle="bold"
             android:textColor="@color/gray10" />
     </LinearLayout>
     <View
@@ -148,15 +147,16 @@
 
             <Button
                 android:id="@+id/timepickResultConfirm"
-                android:layout_width="380dp"
-                android:layout_height="50dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="24dp"
                 app:cornerRadius="8dp"
-                android:backgroundTint="#D9F592"
+                android:backgroundTint="@color/team_lime"
                 android:text="@string/timepick_confirm_meeting"
                 android:textColor="@color/gray09"
-                style="@style/body1_m_16" />
+                style="@style/body2_m_16" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

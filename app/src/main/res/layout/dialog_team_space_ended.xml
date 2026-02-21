@@ -18,9 +18,8 @@
         android:gravity="center"
         android:layout_marginTop="45dp"
         android:text="팀 스페이스가 종료되었습니다!"
-        android:textColor="@color/gray08"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        style="@style/body2_b_18"
+        android:textColor="@color/gray08" />
 
     <Button
         android:id="@+id/dialogTeamEndConfirm"

@@ -6,14 +6,12 @@
     <TextView
         android:id="@+id/tvScreenTitle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:text="찌르기"
-        android:textSize="22dp"
-        android:textColor="@color/black"
-        android:fontFamily="@font/pretendard_semibold"
+        style="@style/head2_b_22"
         android:gravity="center"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="10dp"
         android:layout_alignParentTop="true" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -37,10 +35,9 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:text="찌르기"
-            android:textSize="18dp"
-            android:fontFamily="@font/pretendard_semibold"
+            style="@style/body2_b_18"
             android:enabled="false"
-            android:backgroundTint="#F3F4F6"
+            android:backgroundTint="@color/gray02"
             android:textColor="@color/gray05"/>
 
     </LinearLayout>

@@ -28,9 +28,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
+            style="@style/body2_b_18"
             android:text="@string/timepick_meeting_full_schedule"
-            android:textSize="18sp"
-            android:textStyle="bold"
             android:textColor="@color/gray10" />
     </LinearLayout>
     <View
@@ -148,15 +147,16 @@
 
             <Button
                 android:id="@+id/timepickStatusEditTime"
-                android:layout_width="380dp"
-                android:layout_height="50dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="24dp"
                 app:cornerRadius="8dp"
                 android:backgroundTint="@color/gray03"
                 android:text="@string/timepick_edit_time"
                 android:textColor="@color/gray09"
-                style="@style/body1_m_16" />
+                style="@style/body2_m_16" />
 
             <Button
                 android:id="@+id/timepickStatusGoResult"
@@ -167,9 +167,9 @@
                 app:cornerRadius="8dp"
                 android:layout_marginBottom="16dp"
                 android:backgroundTint="@color/green05"
-                android:text="확정 페이지로 가기(테스트용)"
+                android:text="확정 페이지로 가기"
                 android:textColor="@color/gray09"
-                style="@style/body1_m_16" />
+                style="@style/body2_m_16" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

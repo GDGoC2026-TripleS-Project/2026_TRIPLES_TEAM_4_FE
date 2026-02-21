@@ -27,8 +27,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                style="@style/body2_m_14"
-                android:textStyle="bold"
+                style="@style/body2_b_14"
                 tools:text="행복의 심리학" />
 
             <Button

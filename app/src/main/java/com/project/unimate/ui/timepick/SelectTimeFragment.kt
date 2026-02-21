@@ -9,6 +9,7 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -130,7 +131,29 @@ class SelectTimeFragment : Fragment() {
         val scrollRoot = root.findViewById<com.project.unimate.ui.timepick.TimepickExcludeScrollView>(R.id.selectTimeScrollRoot)
         scrollRoot.excludeView = contentWrapper
 
-        back.setOnClickListener { findNavController().popBackStack() }
+        val nav = findNavController()
+        fun handleBack() {
+            if (TimepickStateHolder.cameBackFromStatus) {
+                TimepickStateHolder.cameBackFromStatus = false
+                nav.popBackStack()
+                val timepickIds = listOf(
+                    R.id.createTimepickFragment,
+                    R.id.selectTimeFragment,
+                    R.id.timepickStatusFragment
+                )
+                while (nav.currentDestination?.id in timepickIds) {
+                    nav.popBackStack()
+                }
+            } else {
+                nav.popBackStack()
+            }
+        }
+        back.setOnClickListener { handleBack() }
+        requireActivity().onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBack()
+            }
+        })
         done.setOnClickListener {
             if (grid.selectedCells.isEmpty()) {
                 Toast.makeText(requireContext(), getString(R.string.timepick_select_at_least_one), Toast.LENGTH_SHORT).show()
