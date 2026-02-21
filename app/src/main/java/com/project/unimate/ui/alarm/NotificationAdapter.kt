@@ -1,5 +1,7 @@
 package com.project.unimate.ui.alarm
 
+// 역할: 알림 목록 RecyclerView 어댑터. 섹션(지금/N일 전)·카드 바인딩, 완료/클릭 콜백
+
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater

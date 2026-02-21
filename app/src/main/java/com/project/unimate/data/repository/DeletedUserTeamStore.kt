@@ -1,8 +1,10 @@
 package com.project.unimate.data.repository
 
+// 역할: 사용자가 삭제한 서버 팀 ID 저장. 재시작 후 팀 목록에서 제외
+
 import android.content.Context
 
-/** 사용자가 삭제한 (서버에서 생성한) 팀 ID 저장. 앱 재시작 후 getMyTeams()에서 제외해 다시 안 보이게 함. */
+/** 삭제한 팀 ID 저장/조회. */
 object DeletedUserTeamStore {
     private const val PREFS_NAME = "deleted_user_teams"
     private const val KEY_IDS = "team_ids"

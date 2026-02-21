@@ -4,9 +4,11 @@ import com.project.unimate.network.dto.*
 import retrofit2.Response
 import retrofit2.http.*
 
+// 역할: 로그인·회원가입·OAuth·이메일 인증·비밀번호 API
+
 interface AuthService {
 
-    // --- 로그인 / 회원가입 ---
+    // 로그인·회원가입
 
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
@@ -26,7 +28,7 @@ interface AuthService {
     @DELETE("api/auth/account")
     suspend fun deleteAccount(): Response<Map<String, String>>
 
-    // --- OAuth ---
+    // OAuth
 
     @GET("api/auth/kakao/authorize-url")
     suspend fun kakaoAuthorizeUrl(): Response<AuthorizeUrlResponse>
@@ -54,12 +56,12 @@ interface AuthService {
     @POST("api/auth/email/find")
     suspend fun findEmail(@Body request: FindEmailRequest): Response<Map<String, String>>
 
-    // --- 닉네임 ---
+    // 닉네임
 
     @GET("api/auth/nickname/check")
     suspend fun checkNickname(@Query("nickname") nickname: String): Response<Map<String, String>>
 
-    // --- 비밀번호 ---
+    // 비밀번호
 
     @POST("api/auth/password/change")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Map<String, String>>

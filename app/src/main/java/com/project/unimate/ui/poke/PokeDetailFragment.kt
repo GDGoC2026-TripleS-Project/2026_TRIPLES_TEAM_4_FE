@@ -1,5 +1,7 @@
 package com.project.unimate.ui.poke
 
+// 역할: 찌르기 메시지 선택·전송. PokeService send. 선택 인원·메시지 검증
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View

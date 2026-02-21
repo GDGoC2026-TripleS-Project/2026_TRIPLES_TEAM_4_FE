@@ -1,5 +1,7 @@
 package com.project.unimate.ui.timepick
 
+// 역할: 모이기 시간 셀 선택·투표 제출. TimepickStateHolder·SchedulePollService
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -93,7 +95,7 @@ class SelectTimeFragment : Fragment() {
         strip.startHour = startHour
         strip.endHour = endHour
 
-        // 스트립 높이를 그리드와 동일하게 맞춤 (시간 라벨 정렬)
+        // 시간 라벨과 그리드 세로 정렬을 위해 스트립 높이를 그리드와 동일하게 맞춤
         grid.viewTreeObserver.addOnGlobalLayoutListener {
             if (grid.height > 0 && strip.layoutParams.height != grid.height) {
                 strip.layoutParams = strip.layoutParams.apply { height = grid.height }
@@ -101,7 +103,7 @@ class SelectTimeFragment : Fragment() {
             }
         }
 
-        // 7일 미만: 왼쪽 마진 줄이기(왼쪽에 붙지 않게). 좌 16dp / 우 28dp 로 블록은 중앙감 유지
+        // 7일 미만일 때 좌 16dp/우 28dp로 블록 중앙감 유지
         val contentWrapper = root.findViewById<LinearLayout>(R.id.selectTimeContentWrapper)
         val density = resources.displayMetrics.density
         val padLeftPx = (16 * density).toInt()

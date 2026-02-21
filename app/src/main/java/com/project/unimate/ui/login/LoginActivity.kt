@@ -1,5 +1,7 @@
 package com.project.unimate.ui.login
 
+// 역할: 로그인 화면 컨테이너 액티비티
+
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity

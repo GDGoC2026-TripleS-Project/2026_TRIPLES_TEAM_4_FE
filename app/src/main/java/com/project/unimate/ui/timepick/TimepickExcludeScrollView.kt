@@ -6,9 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.ScrollView
 
-/**
- * 타임픽 공간(excludeView) 안에서는 세로 스크롤을 막고, 해당 영역 터치 시 드래그만 가능하게 함.
- */
+/** excludeView 영역에서는 세로 스크롤 차단, 터치 시 가로 드래그만 허용 */
 class TimepickExcludeScrollView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,

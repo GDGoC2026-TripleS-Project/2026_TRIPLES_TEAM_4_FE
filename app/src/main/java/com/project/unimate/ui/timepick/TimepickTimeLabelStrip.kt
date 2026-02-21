@@ -8,10 +8,7 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.project.unimate.R
 
-/**
- * 타임픽 왼쪽 시간 라벨만 그리는 뷰. 스크롤 시에도 고정되도록 별도 배치한다.
- * TimepickGridView와 동일한 headerHeight/cellHeight 계산으로 라벨 위치를 맞춘다.
- */
+/** 타임픽 왼쪽 시간 라벨 전용 뷰. TimepickGridView와 동일한 header/cell 높이로 정렬 */
 class TimepickTimeLabelStrip @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,

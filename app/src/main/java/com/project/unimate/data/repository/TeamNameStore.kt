@@ -1,8 +1,10 @@
 package com.project.unimate.data.repository
 
+// 역할: 팀플명 수정값 teamId 기준 저장. 재시작 후에도 반영
+
 import android.content.Context
 
-/** 팀플명 수정값 저장. 더미/사용자 팀 구분 없이 teamId 기준으로 저장해 재시작 후에도 반영. */
+/** 팀별 이름 저장/조회. */
 object TeamNameStore {
     private const val PREFS_NAME = "team_names"
     private const val PREFIX = "name_"

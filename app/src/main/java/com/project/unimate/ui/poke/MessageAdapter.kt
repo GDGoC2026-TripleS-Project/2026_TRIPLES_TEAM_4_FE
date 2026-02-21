@@ -12,8 +12,6 @@ class MessageAdapter(
 ) : RecyclerView.Adapter<MessageAdapter.MsgViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MsgViewHolder {
-        // 간단한 텍스트 뷰 레이아웃 (android.R.layout.simple_list_item_1 등 사용 가능)
-        // 여기서는 직접 코드로 텍스트뷰 생성해서 반환 (xml 안 만들어도 됨)
         val textView = TextView(parent.context).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             setPadding(40, 30, 40, 30) // 패딩 설정

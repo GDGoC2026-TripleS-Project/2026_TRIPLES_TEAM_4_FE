@@ -1,5 +1,7 @@
 package com.project.unimate.ui.login
 
+// 역할: 카카오/네이버 OAuth WebView. authorize-url → callback 연동, JWT 저장 후 홈
+
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent

@@ -1,8 +1,10 @@
 package com.project.unimate.data.repository
 
+// 역할: 서버에서 불러온 닉네임 SharedPreferences 저장. sync 후 복구용
+
 import android.content.Context
 
-/** 서버에서 불러온 닉네임 저장. 재설치 후 sync 전까지 복구용. */
+/** 닉네임 저장/조회. */
 object NicknameStore {
     private const val PREFS_NAME = "user_nickname"
     private const val KEY_NICKNAME = "nickname"

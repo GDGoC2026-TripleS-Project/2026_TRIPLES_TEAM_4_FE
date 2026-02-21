@@ -1,6 +1,8 @@
 package com.project.unimate.network.dto
 
-// === Request ===
+// 일정 투표(폴) 생성·수정·투표·확정 요청/응답 DTO
+
+// Request
 
 data class SchedulePollCreateRequest(
     val teamId: Long,
@@ -28,7 +30,7 @@ data class SchedulePollFixRequest(
     val fixedSlotId: Int
 )
 
-// === Response ===
+// Response
 
 data class SchedulePollCreateResponse(
     val pollId: Long?

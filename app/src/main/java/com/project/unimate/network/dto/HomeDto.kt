@@ -1,6 +1,8 @@
 package com.project.unimate.network.dto
 
-// === Home ===
+// 홈·캘린더·마이페이지·멤버 상태·알림·FCM DTO
+
+// Home
 
 data class HomeSummaryResponse(
     val date: String?,
@@ -58,7 +60,7 @@ data class NotificationBadgeDto(
     val unreadCount: Int?
 )
 
-// === Calendar ===
+// Calendar
 
 data class CalendarMonthResponse(
     val month: String?,
@@ -94,7 +96,7 @@ data class CalendarItemResponse(
     val masked: Boolean?
 )
 
-// === MyPage ===
+// MyPage
 
 data class MyPageSummaryResponse(
     val profile: MyProfileResponse?,
@@ -122,7 +124,7 @@ data class MyTeamCardResponse(
     val dday: String?
 )
 
-// === Member Status ===
+// Member Status
 
 data class TeamMemberBusyNowResponse(
     val members: List<MemberBusy>?
@@ -140,7 +142,7 @@ data class TeamIdleMemberResponse(
     val displayColorHex: String?
 )
 
-// === Notification ===
+// Notification
 
 data class NotificationItemResponse(
     val id: Long?,
@@ -169,7 +171,7 @@ data class CompletionResponse(
     val completed: Boolean?
 )
 
-// === FCM ===
+// FCM
 
 data class FcmTokenRegisterRequest(
     val token: String,

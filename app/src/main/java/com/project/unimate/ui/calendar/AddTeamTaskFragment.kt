@@ -1,5 +1,7 @@
 package com.project.unimate.ui.calendar
 
+// 역할: 팀 일정 추가. TeamScheduleService, DummyRepository
+
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.graphics.Color

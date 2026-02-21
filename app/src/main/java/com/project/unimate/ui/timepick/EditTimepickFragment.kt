@@ -1,5 +1,7 @@
 package com.project.unimate.ui.timepick
 
+// 역할: 모이기 확정·일정 생성. poll detail 기반 최적 시간·TeamScheduleService 생성
+
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -195,7 +197,7 @@ class EditTimepickFragment : Fragment() {
 
         refreshStartEndDisplay()
 
-        // 참여자 투표 기반 최적 시간 자동 계산 (existingTask 없는 신규 확정 케이스)
+        // 신규 확정 시 참여자 투표 기반 최적 시간 자동 계산
         if (existingTask == null) {
             loadAndPickConfirmedTime { refreshStartEndDisplay() }
         }
@@ -341,7 +343,7 @@ class EditTimepickFragment : Fragment() {
         }
     }
 
-    /** 저장 완료 후 홈으로 이동. 모이기 플로우 백스택을 모두 제거한다. */
+    /** 저장 완료 후 홈으로 이동. 모이기 플로우 백스택 전부 제거 */
     private fun navigateToHome() {
         TimepickStateHolder.clear()
         findNavController().navigate(
@@ -392,15 +394,7 @@ class EditTimepickFragment : Fragment() {
         grid.invalidate()
     }
 
-    // =========================================================
-    // 참여자 투표 기반 최적 확정 시간 계산
-    // =========================================================
-
-    /**
-     * 서버 poll detail을 조회해 votesByMember + slotDefinitions 기반으로
-     * 최적 시간 구간을 자동 선택한 뒤 editStartCalendar / editEndCalendar 를 갱신한다.
-     * 완료 후 [onUpdated] 콜백으로 UI를 다시 그린다.
-     */
+    /** 서버 poll detail 기반 votesByMember·slotDefinitions로 최적 구간 선택 후 editStart/EndCalendar 갱신. [onUpdated]로 UI 재그리기 */
     private fun loadAndPickConfirmedTime(onUpdated: () -> Unit) {
         val pollId = TimepickStateHolder.pollId ?: run {
             Log.w("ConfirmDebug", "pollId=null → API 조회 불가, fallback 기본값(13:00) 유지")
@@ -498,10 +492,7 @@ class EditTimepickFragment : Fragment() {
         }
     }
 
-    /**
-     * slotDefinitions 에서 같은 날짜의 연속 슬롯으로 이루어진 [requiredSlots]개짜리 구간 후보를 만든다.
-     * 반환값: List<List<slotId>>  (각 원소가 하나의 구간)
-     */
+    /** slotDefinitions에서 같은 날짜의 연속 [requiredSlots]개 슬롯 구간 후보 생성. 반환: List<List<slotId>> */
     private fun buildContinuousIntervals(
         slotDefs: List<SlotDefinitionResponse>,
         requiredSlots: Int
@@ -555,10 +546,7 @@ class EditTimepickFragment : Fragment() {
         return countMap
     }
 
-    /**
-     * 점수(구간 내 슬롯들의 count 합)가 최대인 구간들을 모두 반환.
-     * 동점이면 여러 개 반환 → 호출부에서 random 선택.
-     */
+    /** 구간 내 슬롯 count 합이 최대인 구간들 반환. 동점 시 여러 개 → 호출부에서 랜덤 선택 */
     private fun pickBestIntervalsByCount(
         intervals: List<List<Int>>,
         countMap: Map<Int, Int>

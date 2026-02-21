@@ -1,5 +1,7 @@
 package com.project.unimate.ui.teamspace
 
+// 역할: 팀스페이스 수정·삭제. 팀 소개 스크롤 터치 간섭 방지. TeamService, TeamScheduleService
+
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -121,17 +123,14 @@ class EditTeamSpaceFragment : Fragment() {
         val nameEt = view.findViewById<EditText>(R.id.editTeamSpaceName)
         val introEt = view.findViewById<EditText>(R.id.editTeamSpaceIntro)
 
-        // --- 팀 소개 스크롤 제어  ---
+        // 팀 소개 EditText: 내부 스크롤 시 부모 스크롤이 터치를 가로채지 않도록
         introEt.apply {
-            // 1. XML에서 설정했지만 코드상으로도 멀티라인 및 수직 스크롤바 명시
             setHorizontallyScrolling(false)
             maxLines = Int.MAX_VALUE
 
-            // 2. 터치 리스너 설정: 입력란 내부 스크롤 시 부모(ScrollView 등)가 터치를 가로채지 못하게 방해 금지 요청
             setOnTouchListener { v, event ->
                 if (v.id == R.id.editTeamSpaceIntro) {
                     v.parent.requestDisallowInterceptTouchEvent(true)
-                    // 터치 액션이 끝났을 때만 부모에게 터치 권한을 다시 넘김
                     when (event.action and android.view.MotionEvent.ACTION_MASK) {
                         android.view.MotionEvent.ACTION_UP -> v.parent.requestDisallowInterceptTouchEvent(false)
                     }
@@ -217,7 +216,6 @@ class EditTeamSpaceFragment : Fragment() {
         }
         refreshDateTimeButtons()
 
-        // 날짜/시간 버튼
         val dateTimeBg = ContextCompat.getDrawable(requireContext(), R.drawable.bg_date_time_btn)
         val gray06 = ContextCompat.getColor(requireContext(), R.color.gray06)
         listOf(startDateBtn, startTimeBtn, endDateBtn, endTimeBtn).forEach { btn ->
@@ -320,7 +318,7 @@ class EditTeamSpaceFragment : Fragment() {
             )
             endCheckIcon.colorFilter = null
         }
-        // 종료된 팀플(종료 체크했거나 마감일이 이미 지남)이면 항상 종료 체크 표시
+        // 종료된 팀(체크 또는 마감일 경과)이면 종료 체크 표시
         val nowInit = System.currentTimeMillis()
         if (team.isCompleted || (team.workEndMillis != null && team.workEndMillis < nowInit)) {
             setEndedTeam = true
@@ -338,7 +336,7 @@ class EditTeamSpaceFragment : Fragment() {
             val workStart = startCal.timeInMillis
             val now = System.currentTimeMillis()
             val workEnd = endCal.timeInMillis
-            // 종료 체크를 누르지 않았어도 마감일을 과거로 설정하고 저장하면 종료 처리
+            // 마감일 과거 설정 후 저장 시 서버에서 종료 처리
             val effectivelyEnded = setEndedTeam || (workEnd < now)
             val completedAt = when {
                 effectivelyEnded && !team.isCompleted -> now
@@ -367,7 +365,7 @@ class EditTeamSpaceFragment : Fragment() {
                     SeedTeamOverridesStore.save(requireContext(), team.id, effectivelyEnded, workEnd, workStart)
                 }
             }
-            // API 호출 (팀 정보 수정, 종료 상태 포함) 후 서버 동기화하고 화면 전환
+            // 팀 수정 API 호출 후 동기화·화면 전환
             val numericId = team.id.toLongOrNull()
             fun navigateAfterSave() {
                 if (effectivelyEnded && !team.isCompleted) {
@@ -466,7 +464,7 @@ class EditTeamSpaceFragment : Fragment() {
                 }
             }
             DummyRepository.deleteTeam(teamId)
-            // API 호출 (팀 삭제)
+            // 팀 삭제 API
             val numericId = teamId.toLongOrNull()
             if (numericId != null) {
                 viewLifecycleOwner.lifecycleScope.launch {

@@ -1,5 +1,7 @@
 package com.project.unimate.ui.profile
 
+// 역할: 대학 검색·프로필 생성 API (OkHttp). JWT 첨부
+
 import android.content.Context
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.network.ApiClient

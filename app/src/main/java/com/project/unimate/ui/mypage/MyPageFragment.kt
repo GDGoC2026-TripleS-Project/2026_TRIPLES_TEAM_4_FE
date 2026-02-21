@@ -1,5 +1,7 @@
 package com.project.unimate.ui.mypage
 
+// 역할: 마이페이지. API로 프로필·팀 목록 로드. 실패 시 DummyRepository 유지. MyPageService, TeamService
+
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater

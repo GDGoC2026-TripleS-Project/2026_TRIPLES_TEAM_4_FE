@@ -1,5 +1,7 @@
 package com.project.unimate.ui.login
 
+// 역할: 이메일/소셜 로그인. LoginViewModel, ServerSync. 로그인 성공 시 서버 동기화 후 홈
+
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Resources

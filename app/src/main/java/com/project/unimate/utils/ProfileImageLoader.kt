@@ -1,5 +1,7 @@
 package com.project.unimate.utils
 
+// 역할: 프로필 이미지 공통 로드. imageRef 규칙(URL/file:/drawable명), version으로 URL 캐시 무효화
+
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.widget.ImageView
@@ -9,15 +11,8 @@ import com.project.unimate.R
 import java.io.File
 
 /**
- * 내 프로필 / 팀원 프로필 이미지 공통 로더.
- *
- * imageRef 규칙:
- *  - null / blank           → 기본 이미지(ic_user)
- *  - "http" / "https" 시작  → Glide URL 로드 (circleCrop, placeholder ic_user)
- *  - "file:" 시작           → internal storage 파일 → BitmapFactory (CENTER_CROP)
- *  - 그 외                  → drawable 리소스 이름으로 해석
- *
- * @param version URL 캐시 무효화용 타임스탬프 (0이면 무시). 프로필 변경 직후 version 전달 시 캐시 스킵.
+ * imageRef: null/blank→기본, http(s)→Glide, file:→내부파일, 그 외→drawable명.
+ * version: 0이면 캐시 사용, >0이면 캐시 스킵(프로필 변경 직후 갱신용).
  */
 object ProfileImageLoader {
 

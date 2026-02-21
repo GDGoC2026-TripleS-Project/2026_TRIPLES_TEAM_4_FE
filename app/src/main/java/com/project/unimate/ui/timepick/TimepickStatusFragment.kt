@@ -1,5 +1,7 @@
 package com.project.unimate.ui.timepick
 
+// 역할: 모이기 1단계. 팀원 목록·가용 시간 필터. 날짜/시간 선택 후 다음 단계
+
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -241,11 +243,7 @@ class TimepickStatusFragment : Fragment() {
 
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
-    /**
-     * 멤버0(현재 사용자)은 사용자 실제 선택만 사용.
-     * API로 연동된 다른 팀원(서버 팀원)은 랜덤 생성하지 않고 빈 선택으로 둠(실제 데이터로 채울 예정).
-     * 그 외 더미 팀원은 날짜별 허용 범위 안에서 하루 1~3시간만 랜덤 블록 추가.
-     */
+    /** 현재 사용자=실제 선택, 서버 팀원=빈 선택, 더미 팀원=날짜별 허용 범위 내 1~3시간 랜덤 블록 */
     private fun buildMemberSelections(
         members: List<TeamMember>,
         dayCount: Int,

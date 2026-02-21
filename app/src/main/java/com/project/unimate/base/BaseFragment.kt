@@ -1,8 +1,4 @@
-//깃허브에 폴더 구조를 올리기 위해 임시로 만들어둔 파일입니다.
-//개발 과정에 따라 파일을 삭제하거나 파일명을 변경해도 됩니다.
-// base 폴더의 경우 필요 시 BaseActivity도 필요할 수 있음
-
-// BaseFragment.kt: 프래그먼트들의 기본틀이 될 코드를 작성하는 파일
+// 역할: ViewBinding 기반 공통 Fragment. 상속처에서 setup()으로 초기 설정 구현
 
 package com.project.unimate.base
 
@@ -30,10 +26,11 @@ abstract class BaseFragment<VB : ViewBinding>(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setup() // 화면 초기 설정 위치
+        setup()
     }
 
-    abstract fun setup() // 상속받는 프래그먼트에서 내용을 채울 함수
+    /** 상속받는 프래그먼트에서 화면 초기 설정 구현 */
+    abstract fun setup()
 
     override fun onDestroyView() {
         super.onDestroyView()

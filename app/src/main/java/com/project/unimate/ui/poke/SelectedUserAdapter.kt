@@ -14,7 +14,6 @@ class SelectedUserAdapter(
 ) : RecyclerView.Adapter<SelectedUserAdapter.UserViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
-        // 기존 item_poke_member.xml 재사용 (체크박스만 코드에서 숨김)
         return UserViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_poke_member, parent, false))
     }
 

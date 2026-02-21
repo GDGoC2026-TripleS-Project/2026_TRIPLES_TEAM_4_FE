@@ -1,8 +1,10 @@
 package com.project.unimate.data.repository
 
+// 역할: 팀별 이미지 리소스명 저장. replaceTeamsWithServerData 후 복원
+
 import android.content.Context
 
-/** 팀 사진(생성/수정 시 추가한 이미지) 저장. 앱 재시작 후 replaceTeamsWithServerData 적용 후 이 값으로 복원. */
+/** 팀별 이미지 저장/조회. */
 object TeamImageStore {
     private const val PREFS_NAME = "team_images"
     private const val PREFIX = "img_"
@@ -15,7 +17,7 @@ object TeamImageStore {
     fun get(context: Context, teamId: String): String? =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(PREFIX + teamId, null)
 
-    /** teamId -> imageResName (비어있지 않은 것만) */
+    /** teamId → imageResName (비어있지 않은 것만) */
     fun getAll(context: Context): Map<String, String> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.all.keys

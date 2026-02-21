@@ -1,5 +1,7 @@
 package com.project.unimate.ui.mypage
 
+// 역할: 프로필 수정. 서버 프로필 로드·업로드. file:만 있을 때 API URL로 보완. UserService
+
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color

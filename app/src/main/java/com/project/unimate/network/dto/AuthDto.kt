@@ -2,7 +2,9 @@ package com.project.unimate.network.dto
 
 import com.google.gson.annotations.SerializedName
 
-// === Request ===
+// 인증·회원가입·OAuth·비밀번호 요청/응답 DTO
+
+// Request
 
 data class LoginRequest(
     val email: String,
@@ -51,7 +53,7 @@ data class RefreshTokenRequest(
     val refreshToken: String
 )
 
-// === Response ===
+// Response
 
 data class AuthResponse(
     @SerializedName("accessToken")

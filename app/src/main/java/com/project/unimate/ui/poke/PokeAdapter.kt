@@ -1,5 +1,7 @@
 package com.project.unimate.ui.poke
 
+// 찌르기 팀/멤버 목록 RecyclerView 어댑터. 헤더·멤버 뷰홀더, 선택 개수 콜백
+
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable

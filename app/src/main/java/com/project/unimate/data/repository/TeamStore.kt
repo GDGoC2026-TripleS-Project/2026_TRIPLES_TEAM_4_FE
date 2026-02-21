@@ -1,11 +1,13 @@
 package com.project.unimate.data.repository
 
+// 역할: 팀 목록 SharedPreferences 저장/복원. 서버 sync 후 저장, 앱 재시작 시 복원
+
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.project.unimate.data.entity.Team
 
-/** 팀 목록 저장/복원. 재설치 후 서버 sync 전까지는 비어 있음. sync 후 저장해 두면 다음 실행 시 복원. */
+/** 팀 목록 저장/복원. sync 후 저장해 두면 다음 실행 시 복원. */
 object TeamStore {
     private const val PREFS_NAME = "team_store"
     private const val KEY_TEAMS = "teams"

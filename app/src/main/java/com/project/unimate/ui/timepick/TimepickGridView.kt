@@ -11,10 +11,7 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.project.unimate.R
 
-/**
- * 타임픽 그리드. 날짜/요일 헤더, 시간 라벨, 셀 그리드.
- * 드래그로 선택 시 main_green (읽기 전용이면 선택 불가).
- */
+/** 타임픽 그리드(날짜/요일 헤더, 시간 라벨, 셀). 드래그 선택 시 main_green. 읽기 전용이면 선택 불가 */
 class TimepickGridView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -188,7 +185,7 @@ class TimepickGridView @JvmOverloads constructor(
                 canvas.drawText(datePair.second, cx, weekdayBaseline, textPaintWeekday.apply { textAlign = Paint.Align.CENTER })
             }
         }
-        // 시간 라벨은 두 번째 페이지(TimepickTimeLabelStrip)와 동일한 공식 사용
+        // TimepickTimeLabelStrip과 동일한 시간 라벨 공식 사용
         if (drawTimeLabels) {
             val fm = textPaintTime.fontMetrics
             val labelVerticalCenterOffset = (fm.ascent + fm.descent) / 2f

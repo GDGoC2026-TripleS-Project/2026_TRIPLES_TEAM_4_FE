@@ -1,5 +1,7 @@
 package com.project.unimate
 
+// 역할: FCM 수신·알림 표시·로컬 저장. 푸시 데이터로 딥링크 Intent 전달(MainActivity에서 처리)
+
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -22,7 +24,7 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d(TAG, "FCM onNewToken: ${token.take(12)}...")
 
-        // JWT가 있으면 즉시 서버에 재등록
+        // 토큰 갱신 시 서버에 재등록(로그인 상태일 때만)
         FcmRegistrar.registerIfPossible(this, Env.BASE_URL)
     }
 
@@ -141,6 +143,7 @@ class UnimateFirebaseMessagingService : FirebaseMessagingService() {
                 val color = android.graphics.Color.parseColor(teamColorHex)
                 setInt(R.id.notif_dot, "setColorFilter", color)
             } catch (_: Exception) {
+                // 잘못된 hex 시 컬러만 스킵
             }
         }
 

@@ -1,5 +1,7 @@
 package com.project.unimate.notification
 
+// 역할: 알림 로컬 저장·로드·서버 목록과 병합. 사용자별 키(KEY_PREFIX+userId)로 SharedPreferences 구분
+
 import android.content.Context
 import com.project.unimate.auth.JwtStore
 import org.json.JSONArray

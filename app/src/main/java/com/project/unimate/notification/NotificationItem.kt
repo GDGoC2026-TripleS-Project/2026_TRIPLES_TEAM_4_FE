@@ -1,5 +1,7 @@
 package com.project.unimate.notification
 
+// 알림 UI/FCM 공용 모델. createdAt 여러 ISO 형식 파싱. FCM payload 필드명(notificationId, teamId 등)에 의존
+
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale

@@ -1,5 +1,7 @@
 package com.project.unimate.ui.home
 
+// 역할: 홈 주간 캘린더·오늘 할일. 서버 동기화(팀·일정) 후 onSyncComplete로 UI 갱신. HomeService, TeamService, TeamScheduleService
+
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
@@ -243,7 +245,7 @@ class HomeFragment : Fragment() {
                 val layoutParams = LinearLayout.LayoutParams(
                     0,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1f                                      // 비율을 1로 설정 (7개 칸이 똑같이 나눠 가짐)
+                    1f                                      // 7칸 균등 비율
                 )
                 column.layoutParams = layoutParams
 

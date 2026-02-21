@@ -5,10 +5,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.HorizontalScrollView
 
-/**
- * 가로 스크롤은 스크롤바 영역(하단) 터치로만 가능.
- * 타임픽 그리드 영역 터치로는 스크롤되지 않고 그리드 선택만 된다.
- */
+/** 가로 스크롤은 하단 스크롤바 영역 터치로만. 그리드 영역 터치는 선택만(스크롤 없음) */
 class ScrollbarOnlyHorizontalScrollView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,

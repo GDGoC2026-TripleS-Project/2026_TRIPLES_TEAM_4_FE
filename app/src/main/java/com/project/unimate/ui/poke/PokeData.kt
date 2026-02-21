@@ -1,5 +1,7 @@
 package com.project.unimate.ui.poke
 
+// 찌르기 UI용 데이터: 팀 헤더·멤버. Parcelable로 상태 유지
+
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 

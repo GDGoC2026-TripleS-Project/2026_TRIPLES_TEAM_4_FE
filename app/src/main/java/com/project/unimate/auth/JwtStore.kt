@@ -1,5 +1,7 @@
 package com.project.unimate.auth
 
+// 역할: 액세스/리프레시 토큰·userId SharedPreferences 저장·로드
+
 import android.content.Context
 
 object JwtStore {
@@ -58,7 +60,7 @@ object JwtStore {
             .apply()
     }
 
-    // Backward compatibility for old call sites
+    // 기존 호출부 호환용
     fun save(context: Context, jwt: String) = saveAccessToken(context, jwt)
     fun load(context: Context): String? = loadAccessToken(context)
 }

@@ -1,5 +1,7 @@
 package com.project.unimate.ui.team
 
+// 역할: 팀 가입 성공. 초대코드 표시·복사·팀스페이스 이동
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -18,7 +20,6 @@ class TeamJoinedSuccessFragment : Fragment() {
     private var _binding: FragmentTeamJoinedSuccessBinding? = null
     private val binding get() = _binding!!
 
-    // 서버에서 받은 초대 코드를 저장할 변수
     private var inviteCode: String = ""
 
     override fun onCreateView(

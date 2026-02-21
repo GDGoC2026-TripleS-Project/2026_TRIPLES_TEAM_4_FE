@@ -1,5 +1,7 @@
 package com.project.unimate.ui.notification
 
+// 역할: 알림 탭. NotificationStore·NotificationApi. 읽음/액션 완료·서버 병합 후 목록 갱신
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -85,7 +87,6 @@ class NotificationFragment : Fragment() {
         return view
     }
 
-    //뒤로가기 버튼
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<View>(R.id.notificationBack).setOnClickListener {

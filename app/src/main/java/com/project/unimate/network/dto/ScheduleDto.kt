@@ -1,6 +1,8 @@
 package com.project.unimate.network.dto
 
-// === Team Schedule ===
+// 팀 일정·개인 일정 요청/응답 DTO. 서버 private 필드는 isPrivate으로 매핑
+
+// Team Schedule
 
 data class TeamScheduleCreateRequest(
     val title: String,
@@ -74,7 +76,7 @@ data class MyScheduleResponse(
     val alarmMinutes: Int?,
     val createdAt: String?,
     val updatedAt: String?,
-    @com.google.gson.annotations.SerializedName("private") val isPrivate: Boolean?
+    @com.google.gson.annotations.SerializedName("private") val isPrivate: Boolean?  // 서버 필드명: private
 )
 
 data class MyScheduleMarkingResponse(

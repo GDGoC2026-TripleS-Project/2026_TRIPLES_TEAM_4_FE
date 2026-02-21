@@ -1,5 +1,7 @@
 package com.project.unimate.notification
 
+// 역할: 알림 목록 조회·읽음/완료/액션 완료 API. JWT 필요. 서버 필드 id/notificationId, read/isRead 혼용 대응
+
 import android.content.Context
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.network.ApiClient
@@ -114,6 +116,7 @@ class NotificationApi(
     }
 
     private fun parseServerItem(obj: JSONObject): NotificationServerItem {
+        // 서버가 read 또는 isRead 필드로 내려올 수 있음
         val isRead = if (obj.has("isRead")) obj.optBoolean("isRead", false) else obj.optBoolean("read", false)
         val processedAt = if (obj.has("processedAt") && !obj.isNull("processedAt")) obj.optString("processedAt") else null
         val meetingNavigationTarget =

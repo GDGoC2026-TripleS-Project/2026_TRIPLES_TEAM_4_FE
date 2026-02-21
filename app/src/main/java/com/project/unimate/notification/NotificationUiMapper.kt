@@ -1,5 +1,7 @@
 package com.project.unimate.notification
 
+// 역할: 알림 목록을 생성일 기준 "지금" / "N일 전" 섹션으로 그룹화해 UI에 전달
+
 object NotificationUiMapper {
 
     data class UiSection(

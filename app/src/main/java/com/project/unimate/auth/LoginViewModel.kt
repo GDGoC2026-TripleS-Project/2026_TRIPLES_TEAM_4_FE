@@ -1,5 +1,8 @@
 package com.project.unimate.auth
 
+// 역할: 로그인(이메일/소셜) 및 JWT 저장·프로필 완료 여부 조회
+// 데이터: AuthApi, JwtStore, FcmRegistrar
+
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -145,7 +148,7 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
         try {
             val json = JSONObject(body)
 
-            // 1) validation errors
+            // 서버 응답: errors 객체 내 필드별 메시지
             val errorsObj = json.optJSONObject("errors")
             if (errorsObj != null && errorsObj.length() > 0) {
                 val msgs = errorsObj.keys().asSequence()
@@ -155,7 +158,7 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                 if (msgs.isNotEmpty()) return msgs.joinToString("\n")
             }
 
-            // 2) message field
+            // message 필드(서버 에러 메시지)
             val message = json.optString("message", "")
             if (message.isNotBlank()) {
                 return when (message) {
@@ -165,11 +168,11 @@ class LoginViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
 
-            // 3) code field
+            // code 필드 fallback
             val errCode = json.optString("code", "")
             if (errCode.isNotBlank()) return errCode
         } catch (e: Exception) {
-            // ignore parse errors
+            // JSON 파싱 실패 시 아래 기본 메시지 반환
         }
 
         return "요청 실패 (code=$code)"

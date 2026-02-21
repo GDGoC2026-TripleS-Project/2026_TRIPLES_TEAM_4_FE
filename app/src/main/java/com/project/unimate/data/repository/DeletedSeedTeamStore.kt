@@ -1,8 +1,10 @@
 package com.project.unimate.data.repository
 
+// 역할: 사용자가 삭제한 시드 팀 이름 저장. 재시작 후 목록에서 제외
+
 import android.content.Context
 
-/** 사용자가 삭제한 시드(더미) 팀 이름 저장. 앱 재시작 후에도 해당 팀이 다시 안 보이게 함. */
+/** 삭제한 시드 팀 이름 저장/조회. */
 object DeletedSeedTeamStore {
     private const val PREFS_NAME = "deleted_seed_teams"
     private const val KEY_NAMES = "team_names"

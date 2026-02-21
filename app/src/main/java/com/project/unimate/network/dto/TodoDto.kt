@@ -1,6 +1,8 @@
 package com.project.unimate.network.dto
 
-// === Request ===
+// Todo 요청/응답 DTO
+
+// Request
 
 data class TodoCreateRequest(
     val date: String,
@@ -11,7 +13,7 @@ data class TodoCompleteRequest(
     val completed: Boolean? = true
 )
 
-// === Response ===
+// Response
 
 data class TeamTodosByDateResponse(
     val teamId: Long?,

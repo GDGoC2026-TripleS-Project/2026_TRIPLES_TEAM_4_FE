@@ -2,7 +2,9 @@ package com.project.unimate.network.dto
 
 import com.google.gson.annotations.SerializedName
 
-// === Request ===
+// 찌르기 요청/응답 DTO. 서버 필드명 차이(teams/data/content, teamId/id 등)는 SerializedName alternate로 수용
+
+// Request
 
 data class PokeRequest(
     val messageId: Long,
@@ -14,7 +16,7 @@ data class PokeTarget(
     val userId: Long
 )
 
-// === Response ===
+// Response
 
 data class PokeResponse(
     val sentCount: Int?,

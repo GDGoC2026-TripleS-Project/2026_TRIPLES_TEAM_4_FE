@@ -1,6 +1,4 @@
-//깃허브에 폴더 구조를 올리기 위해 임시로 만들어둔 파일입니다.
-//개발 과정에 따라 파일을 삭제하거나 파일명을 변경해도 됩니다.
-// 파일명 수정 시 연결된 xml 파일명도 수정 필요
+// 역할: 알림(찌르기) 탭. 찌르기에서는 알림 액션·읽음 처리 미제공
 
 package com.project.unimate.ui.alarm
 
@@ -29,10 +27,10 @@ class AlarmFragment : Fragment() {
 
         adapter = NotificationAdapter(
             onCompleteClicked = { _, _ ->
-                // 찌르기 탭에서는 알림 액션을 제공하지 않음
+                // 정책: 찌르기 탭에서는 알림 액션 미제공
             },
             onCardClicked = { _, _ ->
-                // 찌르기 탭에서는 카드 읽음 처리를 제공하지 않음
+                // 정책: 찌르기 탭에서는 읽음 처리 미제공
             }
         )
         recyclerView.adapter = adapter

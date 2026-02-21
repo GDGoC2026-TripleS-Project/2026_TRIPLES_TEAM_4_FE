@@ -1,5 +1,7 @@
 package com.project.unimate.auth
 
+// 역할: 로그인·로그아웃·소셜 인증 URL/콜백용 OkHttp Request 빌더
+
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody

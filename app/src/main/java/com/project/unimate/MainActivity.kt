@@ -1,5 +1,8 @@
 package com.project.unimate
 
+// 역할: 단일 Activity, 하단 네비·NavHost·푸시 딥링크·앱 시작 시 서버 동기화·팀 종료 팝업
+// 데이터: DummyRepository, SyncManager, JwtStore, FcmRegistrar
+
 import android.Manifest
 import android.content.Intent
 import android.content.SharedPreferences
@@ -38,7 +41,7 @@ import com.project.unimate.databinding.ActivityMainBinding
 import com.project.unimate.network.Env
 import com.project.unimate.ui.timepick.TimepickStateHolder
 
-// 네비게이션바 로직을 위해 AppCompatActivity로 상속 변경
+/** 하단 네비게이션·NavHost 사용을 위해 AppCompatActivity 상속 */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -48,25 +51,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 전체 화면 설정 (Edge-to-Edge)
         enableEdgeToEdge()
 
-        // 1. 레이아웃 설정 (뷰 바인딩 방식으로 수정)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 2. 내비게이션 및 하단바 가시성 설정
         try {
             setupNavigation()
         } catch (e: Exception) {
             Log.e(TAG, "Navigation Setup Error: ${e.message}")
         }
 
-        // 3. 권한 및 푸시 알림 설정
         requestNotificationPermissionIfNeeded()
         handlePushIntent(intent)
 
-        // ✅ 여기 " " 안에 Swagger에서 받은 JWT를 그대로 붙여넣기 (Bearer 붙이지 말 것)
+        // Swagger 등 API 테스트 시 JWT 붙여넣기용. 배포 시 빈 문자열 유지
         val TEST_JWT = ""
 
         if (TEST_JWT.isNotBlank()) {
@@ -106,13 +105,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** 스플래시를 한 번이라도 떠났으면 true (onResume에서 서버 sync 할지 판단용) */
+    /** 스플래시 이탈 여부. onResume에서 서버 sync 1회만 수행할지 판단 */
     private var hasLeftSplashScreen = false
 
     override fun onResume() {
         super.onResume()
         checkAndShowTeamEndPopups()
-        // 앱 백그라운드 복귀 시에만 서버 동기화. cold start 시에는 Splash에서만 sync 하므로 여기서는 스킵
+        // 백그라운드 복귀 시에만 sync. cold start는 Splash에서 처리하므로 여기서는 스킵
         if (JwtStore.load(this).isNullOrBlank()) return
         if (!hasLeftSplashScreen) return
         lifecycleScope.launch { ServerSync.syncFromServer(this@MainActivity) }
@@ -175,11 +174,10 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment.navController
         val navView: BottomNavigationView = binding.bottomNavigation
 
-        // 디자인 디테일 적용
-        navView.itemIconTintList = null // 아이콘 원래 색상 유지
+        navView.itemIconTintList = null  // 아이콘 컬러 그대로 사용(선택 시 색 유지)
         navView.itemActiveIndicatorColor = ColorStateList.valueOf(Color.TRANSPARENT)
 
-        // 네비게이션바 초기화 로직 (홈/캘린더/찌르기/마이페이지만 이동, 팀스페이스 등 서브 화면은 pop)
+        // 탭 선택 시 홈으로 pop 후 이동(서브 화면 스택 정리)
         navView.setOnItemSelectedListener(NavigationBarView.OnItemSelectedListener { item ->
             val navOptions = NavOptions.Builder()
                 .setPopUpTo(R.id.homeFragment, true)
@@ -189,14 +187,13 @@ class MainActivity : AppCompatActivity() {
             true
         })
 
-        // 네비게이션바 내부 간격 조정 호출
         applyBottomNavGap(navView, gapDp = 6)
 
-        // 목적지 변경 리스너 (스플래시 이탈 여부 기록 → onResume에서 sync 1회만 하기 위함)
+        // 목적지 변경 시 스플래시 이탈 플래그 설정(onResume sync 조건)
         navController.addOnDestinationChangedListener { _, destination, _ ->
             if (destination.id != R.id.splashFragment) hasLeftSplashScreen = true
             when (destination.id) {
-                // 숨김 목록
+                // 하단바 숨김 대상
                 R.id.splashFragment, R.id.loginFragment, R.id.profileCreateFragment,
                 R.id.teamAddFragment, R.id.teamCreateFragment, R.id.teamJoinFragment,
                 R.id.teamCompleteFragment, R.id.teamJoinedSuccessFragment,
@@ -218,7 +215,7 @@ class MainActivity : AppCompatActivity() {
                     navView.menu.findItem(destination.id)?.isChecked = true
                 }
                 R.id.notificationFragment -> {
-                    // 홈 헤더 종 버튼에서 들어온 알림 화면은 하단탭을 홈 상태로 유지
+                    // 알림 화면 진입 시에도 탭 선택은 홈으로 표시
                     navView.menu.findItem(R.id.homeFragment)?.isChecked = true
                 }
             }
@@ -331,7 +328,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // UI 간격 조정 로직
+    /** 하단 네비 아이콘·라벨 간격 조정(피그마 등 디자인 반영) */
     private fun applyBottomNavGap(navView: BottomNavigationView, gapDp: Int) {
         navView.post {
             val gapPx = (gapDp * resources.displayMetrics.density)

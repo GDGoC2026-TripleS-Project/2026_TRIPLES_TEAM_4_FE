@@ -10,8 +10,8 @@ import java.util.Calendar
 import java.util.Random
 
 /**
- * 화면 연동용 더미 데이터. 홈/캘린더/마이페이지에서 공유.
- * 실제 서버 연동 시 이 데이터 소스를 API로 교체하면 됨.
+ * 화면 연동용 단일 데이터 소스. 홈/캘린더/팀스페이스/마이페이지 공유.
+ * 서버 동기화: ServerSync·SyncManager. 로컬 영속: TeamStore, ScheduleStore.
  */
 object DummyRepository {
 
@@ -326,7 +326,6 @@ object DummyRepository {
         val membersMegacoffe = getTeamMembers("megacoffe").map { it.name }
         val membersCapstone = getTeamMembers("capstone").map { it.name }
         val membersCherish = getTeamMembers("cherish").map { it.name }
-        // 기존: 체리시·캡스톤 2/4, 2/17
         list.add(task("cherish", "체리시 기획안 업로드", 2026, 2, 4, false, membersCherish.getOrNull(0)))
         list.add(task("cherish", "캐릭터 제작 모델링", 2026, 2, 4, true, membersCherish.getOrNull(1)))
         list.add(task("cherish", "학성지 VOD 3주차 시청", 2026, 2, 4, true, membersCherish.getOrNull(2)))
@@ -337,14 +336,12 @@ object DummyRepository {
         list.add(task("capstone", "캡스톤 초안 형성", 2026, 2, 17, true, membersCapstone.getOrNull(2)))
         list.add(task("capstone", "캐릭터 제작 모델링", 2026, 2, 17, true, membersCapstone.getOrNull(0)))
         list.add(task("capstone", "학성지 VOD 3주차 시청", 2026, 2, 17, true, membersCapstone.getOrNull(1)))
-        // 메가커피릿 2/20: 나영 2개, 지원 1개 (캡처본 기준)
         list.add(task("megacoffe", "캡스톤 초안 형성", 2026, 2, 20, false, "나영"))
         list.add(task("megacoffe", "캐릭터 제작 모델링", 2026, 2, 20, true, "나영"))
         list.add(task("megacoffe", "메가커피 아르바이트", 2026, 2, 20, false, "지원"))
         // 메가커피릿 2/11: 일정 2개 (캘린더 동그라미 2)
         list.add(task("megacoffe", "팀 회의", 2026, 2, 11, false, membersMegacoffe.getOrNull(0)))
         list.add(task("megacoffe", "자료 조사", 2026, 2, 11, false, membersMegacoffe.getOrNull(1)))
-        // 2026-01-01 ~ 2026-02-14: 매주 3일씩 일정 (팀플 할일)
         val teamIds = listOf("capstone", "cherish", "mamosari", "megacoffe", "momami", "psychology", "ai_intro")
         val weekDays = listOf(
             listOf(1, 2, 3), listOf(4, 5, 6), listOf(11, 12, 13), listOf(18, 19, 20),
@@ -365,9 +362,9 @@ object DummyRepository {
                 list.add(task(tid, titleByTeam[tid] ?: "팀 일정", year, month, day, false, members.getOrNull(di % members.size)))
             }
         }
-        // 진행중 팀플(체리시, 메가커피릿, 행복의 심리학, 인공지능 입문)만 2026년 3월 15일까지 더미 일정 추가 (요일 다양: 월·수·금·일·화·목·토)
+        // 진행중 팀플 3월 더미 일정
         val ongoingTeamIds = listOf("cherish", "megacoffe", "psychology", "ai_intro")
-        val marchDays = listOf(2, 4, 6, 8, 10, 12, 14, 15) // 3/2(월), 3/4(수), 3/6(금), 3/8(일), 3/10(화), 3/12(목), 3/14(토), 3/15(일)
+        val marchDays = listOf(2, 4, 6, 8, 10, 12, 14, 15)
         marchDays.forEachIndexed { wi, day ->
             ongoingTeamIds.forEachIndexed { ti, tid ->
                 val members = getTeamMembers(tid).map { it.name }

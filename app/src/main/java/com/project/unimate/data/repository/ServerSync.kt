@@ -23,8 +23,8 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * 재설치/로그인 직후 서버에서 내 사용자 DB(유저정보, 팀, 팀일정, 개인일정) 전부 불러와
- * DummyRepository·로컬 저장소에 반영. 로그인 성공 시·MainActivity onCreate/onResume에서 호출.
+ * 로그인/앱 시작 시 서버에서 유저·팀·팀일정·개인일정 로드 후 DummyRepository·로컬 저장소 반영.
+ * Mutex로 동시 호출 직렬화(ConcurrentModificationException 방지).
  */
 object ServerSync {
 
@@ -81,7 +81,7 @@ object ServerSync {
                 }
             }
 
-            // 2) 팀 목록 (배열 [] 또는 { "content"/"data"/"teams": [] } 둘 다 파싱)
+            // 팀 목록(서버 응답: 배열 또는 content/data/teams 래핑 둘 다 파싱)
             val teamService = RetrofitClient.create<TeamService>(ctx)
             val teamResp = withContext(Dispatchers.IO) { teamService.getMyTeams() }
             if (!teamResp.isSuccessful) {
@@ -104,10 +104,10 @@ object ServerSync {
                 }
                 Log.d(TAG, "getMyTeams applied: ${serverTeams.size} server teams, merged=${merged.size}")
             }
-            // 동시 sync 시 ConcurrentModificationException 방지: 팀 목록 스냅샷으로 순회
+            // 팀 목록 스냅샷으로 순회(동시 수정 예외 방지)
             val teamsSnapshot = withContext(Dispatchers.Main) { DummyRepository.allTeams.toList() }
 
-            // 3) 팀 일정
+            // 팀 일정
             val scheduleService = RetrofitClient.create<TeamScheduleService>(ctx)
             for (team in teamsSnapshot) {
                 val numericTeamId = team.id.toLongOrNull() ?: continue
@@ -139,7 +139,7 @@ object ServerSync {
                 }
             }
 
-            // 4) 개인 일정
+            // 개인 일정
             val myScheduleService = RetrofitClient.create<MyScheduleService>(ctx)
             val allPersonalFromServer = mutableListOf<PersonalScheduleItem>()
             for (team in teamsSnapshot) {

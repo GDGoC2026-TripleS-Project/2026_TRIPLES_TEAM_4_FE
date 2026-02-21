@@ -1,5 +1,7 @@
 package com.project.unimate.ui.team
 
+// 역할: 팀 생성 완료. 초대코드 표시·복사·ViewModel 동기화. TeamViewModel
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -23,7 +25,6 @@ class TeamCompleteFragment : Fragment(R.layout.fragment_team_complete) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTeamCompleteBinding.bind(view)
 
-        // 1. 전달받은 초대코드 표시 + ViewModel에 동기화
         val inviteCodeFromArgs = arguments?.getString("inviteCode")?.trim().orEmpty()
         if (inviteCodeFromArgs.isNotBlank()) {
             viewModel.inviteCode.value = inviteCodeFromArgs

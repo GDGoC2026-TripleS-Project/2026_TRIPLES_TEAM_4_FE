@@ -1,5 +1,7 @@
 package com.project.unimate.ui.calendar
 
+// 역할: 개인일정 추가. 서버 생성 후 응답으로 로컬 추가, 재로드 0개면 replace 생략. MyScheduleService
+
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.graphics.Color
@@ -352,7 +354,7 @@ class AddPersonalTaskFragment : Fragment() {
                 ))
                 if (resp.isSuccessful) {
                     Log.d("AddPersonalTask", "개인 일정 생성 성공: teamId=$firstTeamId")
-                    // 서버에서 개인 일정 전체 재로드 → 로컬 완전 교체
+                    // 재로드 성공 시에만 서버 출처 개인일정 교체(0개면 기존 유지)
                     try {
                         val markedResp = service.getMarkedDates(firstTeamId, "2025-01-01", "2026-12-31")
                         if (markedResp.isSuccessful) {

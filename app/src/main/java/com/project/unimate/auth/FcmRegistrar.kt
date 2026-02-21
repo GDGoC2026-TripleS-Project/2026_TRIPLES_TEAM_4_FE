@@ -14,6 +14,9 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 
+// 역할: 로그인 성공 후 FCM 토큰을 서버에 등록 (JWT·deviceId 필요)
+// API: POST /api/v1/fcm/token/me, platform=ANDROID
+
 object FcmRegistrar {
 
     private const val TAG = "UnimateFCM"
@@ -22,10 +25,8 @@ object FcmRegistrar {
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
     /**
-     * ✅ JWT + FCM_TOKEN 있을 때만 token/me 호출
-     * - baseUrl: MainActivity에서 주입
-     * - deviceId: 앱 설치 UUID (SharedPreferences)
-     * - platform: ANDROID
+     * JWT와 FCM 토큰이 있을 때만 token/me 호출.
+     * deviceId는 DeviceIdProvider(SharedPreferences UUID) 사용.
      */
     fun registerIfPossible(context: Context, baseUrl: String) {
         val jwt = JwtStore.load(context)
@@ -37,7 +38,7 @@ object FcmRegistrar {
         val deviceId = DeviceIdProvider.getOrCreate(context)
         val platform = "ANDROID"
 
-        // ✅✅✅ 요구사항: deviceId 로그 출력 (여기서 항상 확인 가능)
+        // 요구사항: deviceId 로그(디버깅·검증용)
         Log.d(TAG, "DEVICE_ID=$deviceId")
 
         FirebaseMessaging.getInstance().token
@@ -76,6 +77,7 @@ object FcmRegistrar {
             }
     }
 
+    // 릴리즈 빌드에서는 토큰 전체 노출 방지
     private fun logTokenForDebug(context: Context, token: String) {
         val debuggable =
             (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0

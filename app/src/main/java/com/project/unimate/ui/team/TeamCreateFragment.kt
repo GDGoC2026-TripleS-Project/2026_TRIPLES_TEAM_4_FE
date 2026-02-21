@@ -1,5 +1,6 @@
 package com.project.unimate.ui.team
 
+// 역할: 팀 생성. 색상(API 사용 중 갱신)·날짜/시간·이미지. TeamService. 초대코드는 서버 발급만 사용
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -48,10 +49,6 @@ class TeamCreateFragment : Fragment() {
     private var _binding: FragmentTeamCreateBinding? = null
     private val binding get() = _binding!!
 
-    // 선택된 이미지 URI 저장
-
-
-    // 색상 버튼 리스트
     private val colorButtons by lazy {
         with(binding) {
             listOf(
@@ -62,7 +59,7 @@ class TeamCreateFragment : Fragment() {
         }
     }
 
-    /** 팀 생성 시 DB 저장용 색상 hex (버튼 id → hex) */
+    /** 버튼 id → hex (로컬 저장·UI) */
     private val colorButtonToHex: Map<Int, String> = mapOf(
         R.id.btnColorYellow to "#FFE970",
         R.id.btnColorBeige to "#FFF8D3",
@@ -76,7 +73,7 @@ class TeamCreateFragment : Fragment() {
         R.id.btnColorAqua to "#C2FFF0"
     )
 
-    /** API용 색상 코드 (버튼 id → 서버 color enum) */
+    /** 버튼 id → 서버 color 코드 (C01~C10) */
     private val colorButtonToCode: Map<Int, String> = mapOf(
         R.id.btnColorYellow to "C01",
         R.id.btnColorBeige to "C02",
@@ -91,10 +88,9 @@ class TeamCreateFragment : Fragment() {
     )
 
 
-    /** 현재 사용 중인 색상 코드 집합 (C01~C10). 화면 진입 시 API로 갱신됨 */
+    /** 사용 중인 색상 코드(C01~C10). GET colors/available 또는 팀 목록으로 갱신 */
     private var usedColorCodes: Set<String> = emptySet()
 
-    // 갤러리 이미지 선택 런처
     private var selectedImageUri: Uri? = null
 
     private val pickImageLauncher = registerForActivityResult(
@@ -104,7 +100,6 @@ class TeamCreateFragment : Fragment() {
             val imageUri = result.data?.data
             if (imageUri != null) {
                 selectedImageUri = imageUri
-                // ivProfilePlaceholder 대신 실제 XML에 정의된 ID인 ivTeamProfile 사용
                 binding.ivTeamProfile.apply {
                     setImageURI(imageUri)
                     scaleType = ImageView.ScaleType.CENTER_CROP
@@ -125,22 +120,18 @@ class TeamCreateFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 초기화: 색상 버튼 체크 해제
         colorButtons.forEach { it.setImageResource(0) }
 
-        setupImagePicker() // 이미지 선택 리스너 연결
+        setupImagePicker()
         setupDateAndTimeListeners()
         setInitialDateAndTimeToNow()
         setupColorListeners()
         setupCompleteButton()
 
-        // 화면 진입 시 사용 중인 색상 로드 → 팔레트 비활성화 처리
         loadAvailableColors()
     }
 
-    // --- 1. 이미지 선택 로직 ---
     private fun setupImagePicker() {
-        // 프로필 이미지 영역 클릭 시 갤러리 열기
         binding.ivTeamProfile.setOnClickListener {
             openGallery()
         }
@@ -152,7 +143,6 @@ class TeamCreateFragment : Fragment() {
         pickImageLauncher.launch(intent)
     }
 
-    // --- 2. 날짜/시간 선택 로직 ---
     private fun setupDateAndTimeListeners() {
         binding.tvStartDate.setOnClickListener { showStartDatePicker() }
         binding.tvStartTime.setOnClickListener { showStartTimePicker() }
@@ -160,7 +150,7 @@ class TeamCreateFragment : Fragment() {
         binding.tvEndTime.setOnClickListener { showEndTimePicker() }
     }
 
-    /** 페이지 첫 진입 시 시작/종료 날짜·시간을 현재 날짜·시간으로 표시 */
+    /** 시작/종료 날짜·시간을 현재 시각으로 초기화 */
     private fun setInitialDateAndTimeToNow() {
         val cal = Calendar.getInstance()
         val year = cal.get(Calendar.YEAR)
@@ -178,7 +168,7 @@ class TeamCreateFragment : Fragment() {
         binding.tvEndTime.text = timeStr
     }
 
-    /** 시작 날짜 선택: 시작 > 종료면 종료 날짜 = 시작 날짜 */
+    /** 시작일 선택 시 종료일이 더 이전이면 종료일을 시작일로 맞춤 */
     private fun showStartDatePicker() {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
@@ -201,7 +191,7 @@ class TeamCreateFragment : Fragment() {
         datePickerDialog.show()
     }
 
-    /** 종료 날짜 선택: 종료 < 시작이면 시작 날짜 = 종료 날짜 */
+    /** 종료일 선택 시 시작일이 더 이후면 시작일을 종료일로 맞춤 */
     private fun showEndDatePicker() {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
@@ -224,7 +214,7 @@ class TeamCreateFragment : Fragment() {
         datePickerDialog.show()
     }
 
-    /** 시작 시간 선택: 같은 날이고 시작 > 종료면 종료 시간 = 시작 시간 */
+    /** 같은 날일 때 시작 시간이 종료보다 늦으면 종료 시간을 시작과 맞춤 */
     private fun showStartTimePicker() {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
@@ -252,7 +242,7 @@ class TeamCreateFragment : Fragment() {
         timePickerDialog.show()
     }
 
-    /** 종료 시간 선택: 같은 날이고 종료 < 시작이면 시작 시간 = 종료 시간 */
+    /** 같은 날일 때 종료 시간이 시작보다 이전이면 시작 시간을 종료와 맞춤 */
     private fun showEndTimePicker() {
         val cal = Calendar.getInstance()
         val contextWrapper = ContextThemeWrapper(requireContext(), R.style.MyDatePickerDialogTheme)
@@ -280,7 +270,6 @@ class TeamCreateFragment : Fragment() {
         timePickerDialog.show()
     }
 
-    // 다이얼로그 버튼 색상 스타일링 (코드 중복 제거)
     private fun styleDatePicker(dialog: DatePickerDialog) {
         dialog.setButton(DatePickerDialog.BUTTON_POSITIVE, "확인", dialog)
         dialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, "취소", dialog)
@@ -301,7 +290,6 @@ class TeamCreateFragment : Fragment() {
         }
     }
 
-    // --- 3. 컬러 선택 로직 ---
     private fun setupColorListeners() {
         colorButtons.forEach { button ->
             button.setOnClickListener { onColorSelected(button) }
@@ -323,7 +311,7 @@ class TeamCreateFragment : Fragment() {
         selectedButton.tag = "SELECTED"
     }
 
-    // --- 3-1. 사용 중인 색상 로드 (GET /api/teams/colors/available 우선, 실패 시 GET /api/teams 폴백) ---
+    /** GET colors/available 우선, 실패 시 팀 목록으로 사용 중 색상 갱신 */
     private fun loadAvailableColors() {
         val ctx = context ?: return
         viewLifecycleOwner.lifecycleScope.launch {
@@ -380,24 +368,19 @@ class TeamCreateFragment : Fragment() {
         }
     }
 
-    // --- 4. 완료 버튼 및 유효성 검사 (팝업 포함) ---
-    // --- 완료 버튼 로직 ---
     private fun setupCompleteButton() {
         binding.btnCompleteCreate.setOnClickListener {
             val teamName = binding.etTeamName.text.toString().trim()
 
-            // 1. 팀 명 유효성 검사 (필수)
             if (teamName.isEmpty()) {
                 Toast.makeText(requireContext(), "팀 명을 입력해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 2. 날짜 논리 유효성 검사 (시작일이 종료일보다 뒤에 있으면 토스트 메시지)
             val startDateStr = binding.tvStartDate.text.toString()
             val endDateStr = binding.tvEndDate.text.toString()
-            val defaultDate = "2026. 2. 23" // XML에 설정된 기본값
+            val defaultDate = "2026. 2. 23"
 
-            // 시작일과 종료일이 모두 선택된 경우에만 비교
             if (startDateStr != defaultDate && endDateStr != defaultDate) {
                 val sdf = java.text.SimpleDateFormat("yyyy. MM. dd", java.util.Locale.KOREA)
                 try {
@@ -405,7 +388,6 @@ class TeamCreateFragment : Fragment() {
                     val endDate = sdf.parse(endDateStr)
 
                     if (startDate != null && endDate != null && startDate.after(endDate)) {
-                        //  토스트 메시지 사용
                         Toast.makeText(requireContext(), "시작일은 종료일보다 빨라야 합니다.", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
@@ -414,7 +396,6 @@ class TeamCreateFragment : Fragment() {
                 }
             }
 
-            // 3. 컬러 선택 유효성 검사 (필수)
             val selectedBtn = colorButtons.find { it.tag == "SELECTED" }
             if (selectedBtn == null) {
                 Toast.makeText(requireContext(), "팀 컬러를 선택해주세요.", Toast.LENGTH_SHORT).show()
@@ -424,19 +405,17 @@ class TeamCreateFragment : Fragment() {
             val colorCode = colorButtonToCode[selectedBtn.id] ?: "C03"
             val colorHex = colorButtonToHex[selectedBtn.id] ?: "#90A3ED"
 
-            // 4. 최종 중복 색상 검증 (우회 방지)
             if (colorCode.uppercase() in usedColorCodes) {
                 Toast.makeText(requireContext(), "이미 사용 중인 팀 색상입니다. 다른 색상을 선택해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 로컬 더미 + API 처리 (초대코드는 서버에서 발급 — 클라이언트 생성 금지)
+            // 초대코드는 서버에서만 발급. 로컬 더미는 네비/폴백용
             val localTeamId = "created_${System.currentTimeMillis()}"
             val (workStart, workEnd) = parseWorkDateTimes(binding.tvStartDate.text.toString(), binding.tvStartTime.text.toString(), binding.tvEndDate.text.toString(), binding.tvEndTime.text.toString())
             val imageResName = selectedImageUri?.let { saveTeamImageToFile(it, localTeamId) } ?: ""
             val intro = binding.etTeamDesc.text?.toString()?.trim() ?: ""
 
-            // 더미 데이터에도 추가 (fallback)
             val newTeam = Team(
                 id = localTeamId,
                 name = teamName,
@@ -452,7 +431,6 @@ class TeamCreateFragment : Fragment() {
             )
             DummyRepository.addTeam(newTeam)
 
-            // API 호출 — 결과에 따라 네비게이션 또는 에러 처리
             val startAtIso = workStart?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis())
             val endAtIso = workEnd?.let { formatToIso(it) } ?: formatToIso(System.currentTimeMillis() + 7 * 24 * 3600 * 1000L)
             binding.btnCompleteCreate.isEnabled = false
@@ -467,7 +445,6 @@ class TeamCreateFragment : Fragment() {
                         endAt = endAtIso
                     ))
                     if (apiResp.code() == 409) {
-                        // 서버에서 색상 중복 감지
                         Log.w("TeamCreate", "409: 색상 중복 - $colorCode")
                         usedColorCodes = usedColorCodes + colorCode.uppercase()
                         updateColorButtonStates()
@@ -620,56 +597,42 @@ class TeamCreateFragment : Fragment() {
     }
 
 
-    /**
-     * 시작 일시와 종료 일시를 비교하는 함수
-     * 문제가 있으면 Alert Dialog를 띄우고 false를 반환
-     */
+    /** 시작/종료 일시 유효성 검사. 잘못되면 다이얼로그 후 false */
     private fun isValidDateRange(): Boolean {
         val startDateStr = binding.tvStartDate.text.toString()
         val startTimeStr = binding.tvStartTime.text.toString()
         val endDateStr = binding.tvEndDate.text.toString()
         val endTimeStr = binding.tvEndTime.text.toString()
 
-        // 기본 텍스트("2026. 2. 23" 등)가 그대로인지 확인 (날짜를 선택하지 않은 경우)
-        // 실제 앱에서는 기본값인지 확인하는 로직을 더 정교하게 하거나, 빈 값으로 시작하는 게 좋음
         if (startDateStr == "2026. 2. 23" || endDateStr == "2026. 2. 23") {
             Toast.makeText(context, "시작 및 종료 날짜를 모두 설정해주세요.", Toast.LENGTH_SHORT).show()
             return false
         }
 
-        // 날짜 포맷: "yyyy. M. d a h:mm" (Locale.KOREA 기준 "오전/오후" 파싱 가능)
         val dateFormat = SimpleDateFormat("yyyy. M. d a h:mm", Locale.KOREA)
 
         try {
-            // 날짜와 시간을 합쳐서 Date 객체로 변환
-            // 예: "2026. 2. 23" + " " + "오후 1:05"
             val startFullDate = dateFormat.parse("$startDateStr $startTimeStr")
             val endFullDate = dateFormat.parse("$endDateStr $endTimeStr")
 
             if (startFullDate != null && endFullDate != null) {
                 if (startFullDate.after(endFullDate)) {
-                    // [팝업] 종료일이 시작일보다 빠름
                     showErrorDialog("종료 일시가 시작 일시보다 빠릅니다.\n날짜와 시간을 다시 확인해주세요.")
                     return false
                 }
                 if (startFullDate == endFullDate) {
-                    // [팝업] 시작과 종료가 같음 (필요 시 주석 처리)
                     showErrorDialog("시작 일시와 종료 일시가 같습니다.\n다시 확인해주세요.")
                     return false
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            // 파싱 에러 시 그냥 통과시키거나 에러 메시지
             return true
         }
 
         return true
     }
 
-    /**
-     * 경고 팝업창 띄우기
-     */
     private fun showErrorDialog(message: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("날짜 설정 오류")

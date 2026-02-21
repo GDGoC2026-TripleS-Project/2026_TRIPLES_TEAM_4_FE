@@ -1,5 +1,7 @@
 package com.project.unimate.ui.calendar
 
+// 역할: 캘린더 월 그리드·선택일 팀/개인 일정 표시. DummyRepository·CalendarService. onResume 시 그리드/일정 갱신
+
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -351,7 +353,6 @@ class CalendarFragment : Fragment() {
             findNavController().navigate(R.id.addPersonalTaskFragment)
         }
 
-        // API에서 캘린더 데이터 로드
         loadCalendarFromApi(
             { refreshGrid() },
             { refreshDayTasks() }
@@ -390,11 +391,9 @@ class CalendarFragment : Fragment() {
                 val monthStr = String.format("%04d-%02d", currentYear, currentMonth + 1)
                 val response = service.getMonth(monthStr)
                 if (response.isSuccessful) {
-                    // API 월간 데이터 로드 성공 시 로그
                     android.util.Log.d("CalendarFragment", "Month API loaded: ${response.body()?.dayCounts?.size} days")
                 }
             } catch (_: Exception) {
-                // API 실패 시 DummyRepository 데이터 유지
             }
             try {
                 val service = RetrofitClient.create<CalendarService>(ctx)

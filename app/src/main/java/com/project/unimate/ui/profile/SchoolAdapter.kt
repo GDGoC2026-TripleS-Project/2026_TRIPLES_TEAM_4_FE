@@ -1,5 +1,7 @@
 package com.project.unimate.ui.profile
 
+// 대학 검색 결과 목록 RecyclerView 어댑터
+
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView

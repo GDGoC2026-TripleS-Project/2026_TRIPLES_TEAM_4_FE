@@ -1,5 +1,7 @@
 package com.project.unimate.ui.calendar
 
+// 역할: 개인일정 수정·삭제. p-server-* 인 경우만 서버 API 호출. MyScheduleService
+
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog

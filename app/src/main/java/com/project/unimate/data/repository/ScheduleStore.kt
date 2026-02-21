@@ -1,5 +1,7 @@
 package com.project.unimate.data.repository
 
+// 역할: 팀 일정·개인 일정 SharedPreferences 저장/복원. 앱 재시작 후에도 유지
+
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -7,7 +9,7 @@ import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.entity.TaskItem
 import java.util.Calendar
 
-/** 팀 일정·개인 일정 전체를 저장/복원. 앱 재시작 후에도 추가·수정한 일정 유지. */
+/** 팀 일정·개인 일정 전체 저장/복원. */
 object ScheduleStore {
     private const val PREFS_NAME = "schedule_store"
     private const val KEY_TASKS = "task_items"

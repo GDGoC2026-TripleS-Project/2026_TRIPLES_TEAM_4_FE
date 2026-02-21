@@ -1,5 +1,7 @@
 package com.project.unimate
 
+// 역할: 푸시 알림 채널 생성·유지. IMPORTANCE_HIGH 미만이면 채널 재생성
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -19,6 +21,7 @@ object NotificationChannels {
         val existing = nm.getNotificationChannel(ALERT_CHANNEL_ID)
         if (existing != null && existing.importance >= NotificationManager.IMPORTANCE_HIGH) return
         if (existing != null) {
+            // 사용자가 채널 중요도를 낮춘 경우 재생성해 HIGH 복구
             Log.w(TAG, "Alert channel importance is ${existing.importance}. Recreating as HIGH.")
             nm.deleteNotificationChannel(ALERT_CHANNEL_ID)
         }

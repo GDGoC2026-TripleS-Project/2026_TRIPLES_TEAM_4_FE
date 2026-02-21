@@ -1,5 +1,7 @@
 package com.project.unimate.ui.profile
 
+// 역할: 프로필 생성 화면 컨테이너 액티비티
+
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity

@@ -1,5 +1,7 @@
 package com.project.unimate.ui.mypage
 
+// 역할: 초대코드로 팀 가입. TeamService joinTeam
+
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -74,7 +76,6 @@ class JoinTeamSpaceFragment : Fragment() {
             }
         })
 
-        // 초기 상태
         joinButton.backgroundTintList = null
         joinButton.background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_join_button)
         joinButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray06))

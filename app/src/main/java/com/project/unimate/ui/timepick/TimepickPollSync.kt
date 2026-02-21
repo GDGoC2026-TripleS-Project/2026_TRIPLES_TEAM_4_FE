@@ -1,5 +1,7 @@
 package com.project.unimate.ui.timepick
 
+// 역할: 모이기 poll 서버 동기화. SchedulePollService getDetail → TimepickStateHolder 반영
+
 import android.content.Context
 import com.project.unimate.auth.JwtStore
 import com.project.unimate.network.RetrofitClient

@@ -1,5 +1,7 @@
 package com.project.unimate.network
 
+// 역할: 모든 API 요청에 JWT를 Authorization Bearer 헤더로 첨부. Content-Type 기본값 application/json
+
 import android.content.Context
 import com.project.unimate.auth.JwtStore
 import okhttp3.Interceptor

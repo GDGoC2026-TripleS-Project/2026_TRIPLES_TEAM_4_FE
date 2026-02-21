@@ -1,5 +1,7 @@
 package com.project.unimate.ui.teamspace
 
+// 역할: 팀스페이스 상세. 팀/개인 캘린더 토글. 서버 팀원·일정 로드, 실패 시 더미 유지. TeamService, TeamScheduleService
+
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
@@ -157,7 +159,7 @@ class TeamSpaceFragment : Fragment() {
 
         teamSpaceMembersTitle.text = "함께하는 팀원"
         teamSpaceMembersIcons.removeAllViews()
-        // 더미 팀원 즉시 렌더링 (서버 응답 전에도 목록이 보이도록)
+        // API 응답 전까지 로컬 더미 팀원으로 목록 표시
         val initialMembers = DummyRepository.getTeamMembers(teamId)
         teamSpaceMembersCount.text = initialMembers.size.toString()
         renderMembers(initialMembers)
@@ -403,7 +405,7 @@ class TeamSpaceFragment : Fragment() {
             refreshNoScheduleMembers()
         }
 
-        // API에서 팀 상세 정보 로드 시도
+        // 팀 상세·팀원 API
         loadTeamDetailFromApi()
 
         return root
@@ -428,7 +430,7 @@ class TeamSpaceFragment : Fragment() {
                     android.util.Log.d("TeamSpaceFragment", "API 팀 상세 로드 성공: ${detail?.team?.name}, myRole=$myRole")
                 }
             } catch (_: Exception) {
-                // API 실패 시 더미 데이터 유지
+                // API 실패 시 기존 더미 유지
             }
         }
     }
@@ -496,7 +498,7 @@ class TeamSpaceFragment : Fragment() {
                 DummyRepository.replaceTasksForTeam(teamId, mapped)
                 DummyRepository.saveSchedulesTo(requireContext())
                 view?.post {
-                    // 일정 동기화 후 캘린더/리스트 즉시 반영
+                    // 동기화 후 그리드·일정 목록 갱신
                     recreateCalendarAndTasks()
                 }
             } catch (_: Exception) {

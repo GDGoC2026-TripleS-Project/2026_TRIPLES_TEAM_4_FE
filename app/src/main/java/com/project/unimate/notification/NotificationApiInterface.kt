@@ -1,16 +1,13 @@
 package com.project.unimate.notification
 
 /**
- * TODO: 서버 알림 목록 API 정의용 인터페이스.
- * - 실제 네트워크 구현은 하지 않음.
+ * 서버 알림 목록 조회 인터페이스. 실제 네트워크 호출은 NotificationApi에서 수행.
  */
 interface NotificationApiInterface {
     fun getNotifications(onDone: (List<NotificationServerItem>) -> Unit)
 }
 
-/**
- * 서버 알림 응답용 모델 (isCompleted는 서버가 제공하지 않으면 null)
- */
+/** 서버 알림 응답 모델. isRead/action/actionDone 등은 서버 미제공 시 null */
 data class NotificationServerItem(
     val notificationId: Long,
     val teamId: Long,

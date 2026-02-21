@@ -1,5 +1,7 @@
 package com.project.unimate.ui.profile
 
+// 역할: 프로필 생성(닉네임·대학·이미지). FCM 등록. ProfileApi·DummyRepository
+
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri

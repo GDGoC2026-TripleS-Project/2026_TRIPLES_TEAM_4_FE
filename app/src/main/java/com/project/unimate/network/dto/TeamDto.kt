@@ -1,5 +1,7 @@
 package com.project.unimate.network.dto
 
+// 팀 생성·수정·가입 요청 및 팀/멤버/초대코드 응답 DTO. 서버가 content/data/teams 혼용 시 디시리얼라이저로 통일
+
 import com.google.gson.Gson
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -8,7 +10,7 @@ import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
 
-// === Request ===
+// Request
 
 data class TeamCreateRequest(
     val name: String,
@@ -32,7 +34,7 @@ data class TeamJoinRequest(
     val inviteCode: String
 )
 
-// === Response ===
+// Response
 
 data class TeamResponse(
     val id: Long?,
@@ -67,7 +69,7 @@ data class TeamSummaryResponse(
     val imageUrl: String? = null
 )
 
-/** GET /api/teams 응답: 배열 [] 또는 { "content"/"data"/"teams": [] } 둘 다 파싱 */
+/** GET /api/teams: 응답이 배열이거나 content/data/teams 래퍼 객체인 경우 모두 파싱 */
 data class TeamsListResponse(
     val content: List<TeamSummaryResponse>? = null,
     val data: List<TeamSummaryResponse>? = null,
@@ -78,7 +80,7 @@ data class TeamsListResponse(
 
 private val listType = object : TypeToken<List<TeamSummaryResponse>>() {}.type
 
-/** 배열/객체 둘 다 파싱하는 디시리얼라이저 */
+/** JSON 배열 또는 content/data/teams 객체를 TeamsListResponse로 변환 */
 class TeamsListResponseDeserializer : JsonDeserializer<TeamsListResponse> {
     private val gson = Gson()
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): TeamsListResponse {

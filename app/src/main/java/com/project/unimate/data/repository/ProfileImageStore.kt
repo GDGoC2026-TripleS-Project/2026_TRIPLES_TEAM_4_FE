@@ -1,8 +1,10 @@
 package com.project.unimate.data.repository
 
+// 역할: 현재 유저 프로필 이미지 리소스명 저장. 마이페이지·프로필 수정용
+
 import android.content.Context
 
-/** 마이페이지·프로필 수정에 쓰는 유저 프로필 이미지 경로 저장. 앱 재시작 후에도 유지. */
+/** 프로필 이미지 저장/조회. */
 object ProfileImageStore {
     private const val PREFS_NAME = "user_profile_image"
     private const val KEY_IMAGE_RES_NAME = "image_res_name"

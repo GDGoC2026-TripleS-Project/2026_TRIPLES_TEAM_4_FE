@@ -1,5 +1,7 @@
 package com.project.unimate.ui.timepick
 
+// 역할: 모이기 날짜·시간 선택. TimepickStateHolder·TeamService. 팀 변경 시 플로우 초기화
+
 import android.app.TimePickerDialog
 import android.os.Bundle
 import android.view.ContextThemeWrapper
@@ -56,15 +58,13 @@ class CreateTimepickFragment : Fragment() {
             return root
         }
 
-        // 새 모이기 플로우 진입 시 이전 생성 상태(pollId)가 남아 있으면 초기화
-        // - 다른 팀으로 진입
-        // - 이전 모이기 생성 성공 후 같은 팀에서 다시 시작
+        // 새 모이기 플로우 진입 시 이전 pollId 초기화(다른 팀 진입 또는 재시작 시)
         if (TimepickStateHolder.teamId != teamId || TimepickStateHolder.pollId != null) {
             TimepickStateHolder.clear()
         }
         TimepickStateHolder.teamId = teamId
 
-        // 서버 팀원 미리 캐시 → TimepickStatusFragment에서 merge된 팀원 표시
+        // 서버 팀원 미리 캐시(TimepickStatusFragment에서 merge 표시용)
         val numericTeamIdForCache = teamId.toLongOrNull()
         if (numericTeamIdForCache != null) {
             lifecycleScope.launch {

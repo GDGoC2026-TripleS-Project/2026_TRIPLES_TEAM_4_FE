@@ -1,5 +1,7 @@
 package com.project.unimate.network
 
+// 역할: Retrofit 싱글톤 빌드. AuthInterceptor·TokenAuthenticator·Gson(TeamsListResponse 디시리얼라이저) 적용
+
 import android.content.Context
 import com.google.gson.GsonBuilder
 import com.project.unimate.network.dto.TeamsListResponse

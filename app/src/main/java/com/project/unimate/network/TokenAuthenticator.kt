@@ -1,5 +1,7 @@
 package com.project.unimate.network
 
+// 역할: 401 시 리프레시 토큰으로 액세스 갱신 후 재요청. /api/auth/refresh 호출은 재인증 제외, 2회 이상 연쇄 시 중단
+
 import android.content.Context
 import com.project.unimate.auth.JwtStore
 import okhttp3.Authenticator

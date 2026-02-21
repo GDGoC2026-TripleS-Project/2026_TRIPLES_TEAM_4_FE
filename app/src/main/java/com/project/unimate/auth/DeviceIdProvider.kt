@@ -1,5 +1,7 @@
 package com.project.unimate.auth
 
+// 역할: 앱 설치당 1개 UUID 생성·유지(SharedPreferences). FCM 등록 시 deviceId로 사용
+
 import android.content.Context
 import java.util.UUID
 

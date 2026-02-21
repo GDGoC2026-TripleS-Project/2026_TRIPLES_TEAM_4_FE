@@ -1,5 +1,7 @@
 package com.project.unimate.ui.teamspace
 
+// 역할: 팀 초대코드 공유·복사. 만료 카운트다운. TeamService
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -46,7 +48,6 @@ class TeamShareFragment : Fragment() {
 
         Log.d("TeamShare", "진입 — teamId=$teamId, myRole=$myRole, isLeader=$isLeader")
 
-        // teamId 없으면 즉시 에러 UI
         if (teamId.isNullOrBlank()) {
             inviteCodeView.text = "---"
             countdownView.text = "팀 정보를 불러올 수 없습니다."
@@ -57,7 +58,6 @@ class TeamShareFragment : Fragment() {
             loadInviteCode(teamId, isLeader, inviteCodeView, countdownView, reissueBtn)
         }
 
-        // 재발급 버튼: 팀장만 표시
         reissueBtn.visibility = if (isLeader) View.VISIBLE else View.GONE
         reissueBtn.setOnClickListener {
             val numericId = teamId?.toLongOrNull() ?: return@setOnClickListener
@@ -96,7 +96,6 @@ class TeamShareFragment : Fragment() {
             }
         }
 
-        // 복사 로직
         fun copyInviteCode() {
             val code = inviteCodeView.text?.toString()?.trim().orEmpty()
             if (code.isBlank() || code == "로딩 중..." || code == "---"
@@ -114,8 +113,7 @@ class TeamShareFragment : Fragment() {
         view.findViewById<View>(R.id.ivShareCopyIcon).setOnClickListener { copyInviteCode() }
     }
 
-    // ── 초대코드 로드 (역할 분기) ────────────────────────────────────────────
-
+    /** 팀장: POST invite-code 발급. 팀원: GET invite 조회. 403/401 시 GET fallback */
     private fun loadInviteCode(
         teamId: String,
         isLeader: Boolean,
@@ -152,7 +150,6 @@ class TeamShareFragment : Fragment() {
                             }
                         }
                         resp.code() == 403 || resp.code() == 401 -> {
-                            // 권한 오류 → GET으로 fallback
                             Log.w("TeamShare", "POST 권한 거부(${resp.code()}) → GET fallback")
                             tryGetInviteCode(numericId, service, inviteCodeView, countdownView, isLeader)
                         }
@@ -164,7 +161,6 @@ class TeamShareFragment : Fragment() {
                         }
                     }
                 } else {
-                    // 팀원: GET /api/teams/{teamId}/invite
                     tryGetInviteCode(numericId, service, inviteCodeView, countdownView, isLeader)
                 }
 
@@ -210,8 +206,6 @@ class TeamShareFragment : Fragment() {
             }
         }
     }
-
-    // ── 카운트다운 ───────────────────────────────────────────────────────────
 
     private fun startCountdown(expiresAt: String?, countdownView: TextView, reissueBtn: View?) {
         stopCountdown()

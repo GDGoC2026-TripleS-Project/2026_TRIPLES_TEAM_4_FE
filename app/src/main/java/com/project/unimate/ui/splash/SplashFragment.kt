@@ -14,8 +14,7 @@ import com.project.unimate.databinding.FragmentSplashBinding
 import kotlinx.coroutines.launch
 
 /**
- * 앱의 시작을 알리는 스플래시.
- * JWT 있으면 서버 동기화 후 홈으로, 없으면 2초 뒤 로그인으로.
+ * 스플래시. JWT 있으면 서버 동기화 후 홈, 없으면 2초 후 로그인. 동기화 실패해도 홈 이동(갇힘 방지).
  */
 class SplashFragment : Fragment(R.layout.fragment_splash) {
 
@@ -28,11 +27,11 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
 
         val jwt = JwtStore.load(requireContext())
         if (!jwt.isNullOrBlank()) {
-            // 이미 로그인됨 → 서버 sync 1회 후 홈으로 (실패해도 홈으로 이동해 스플래시에 갇히지 않음)
+            // 로그인 상태: 서버 sync 1회 후 홈. 실패해도 홈 이동(스플래시 갇힘 방지)
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     ServerSync.syncFromServer(requireContext().applicationContext)
-                } catch (_: Exception) { /* 실패해도 로컬 캐시로 홈 표시 */ }
+                } catch (_: Exception) { /* 실패 시 로컬 캐시로 홈 표시 */ }
                 if (isAdded) {
                     findNavController().navigate(R.id.action_splash_to_home)
                 }

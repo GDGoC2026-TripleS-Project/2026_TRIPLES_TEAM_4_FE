@@ -19,7 +19,7 @@ data class Team(
     val imageResName: String,
     val isCompleted: Boolean = false,
     val memberCount: Int = 0,
-    val deadlineDays: Int? = null, // 마감 D-N, null이면 표시 안 함
+    val deadlineDays: Int? = null, // null이면 마감 D-N 미표시
     val intro: String = "",
     val workStartMillis: Long? = null,
     val workEndMillis: Long? = null,

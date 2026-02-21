@@ -1,5 +1,7 @@
 package com.project.unimate.ui.team
 
+// 역할: 초대코드 입력·팀 가입. TeamService joinTeam
+
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher

@@ -1,5 +1,7 @@
 package com.project.unimate.ui.poke
 
+// 역할: 찌르기 대상 팀·멤버 선택·메시지 입력·전송. PokeService, DummyRepository
+
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log

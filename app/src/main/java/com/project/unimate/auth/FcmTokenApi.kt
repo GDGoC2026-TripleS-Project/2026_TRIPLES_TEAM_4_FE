@@ -1,5 +1,7 @@
 package com.project.unimate.auth
 
+// 역할: FCM token/me API용 Request 빌더(jwt, deviceId, platform)
+
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody

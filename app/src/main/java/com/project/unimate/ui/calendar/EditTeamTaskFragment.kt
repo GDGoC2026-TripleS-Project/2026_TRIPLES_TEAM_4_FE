@@ -1,5 +1,7 @@
 package com.project.unimate.ui.calendar
 
+// 역할: 팀 일정 수정·삭제. 서버 일정은 API 후 로컬 삭제. 편집 시 팀/개인 토글 비활성
+
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog

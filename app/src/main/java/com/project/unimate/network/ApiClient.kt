@@ -1,5 +1,7 @@
 package com.project.unimate.network
 
+// 역할: OkHttp 공용 클라이언트(인증·리프레시 적용). auth 패키지 등 비 Retrofit 호출용
+
 import com.project.unimate.UnimateApp
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit

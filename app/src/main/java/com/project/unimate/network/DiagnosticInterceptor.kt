@@ -6,14 +6,8 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 
 /**
- * 모든 API 요청/응답을 "UniLog" 태그로 Logcat에 출력합니다.
- *
- * 확인 항목:
- * - 요청 URL, Method
- * - Authorization 헤더 존재 여부 및 앞 30자 (토큰 null 체크)
- * - 응답 코드 + message
- * - 응답 body 앞 1000자 (JSON 래퍼 구조 확인)
- * - 실패 응답(non-2xx) errorBody 전문
+ * API 요청/응답을 UniLog 태그로 Logcat 출력.
+ * 요청 URL·Method, Authorization 헤더 여부, 응답 코드·body 앞 1000자. 실패 시 errorBody 전체.
  */
 class DiagnosticInterceptor : Interceptor {
 
@@ -51,7 +45,7 @@ class DiagnosticInterceptor : Interceptor {
         Log.d(TAG, "━━━ RESPONSE [$code $message] ━━━")
         Log.d(TAG, "  URL  : $url")
 
-        // body를 읽고 다시 복원 (body는 1회만 읽을 수 있음)
+        // OkHttp ResponseBody는 1회만 읽을 수 있으므로 읽은 뒤 새 body로 복원
         val contentType = response.body?.contentType()
         val rawBody = response.body?.string() ?: ""
 
@@ -62,7 +56,7 @@ class DiagnosticInterceptor : Interceptor {
             Log.e(TAG, "  ❌ 실패[$code] | errorBody: $rawBody")
         }
 
-        // body를 소비했으므로 새 Response로 복원
+        // 소비한 body를 복원해 downstream이 다시 읽을 수 있게 함
         return response.newBuilder()
             .body(rawBody.toResponseBody(contentType))
             .build()

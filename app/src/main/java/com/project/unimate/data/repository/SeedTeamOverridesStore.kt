@@ -1,9 +1,11 @@
 package com.project.unimate.data.repository
 
+// 역할: 시드 팀의 진행/종료·날짜 수정값 저장. 병합 후 적용해 재시작 시 반영
+
 import android.content.Context
 import com.project.unimate.data.entity.Team
 
-/** 시드(더미) 팀에 대해 사용자가 수정한 진행/종료 상태·날짜 저장. 병합 후 해당 팀에 적용해 재시작 후에도 반영. */
+/** 시드 팀 오버라이드 저장/조회·팀 목록에 적용. */
 object SeedTeamOverridesStore {
     private const val PREFS_NAME = "seed_team_overrides"
     private const val SUFFIX_COMPLETED = "_completed"
