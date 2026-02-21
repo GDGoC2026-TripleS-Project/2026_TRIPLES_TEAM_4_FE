@@ -120,13 +120,13 @@ class NotificationAdapter(
                 button.visibility = View.VISIBLE
                 when {
                     !n.action && n.actionDone -> {
-                        // 체크 일정 확인 완료: 회색 비활성 "체크 완료"
-                        button.isEnabled = false
+                        // 체크 일정 확인 완료: 회색이지만 활성(재진입 가능) "체크 완료"
+                        button.isEnabled = true
                         button.text = "체크 완료"
                         button.setBackgroundResource(R.drawable.bg_notification_button_disabled)
                         button.backgroundTintList = null
                         button.setTextColor(ContextCompat.getColor(itemView.context, R.color.gray10))
-                        button.setOnClickListener(null)
+                        button.setOnClickListener { onMeetingNavigated(n) }
                     }
                     n.action && n.actionDone -> {
                         // 시간 입력 완료: 회색이지만 활성(재진입 가능) "시간 수정하기"
