@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.project.unimate.R
+import com.project.unimate.utils.ProfileImageLoader
 
 class SelectedUserAdapter(
     private val members: List<PokeData.Member>
@@ -26,6 +27,7 @@ class SelectedUserAdapter(
     inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvUserName: TextView = itemView.findViewById(R.id.tvUserName)
         private val ivCheck: ImageView = itemView.findViewById(R.id.ivCheck)
+        private val ivProfile: ImageView = itemView.findViewById(R.id.ivProfile)
         private val viewBar: View = itemView.findViewById(R.id.viewBar) // 왼쪽 컬러바
 
         // 상세 화면에서는 구분선이나 불필요한 요소 숨기기
@@ -34,6 +36,9 @@ class SelectedUserAdapter(
 
         fun bind(member: PokeData.Member) {
             tvUserName.text = member.name
+
+            // 프로필 이미지 로드
+            ProfileImageLoader.load(ivProfile, member.profileImageUrl, itemView.context)
 
             // 상세 화면에서는 체크박스 숨김
             ivCheck.visibility = View.GONE
