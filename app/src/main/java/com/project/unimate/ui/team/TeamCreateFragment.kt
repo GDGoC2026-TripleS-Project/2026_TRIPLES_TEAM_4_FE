@@ -30,11 +30,15 @@ import com.project.unimate.data.repository.DeletedSeedTeamStore
 import com.project.unimate.data.repository.DeletedUserTeamStore
 import com.project.unimate.data.repository.DummyRepository
 import com.project.unimate.data.repository.SeedTeamOverridesStore
+import com.project.unimate.data.repository.SyncManager
 import com.project.unimate.data.repository.TeamImageStore
 import com.project.unimate.databinding.FragmentTeamCreateBinding
 import com.project.unimate.network.RetrofitClient
 import com.project.unimate.network.dto.TeamCreateRequest
 import com.project.unimate.network.service.TeamService
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -498,6 +502,22 @@ class TeamCreateFragment : Fragment() {
                             val dst = java.io.File(dir, newFileName)
                             if (src.exists()) src.copyTo(dst, overwrite = true)
                         }
+                        val teamImageFile = File(requireContext().filesDir, "team_$createdTeamId.jpg")
+                        if (teamImageFile.exists()) {
+                            try {
+                                val part = MultipartBody.Part.createFormData(
+                                    "file",
+                                    teamImageFile.name,
+                                    teamImageFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                                )
+                                val uploadResp = service.uploadTeamImage(createdTeamId, part)
+                                if (uploadResp.isSuccessful) {
+                                    SyncManager.syncAllDataFromServer(requireContext().applicationContext)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("TeamCreate", "팀 스페이스 사진 업로드 실패: ${e.message}")
+                            }
+                        }
                     }
                     try {
                         val myTeamsResp = service.getMyTeams()
@@ -509,8 +529,8 @@ class TeamCreateFragment : Fragment() {
                                 val id = r.id ?: return@mapNotNull null
                                 val completed = r.completed == true || r.isCompleted == true
                                 val endMillis = parseIsoToMillis(r.endAt)
-                                val teamImageResName = if (id.toString() == createdIdStr && imageResName.isNotBlank() && imageResName.startsWith("file:team_"))
-                                    "file:team_$createdTeamId.jpg" else ""
+                                val teamImageResName = r.imageUrl?.takeIf { it.isNotBlank() }
+                                    ?: (if (id.toString() == createdIdStr && imageResName.startsWith("file:team_")) "file:team_$createdTeamId.jpg" else "")
                                 Team(
                                     id = id.toString(),
                                     name = r.name ?: "",

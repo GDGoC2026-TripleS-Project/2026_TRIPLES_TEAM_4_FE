@@ -90,19 +90,58 @@ object ServerSync {
             if (teamResp.isSuccessful) {
                 val rawList = teamResp.body()?.listOrEmpty() ?: emptyList()
                 val deletedUserIds = DeletedUserTeamStore.getDeletedIds(ctx)
-                val serverTeams = rawList
+                val serverTeamList = rawList
                     .filter { r -> r.id?.toString() !in deletedUserIds }
                     .mapNotNull { teamSummaryToTeam(it) }
+                // 폴백: 목록 응답에 imageUrl이 없으면 팀 상세 API에서 가져오기 (재설치/클린 후 목록 API가 이미지 미포함 시)
+                val serverTeamListWithImageFallback = withContext(Dispatchers.IO) {
+                    serverTeamList.map { team ->
+                        if (team.imageResName.isNotBlank()) team
+                        else {
+                            val tid = team.id.toLongOrNull() ?: 0L
+                            if (tid == 0L) team
+                            else {
+                                val detailResp = teamService.getTeamDetail(tid)
+                                val url = detailResp.body()?.team?.imageUrl?.takeIf { it.isNotBlank() }
+                                if (url != null) team.copy(imageResName = url) else team
+                            }
+                        }
+                    }
+                }
+                // 서버 팀 이미지 URL이 있으면 로컬 파일로 다운로드해 저장 (재설치 후에도 복원되도록, 유저 프로필 이미지와 동일 방식)
+                val teamsWithLocalImages = withContext(Dispatchers.IO) {
+                    serverTeamListWithImageFallback.map { team ->
+                        val serverImageRef = team.imageResName
+                        if (serverImageRef.startsWith("http://") || serverImageRef.startsWith("https://")) {
+                            try {
+                                val imageBytes = URL(serverImageRef).openStream().readBytes()
+                                val localTeamImageFileName = "team_${team.id}.jpg"
+                                val outFile = File(ctx.filesDir, localTeamImageFileName)
+                                outFile.writeBytes(imageBytes)
+                                val localTeamImagePath = "file:$localTeamImageFileName"
+                                TeamImageStore.save(ctx, team.id, localTeamImagePath)
+                                team.copy(imageResName = localTeamImagePath)
+                            } catch (_: Exception) {
+                                team
+                            }
+                        } else {
+                            team
+                        }
+                    }
+                }
                 val deletedNames = DeletedSeedTeamStore.getDeletedNames(ctx)
-                val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams, deletedNames)
+                val merged = DummyRepository.mergeServerTeamsWithSeed(teamsWithLocalImages, deletedNames)
                 val seedIds = DummyRepository.getSeedTeams().map { it.id }.toSet()
                 val withOverrides = SeedTeamOverridesStore.applyOverrides(ctx, merged, seedIds)
                 withContext(Dispatchers.Main) {
                     DummyRepository.replaceTeamsWithServerData(withOverrides)
                     DummyRepository.applyPersistedTeamImages(ctx)
                     DummyRepository.applyPersistedTeamNames(ctx)
+                    DummyRepository.saveSchedulesTo(ctx)
                 }
-                Log.d(TAG, "getMyTeams applied: ${serverTeams.size} server teams, merged=${merged.size}")
+                val fromList = serverTeamList.count { it.imageResName.isNotBlank() }
+                val fromFallback = serverTeamListWithImageFallback.count { it.imageResName.isNotBlank() } - fromList
+                Log.d(TAG, "getMyTeams applied: ${serverTeamList.size} server teams, merged=${merged.size}, images: list=$fromList detailFallback=$fromFallback")
             }
             // 동시 sync 시 ConcurrentModificationException 방지: 팀 목록 스냅샷으로 순회
             val teamsSnapshot = withContext(Dispatchers.Main) { DummyRepository.allTeams.toList() }

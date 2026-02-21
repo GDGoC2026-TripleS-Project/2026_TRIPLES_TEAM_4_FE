@@ -97,15 +97,17 @@ object DummyRepository {
         )
     }
 
-    /** 서버에서 받은 내 팀 목록으로 로컬 팀만 교체. 기존 팀의 imageResName(팀 사진)은 유지. 더미 일정(_allTaskItems)은 유지. */
+    /** 서버에서 받은 내 팀 목록으로 로컬 팀만 교체. 서버 팀의 imageResName이 있으면 그대로 사용(서버 우선), 없을 때만 기존 로컬 팀 사진 유지. 더미 일정(_allTaskItems)은 유지. */
     fun replaceTeamsWithServerData(teams: List<Team>) {
-        val preservedImages = _allTeams.associate { it.id to it.imageResName }.filter { (_, v) -> v.isNotBlank() }
+        val preservedTeamImages = _allTeams.associate { it.id to it.imageResName }.filter { (_, v) -> v.isNotBlank() }
         _allTeams.clear()
         _allTeams.addAll(teams)
         for (i in _allTeams.indices) {
             val t = _allTeams[i]
-            preservedImages[t.id]?.let { img ->
-                _allTeams[i] = t.copy(imageResName = img)
+            if (t.imageResName.isBlank()) {
+                preservedTeamImages[t.id]?.let { img ->
+                    _allTeams[i] = t.copy(imageResName = img)
+                }
             }
         }
         extraTeamMembers.clear()

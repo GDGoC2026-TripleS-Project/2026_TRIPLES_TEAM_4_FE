@@ -318,6 +318,9 @@ class HomeFragment : Fragment() {
                 val merged = DummyRepository.mergeServerTeamsWithSeed(serverTeams)
                 withContext(Dispatchers.Main) {
                     DummyRepository.replaceTeamsWithServerData(merged)
+                    DummyRepository.applyPersistedTeamImages(requireContext())
+                    DummyRepository.applyPersistedTeamNames(requireContext())
+                    DummyRepository.saveSchedulesTo(requireContext())
                     refreshTeamIcons(root)
                 }
 
@@ -448,7 +451,7 @@ class HomeFragment : Fragment() {
             id = id.toString(),
             name = r.name ?: "",
             colorHex = r.colorHex ?: "#cccccc",
-            imageResName = "",
+            imageResName = r.imageUrl?.takeIf { it.isNotBlank() } ?: "",
             isCompleted = completed,
             memberCount = (r.memberCount ?: 0).toInt(),
             deadlineDays = null,

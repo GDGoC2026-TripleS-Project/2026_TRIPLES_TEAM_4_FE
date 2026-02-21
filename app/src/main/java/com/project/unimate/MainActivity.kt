@@ -84,9 +84,6 @@ class MainActivity : AppCompatActivity() {
         ProfileImageStore.get(this).takeIf { it.isNotBlank() }?.let {
             DummyRepository.setCurrentUserProfileImageResName(it)
         }
-        // 저장된 팀 사진·팀플명 복원
-        DummyRepository.applyPersistedTeamImages(this)
-        DummyRepository.applyPersistedTeamNames(this)
 
         if (!jwt.isNullOrBlank()) {
             // 이미 로그인된 상태: 닉네임 + 로컬 캐시 복원 후 서버 동기화

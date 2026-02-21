@@ -40,7 +40,7 @@ data class TeamResponse(
     val description: String?,
     val color: String?,
     val colorHex: String?,
-    val imageUrl: String? = null,
+    @SerializedName(value = "imageUrl", alternate = ["image_url"]) val imageUrl: String? = null,
     val ownerUserId: Long?,
     val startAt: String?,
     val endAt: String?,
@@ -64,7 +64,7 @@ data class TeamSummaryResponse(
     val updatedAt: String?,
     val completed: Boolean?,
     val isCompleted: Boolean?,
-    val imageUrl: String? = null
+    @SerializedName(value = "imageUrl", alternate = ["image_url"]) val imageUrl: String? = null
 )
 
 /** GET /api/teams 응답: 배열 [] 또는 { "content"/"data"/"teams": [] } 둘 다 파싱 */
