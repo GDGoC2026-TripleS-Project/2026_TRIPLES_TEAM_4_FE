@@ -2,7 +2,6 @@ package com.project.unimate.data.repository
 
 import android.content.Context
 import android.util.Log
-import com.project.unimate.data.entity.CalendarDayEvent
 import com.project.unimate.data.entity.PersonalScheduleItem
 import com.project.unimate.data.entity.TaskItem
 import com.project.unimate.data.entity.Team

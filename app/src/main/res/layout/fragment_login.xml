@@ -50,7 +50,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="55dp"
         android:layout_marginEnd="24dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -79,7 +79,7 @@
             android:id="@+id/btn_naver"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="17dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
             style="@style/body2_b_16"
@@ -93,25 +93,7 @@
             app:iconPadding="12dp"
             app:iconTint="@null" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_google"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="12dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            style="@style/body2_b_16"
-            android:text="구글 로그인"
-            android:textColor="@color/black"
-            app:backgroundTint="@android:color/white"
-            app:cornerRadius="16dp"
-            app:icon="@drawable/ic_google_logo"
-            app:iconGravity="start"
-            app:iconPadding="12dp"
-            app:iconTint="@null"
-            app:iconSize="20dp"
-            app:strokeColor="#EBEBEB"
-            app:strokeWidth="1dp" />
+
 
     </LinearLayout>
 
