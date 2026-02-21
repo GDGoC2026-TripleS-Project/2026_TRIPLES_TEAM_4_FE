@@ -25,7 +25,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/pretendard_semibold"
             android:text="찌르기"
             style="@style/head2_b_22"
             app:layout_constraintBottom_toBottomOf="parent"

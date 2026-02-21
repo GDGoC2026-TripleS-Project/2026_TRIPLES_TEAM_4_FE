@@ -36,8 +36,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:textColor="@android:color/white"
-                android:fontFamily="@font/pretendard_semibold"
-                android:textSize="24sp"
+                style="@style/head2_b_24"
                 android:visibility="gone" />
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>

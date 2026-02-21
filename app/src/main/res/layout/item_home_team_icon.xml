@@ -36,8 +36,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:textColor="@color/white"
-                android:textSize="24sp"
-                android:fontFamily="@font/pretendard_semibold"
+                style="@style/head2_b_24"
                 android:visibility="gone"
                 tools:text="체"
                 tools:visibility="visible" />

@@ -224,9 +224,11 @@
 
                 <ImageButton
                     android:id="@+id/homeExpandArrow"
-                    android:layout_width="match_parent"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
                     android:minHeight="40dp"
+                    android:scaleType="centerInside"
+                    android:layout_gravity="center_horizontal"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="접기/펼치기"
                     android:src="@drawable/ic_arrow_down"

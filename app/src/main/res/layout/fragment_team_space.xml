@@ -134,8 +134,10 @@
 
                     <ImageButton
                         android:id="@+id/teamSpaceIntroExpandArrow"
-                        android:layout_width="match_parent"
+                        android:layout_width="80dp"
                         android:layout_height="36dp"
+                        android:scaleType="centerInside"
+                        android:layout_gravity="center_horizontal"
                         android:minHeight="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="접기/펼치기"

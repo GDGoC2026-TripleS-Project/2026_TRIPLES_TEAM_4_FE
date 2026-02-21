@@ -155,10 +155,17 @@
             style="@style/body2_m_14"
             android:hint="@string/introduce_team"
             android:textColorHint="@color/gray06"
+            android:textColor="@color/gray06"
             android:inputType="textMultiLine"
             android:paddingHorizontal="12dp"
             android:paddingVertical="12dp"
-            android:textColor="@color/gray06" />
+
+            android:scrollbars="vertical"
+            android:overScrollMode="always"
+            android:scrollbarStyle="insideOverlay"
+            android:verticalScrollbarPosition="right"
+
+             />
 
         <!-- 팀 작업일  -->
         <LinearLayout

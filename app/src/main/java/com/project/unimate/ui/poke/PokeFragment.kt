@@ -219,7 +219,7 @@ class PokeFragment : Fragment() {
     private fun updateButtonState(selectedCount: Int) {
         val button = btnSendPoke ?: return
         if (!isAdded) return
-        val typeFace = ResourcesCompat.getFont(requireContext(), R.font.pretendard_semibold)
+        val typeFace = ResourcesCompat.getFont(requireContext(), R.font.pretendard_bold)
         button.typeface = typeFace
         if (selectedCount > 0) {
             button.isEnabled = true
