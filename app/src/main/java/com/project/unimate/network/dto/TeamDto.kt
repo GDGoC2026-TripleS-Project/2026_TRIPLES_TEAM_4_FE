@@ -40,6 +40,7 @@ data class TeamResponse(
     val description: String?,
     val color: String?,
     val colorHex: String?,
+    val imageUrl: String? = null,
     val ownerUserId: Long?,
     val startAt: String?,
     val endAt: String?,
